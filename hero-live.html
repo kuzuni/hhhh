@@ -825,7 +825,7 @@ function drawWisp(ctx,x,y,r,ang,a,col){
 var WISPS=[],EMBERS=[];
 (function(){
  var R=rng(777),i;
- for(i=0;i<13;i++)WISPS.push({ph:R()*TAU,rad:190+R()*200,sp:.14+R()*.2,r:9+R()*16,vy:.35+R()*.4,front:R()<.35});
+ for(i=0;i<13;i++)WISPS.push({ph:R()*TAU,rad:190+R()*200,sp:.14+R()*.2,r:15+R()*24,vy:.35+R()*.4,front:R()<.35});
  for(i=0;i<40;i++)EMBERS.push({x:R(),y:R(),sp:.02+R()*.05,r:.8+R()*1.8,tw:R()*TAU});
 })();
 function drawWisps(ctx,t,view,front){
@@ -950,7 +950,7 @@ function drawMontage(){
   ctx.save();
   ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
   var gr=ctx.createRadialGradient(x+w/2,y+h*.36,h*.06,x+w/2,y+h*.5,h*.9);
-  gr.addColorStop(0,'#241a38'); gr.addColorStop(1,'#100c1a');
+  gr.addColorStop(0,'#2e2352'); gr.addColorStop(1,'#151022');
   ctx.fillStyle=gr; ctx.fillRect(x,y,w,h);
   var v=cellView(x,y,w,h,fx,fy,charH);
   if(!/[?&]bare/.test(location.search)){

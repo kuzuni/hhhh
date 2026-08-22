@@ -134,8 +134,8 @@ makePart('head',-46,-112,52,6,5,c=>{
   c.strokeStyle='rgba(150,95,70,.95)';c.lineWidth=1.6;
   c.beginPath();c.moveTo(22,-34);c.quadraticCurveTo(24.6,-31,21.6,-28.4);c.stroke();
   // 아랫입술 밑 그림자 힌트
-  c.strokeStyle='rgba(190,130,105,.5)';c.lineWidth=1.1;
-  c.beginPath();c.moveTo(8,-14);c.quadraticCurveTo(11,-12.6,14,-14);c.stroke();
+  c.strokeStyle='rgba(190,130,105,.32)';c.lineWidth=1;
+  c.beginPath();c.moveTo(8.5,-14);c.quadraticCurveTo(11,-12.9,13.5,-14);c.stroke();
 });
 
 // ---- 2b. 눈 (상태 3종 × 좌우) : dir=-1 왼눈(이미지 좌, 또렷) / +1 오른눈(3/4로 약간 좁게)
@@ -843,14 +843,14 @@ function drawTrailMontage(ctx,k){ // 찌르기 스미어: 회전 팬 잔상 + �
   const rp=RIGM.rapier,ws=rp.ws,p=PARTS.rapier;
   // 검이 휘둘러져 올라온 궤적: 피벗 기준 아래쪽으로 회전시킨 고스트 팬
   for(let i=1;i<=4;i++){
-    ctx.save();ctx.globalAlpha=k*(.4-i*.08);
-    ctx.translate(rp.wx,rp.wy);ctx.rotate(rp.wr+i*.22*k);ctx.scale(ws/p.bs,ws/p.bs);
+    ctx.save();ctx.globalAlpha=k*(.55-i*.11);
+    ctx.translate(rp.wx,rp.wy);ctx.rotate(rp.wr+i*.24*k);ctx.scale(ws/p.bs,ws/p.bs);
     ctx.drawImage(p.cv,p.ox,p.oy);ctx.restore();
   }
   const[tx,ty]=nodeWorldPoint(rp,0,-224);
   const[bx,by]=nodeWorldPoint(rp,0,-40);
   // 팬 영역을 채우는 반투명 스미어
-  ctx.save();ctx.globalAlpha=k*.35;
+  ctx.save();ctx.globalAlpha=k*.55;
   const ang0=Math.atan2(ty-rp.wy,tx-rp.wx),R=Math.hypot(tx-rp.wx,ty-rp.wy);
   const gr=ctx.createRadialGradient(rp.wx,rp.wy,R*.2,rp.wx,rp.wy,R);
   gr.addColorStop(0,'rgba(255,236,170,0)');gr.addColorStop(1,'rgba(255,247,214,.85)');
@@ -1112,6 +1112,22 @@ function startLive(){
 // ==== 8. 몽타주 (?montage) — 로드 즉시 동기 렌더 ============================
 function montage(){
   ['ui','hint','title','badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  if(location.search.indexOf('probe')>=0){ // 디버그: 런지 발사 순간 확대 + 마커
+    cv.width=900;cv.height=900;cv.style.width='900px';cv.style.height='900px';
+    const c2=cv.getContext('2d');
+    c2.fillStyle='#1d1712';c2.fillRect(0,0,900,900);
+    const po=pose('lunge',.63),ps=1.0;
+    const px=380-((po.over.root&&po.over.root.x)||0)*ps,py=880-FLOOR*ps;
+    renderCharacter(c2,{px,py,ps,over:po.over,face:po.face,fx:po.fx,time:.63});
+    const rp=RIGM.rapier;
+    const[tx,ty]=nodeWorldPoint(rp,0,-224);
+    c2.fillStyle='red';c2.beginPath();c2.arc(tx,ty,8,0,TAU);c2.fill();
+    c2.fillStyle='blue';c2.beginPath();c2.arc(rp.wx,rp.wy,8,0,TAU);c2.fill();
+    c2.fillStyle='lime';c2.beginPath();c2.arc(RIGM.handR.wx,RIGM.handR.wy,6,0,TAU);c2.fill();
+    c2.fillStyle='#fff';c2.font='14px sans-serif';
+    c2.fillText('rapier.wr='+rp.wr.toFixed(2)+' ws='+rp.ws.toFixed(2),20,30);
+    return;
+  }
   const MW=1680,MH=1500;
   cv.width=MW;cv.height=MH;cv.style.width=MW+'px';cv.style.height=MH+'px';
   const ctx=cv.getContext('2d');
