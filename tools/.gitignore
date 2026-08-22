@@ -1,0 +1,3 @@
+# generated inspector + render screenshots (reproducible via build-inspect.js + shot.sh)
+inspect.html
+*.png
