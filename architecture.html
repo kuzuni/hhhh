@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>아키텍처 — 2D 리깅 3부작</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
+<style>
+  :root{
+    --ink:#f2ede2; --dim:#9a94a8; --faint:#6d6880; --bg:#0c0a12; --panel:#131019;
+    --line:rgba(255,255,255,.09);
+    --gold:#e8c46a; --blade:#7fa7e8; --puppet:#e8c46a; --live:#8a76e8;
+    --ok:#7fd8a8; --warn:#e8a25a;
+    --disp:"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    --mono:Consolas,"Cascadia Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--disp)}
+  main{max-width:1080px;margin:0 auto;padding:52px 22px 90px}
+  a{color:#cfc4a4;text-decoration:none}
+  a:hover{color:#f2e6c2}
+  .back{font-size:13px;letter-spacing:.08em;color:var(--dim)}
+
+  header{text-align:center;margin:26px 0 8px}
+  .eyebrow{letter-spacing:.42em;font-size:12px;color:var(--dim);text-transform:uppercase;margin-bottom:12px}
+  h1{margin:0;font-size:clamp(28px,4.8vw,44px);font-weight:800;letter-spacing:.08em;
+     background:linear-gradient(180deg,#fff8e8 20%,#cbb98a 90%);
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--dim);margin:12px auto 0;max-width:640px;line-height:1.7;font-size:14px}
+
+  h2{font-size:19px;letter-spacing:.14em;margin:64px 0 6px;color:#efe6cd}
+  h2 .no{color:var(--gold);font-family:var(--mono);font-size:15px;margin-right:10px}
+  .lead{color:var(--dim);font-size:13.5px;line-height:1.75;margin:0 0 22px}
+  .rule{height:1px;background:linear-gradient(90deg,rgba(232,196,106,.4),transparent);margin:10px 0 22px}
+
+  .panel{background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(255,255,255,.01) 60%),var(--panel);
+    border:1px solid var(--line);border-radius:16px;padding:26px}
+
+  /* ---- site map ---- */
+  .sitemap{display:flex;flex-direction:column;align-items:center;gap:0}
+  .node{border:1px solid var(--line);border-radius:12px;padding:10px 18px;background:#17131f;
+    font-size:13.5px;text-align:center;line-height:1.5}
+  .node b{display:block;font-size:14.5px}
+  .node small{color:var(--dim)}
+  .node.root{border-color:rgba(232,196,106,.5);box-shadow:0 0 24px -8px rgba(232,196,106,.35)}
+  .down{width:1px;height:22px;background:var(--line)}
+  .fan{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;margin-top:0}
+  .fan .node{height:100%}
+  .fanwrap{position:relative;width:100%;padding-top:22px}
+  .fanwrap::before{content:"";position:absolute;top:0;left:16.6%;right:16.6%;height:1px;background:var(--line)}
+  .fanwrap::after{content:"";position:absolute;top:-22px;left:50%;width:1px;height:22px;background:var(--line)}
+  .fan .node::before{content:"";display:block;width:1px;height:14px;background:var(--line);margin:-24px auto 10px}
+  .tag{display:inline-block;font-size:10.5px;letter-spacing:.12em;padding:3px 9px;border-radius:999px;margin-top:7px;border:1px solid}
+  .t-blade{color:var(--blade);border-color:rgba(127,167,232,.45)}
+  .t-puppet{color:var(--puppet);border-color:rgba(232,196,106,.45)}
+  .t-live{color:var(--live);border-color:rgba(138,118,232,.5)}
+  .etc{display:flex;gap:12px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+  .etc .node{opacity:.65;font-size:12.5px;padding:7px 14px}
+  @media(max-width:720px){.fan{grid-template-columns:1fr}.fanwrap::before{display:none}.fan .node::before{display:none}}
+
+  /* ---- pipeline ---- */
+  .flow{display:flex;flex-direction:column;gap:0;align-items:stretch}
+  .step{display:flex;gap:16px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;background:#17131f}
+  .step .ic{flex:0 0 40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:19px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+  .step b{font-size:14.5px;letter-spacing:.03em}
+  .step p{margin:5px 0 0;color:var(--dim);font-size:13px;line-height:1.7}
+  .step code{font-family:var(--mono);font-size:12px;color:#d7cfa8;background:rgba(232,196,106,.08);
+    padding:1px 6px;border-radius:6px}
+  .conn{width:1px;height:20px;background:var(--line);margin:0 auto}
+  .conn.loop{position:relative}
+  .loopnote{position:absolute;left:calc(50% + 14px);top:-2px;font-size:11px;color:var(--warn);white-space:nowrap;letter-spacing:.06em}
+  .gate{border-color:rgba(127,216,168,.4)}
+  .gate .ic{color:var(--ok)}
+  .par{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .par .mini{border:1px dashed var(--line);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dim);text-align:center;line-height:1.55}
+  .par .mini b{display:block;color:var(--ink);font-size:12.5px}
+  @media(max-width:640px){.par{grid-template-columns:1fr}}
+
+  /* ---- technique columns ---- */
+  .tech{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:880px){.tech{grid-template-columns:1fr}}
+  .tcard{border:1px solid var(--line);border-radius:16px;padding:20px;background:#151120;display:flex;flex-direction:column}
+  .tcard.b{border-top:2px solid rgba(127,167,232,.6)}
+  .tcard.p{border-top:2px solid rgba(232,196,106,.6)}
+  .tcard.l{border-top:2px solid rgba(138,118,232,.65)}
+  .tcard h3{margin:0;font-size:15.5px;letter-spacing:.03em}
+  .tcard .who{font-size:12px;color:var(--dim);margin:3px 0 14px;letter-spacing:.1em}
+  .tcard svg{width:100%;height:150px;background:#0e0b15;border-radius:10px;border:1px solid rgba(255,255,255,.05)}
+  .tcard ul{margin:14px 0 0;padding:0 0 0 2px;list-style:none;font-size:12.8px;color:var(--dim);line-height:1.75}
+  .tcard li{padding-left:16px;position:relative;margin-bottom:7px}
+  .tcard li::before{content:"◆";position:absolute;left:0;top:0;font-size:8px;line-height:2.4}
+  .tcard.b li::before{color:var(--blade)}
+  .tcard.p li::before{color:var(--puppet)}
+  .tcard.l li::before{color:var(--live)}
+  .tcard li b{color:var(--ink);font-weight:600}
+
+  /* ---- principles ---- */
+  .princ{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:640px){.princ{grid-template-columns:1fr}}
+  .princ .pc{border:1px solid var(--line);border-radius:12px;padding:15px 17px;background:#151120;font-size:13px;line-height:1.7;color:var(--dim)}
+  .princ .pc b{color:var(--ink);display:block;margin-bottom:4px;font-size:13.5px}
+  .princ code{font-family:var(--mono);font-size:11.5px;color:#d7cfa8}
+
+  footer{margin-top:70px;text-align:center;color:var(--faint);font-size:12.5px;line-height:2}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="heroes.html">← 용사 전시관</a>
+
+  <header>
+    <div class="eyebrow">Architecture</div>
+    <h1>🏛 아키텍처</h1>
+    <p class="sub">「미소년 용사 2D 리깅 3부작」이 어떻게 만들어지고, 어떻게 움직이는가 —
+      사이트 구조 · 멀티에이전트 제작 파이프라인 · 기법별 런타임 리깅 설계.</p>
+  </header>
+
+  <h2><span class="no">01</span>사이트 구조</h2>
+  <div class="rule"></div>
+  <p class="lead">GitHub Pages 정적 호스팅. 페이지 하나 = HTML 파일 하나 = 독립 URL. 모든 페이지는 외부 리소스 0개의 단일 파일이다.</p>
+  <div class="panel sitemap">
+    <div class="node root"><b>kuzuni.github.io/hhhh/</b><small>GitHub Pages · main 브랜치 루트 서빙</small></div>
+    <div class="down"></div>
+    <div class="node"><b>heroes.html</b><small>용사 전시관 (허브)</small></div>
+    <div class="fanwrap">
+      <div class="fan">
+        <div class="node"><b>hero-blade.html</b><small>아스렐 · 銀月의 검성</small><br><span class="tag t-blade">절차적 스켈레톤 · IK</span></div>
+        <div class="node"><b>hero-puppet.html</b><small>루시엘 · 황금 사자의 왕자</small><br><span class="tag t-puppet">컷아웃 리깅 · 퍼펫</span></div>
+        <div class="node"><b>hero-live.html</b><small>카이렌 · 흑염의 마검사</small><br><span class="tag t-live">메시 디포메이션 · Live2D식</span></div>
+      </div>
+    </div>
+    <div class="etc">
+      <div class="node">index.html — 바퀴성 대전</div>
+      <div class="node">spiderbot.html — ORB WEAVER</div>
+      <div class="node">architecture.html — 이 문서</div>
+    </div>
+  </div>
+
+  <h2><span class="no">02</span>제작 파이프라인 — 멀티에이전트 스튜디오</h2>
+  <div class="rule"></div>
+  <p class="lead">AI 에이전트들이 스튜디오처럼 분업한다: 병렬 빌더가 만들고, 각자 헤드리스 스크린샷으로 자기 그림을 직접 보며 고치고, 3인 심사 패널이 채점하고, 떨어지면 수정 라운드가 돈다. 사람(관객)은 그동안 실시간 배포로 과정을 지켜본다.</p>
+  <div class="flow">
+    <div class="step"><div class="ic">📜</div><div><b>스펙 — 아트 디렉션 계약서</b>
+      <p>공통 스펙(미소년 얼굴 공식·비율·선·셰이딩·애니 원칙·몽타주 규격) + 캐릭터별 스펙(컨셉·팔레트·기법 정의·애니 목록). 빌더와 심사위원이 같은 문서를 본다.</p></div></div>
+    <div class="conn"></div>
+    <div class="step"><div class="ic">🎨</div><div><b>빌더 ×3 — 병렬 제작</b>
+      <p>캐릭터당 1명. 단일 HTML을 작성한 뒤 <b>자가검증 루프 최소 4회</b>:
+      <code>bash tools/shot2.sh page.html?montage out.png</code> → 헤드리스 Edge 렌더 → 에이전트가 PNG를 <b>눈으로 보고</b> 결함 목록 → 수정 → 재촬영.</p>
+      <div class="par">
+        <div class="mini"><b>blade 빌더</b>본·IK를 코드로</div>
+        <div class="mini"><b>puppet 빌더</b>부품 아틀라스+씬그래프</div>
+        <div class="mini"><b>live 빌더</b>메시+가중치 변형</div>
+      </div></div></div>
+    <div class="conn"></div>
+    <div class="step"><div class="ic">⚖️</div><div><b>심사 패널 ×3 — 렌즈 분리</b>
+      <p>① 미소년 얼굴·아트 디렉션 ② 애니메이션·모션 ③ 테크니컬 아트·기법 시연. 각자 몽타주 PNG를 보고
+      face / art / motion / technique / polish 5개 축 + 종합점수(0~10)와 위치 특정 이슈를 제출.</p></div></div>
+    <div class="conn"></div>
+    <div class="step gate"><div class="ic">✅</div><div><b>합격 게이트</b>
+      <p>전원 <b>8.0 이상</b> + critical 이슈 0개. 미달이면 ↓</p></div></div>
+    <div class="conn loop"><span class="loopnote">↺ 최대 3라운드</span></div>
+    <div class="step"><div class="ic">🔧</div><div><b>수정 에이전트</b>
+      <p>심사 이슈(JSON)를 심각도 순으로 반영 → 재촬영 → 스스로 확인 → 재심사로 복귀.</p></div></div>
+    <div class="conn"></div>
+    <div class="step"><div class="ic">🚀</div><div><b>배포 — 그때그때</b>
+      <p>워처가 2분마다 변경 감지 → <code>git commit + push</code> → GitHub Pages 자동 반영.
+      심사 점수가 낮아도 일단 라이브에 올라가고, 라운드가 돌수록 퀄리티가 올라간다. 최종적으로 오케스트레이터가 직접 검수 후 마무리 커밋.</p></div></div>
+  </div>
+
+  <h2><span class="no">03</span>런타임 리깅 — 세 가지 설계</h2>
+  <div class="rule"></div>
+  <p class="lead">셋 다 Canvas 2D 위에서 돌지만, "그림이 어떻게 움직이는가"의 답이 근본적으로 다르다. 그 차이 자체가 각 페이지의 주제다.</p>
+  <div class="tech">
+    <div class="tcard b">
+      <h3>절차적 스켈레톤 + IK</h3>
+      <div class="who">hero-blade.html · 아스렐</div>
+      <svg viewBox="0 0 300 150" aria-hidden="true">
+        <g stroke="#7fa7e8" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".9">
+          <path d="M150 38 149 66"/><path d="M149 66 132 92 128 118"/><path d="M149 66 166 90 172 118"/>
+          <path d="M150 46 128 60 116 78"/><path d="M150 46 172 58 186 70"/>
+        </g>
+        <g fill="#dfe8fa"><circle cx="150" cy="30" r="9"/><circle cx="149" cy="66" r="4"/>
+          <circle cx="132" cy="92" r="3.4"/><circle cx="166" cy="90" r="3.4"/>
+          <circle cx="128" cy="60" r="3"/><circle cx="172" cy="58" r="3"/>
+          <circle cx="128" cy="118" r="3.4"/><circle cx="172" cy="118" r="3.4"/></g>
+        <rect x="120" y="122" width="16" height="3" rx="1.5" fill="#7fd8a8"/>
+        <text x="141" y="129" font-size="9" fill="#7fd8a8">IK 접지</text>
+        <path d="M186 70 218 42" stroke="#9fd8ff" stroke-width="3" stroke-linecap="round"/>
+        <path d="M218 42q26 10 12 34" stroke="#9fd8ff" stroke-width="1.5" fill="none" opacity=".5" stroke-dasharray="3 4"/>
+        <text x="16" y="22" font-size="10" fill="#8fa3c9" font-family="Consolas">pose(anim, t)</text>
+        <text x="16" y="36" font-size="9" fill="#5d6b8a">매 프레임 본 행렬 계산</text>
+      </svg>
+      <ul>
+        <li><b>본 트리</b> pelvis→spine→chest→목/사지, 매 프레임 애니 커브 → 트랜스폼 계산</li>
+        <li><b>2본 해석 IK</b> — 보행 발 접지(미끄러짐 0), 베기 양손 그립</li>
+        <li>팔다리는 관절에서 <b>부드럽게 휘는 테이퍼 곡선</b>으로 매 프레임 드로잉</li>
+        <li>검격 <b>리본 트레일 + 포즈 잔상</b>도 본 데이터에서 파생</li>
+        <li><code>pose(anim,t)</code> 순수함수 → 실시간·몽타주 공용</li>
+      </ul>
+    </div>
+    <div class="tcard p">
+      <h3>컷아웃 리깅 (퍼펫)</h3>
+      <div class="who">hero-puppet.html · 루시엘</div>
+      <svg viewBox="0 0 300 150" aria-hidden="true">
+        <g stroke="rgba(232,196,106,.35)" stroke-width="1"><path d="M150 40 150 66M150 66 122 76M150 66 178 76M150 66 138 108M150 66 162 108" fill="none"/></g>
+        <rect x="136" y="18" width="28" height="30" rx="9" fill="#f4de9c"/>
+        <rect x="138" y="52" width="24" height="34" rx="8" fill="#f7f3e9"/>
+        <rect x="108" y="66" width="26" height="11" rx="5.5" fill="#f7f3e9" transform="rotate(24 108 66)"/>
+        <rect x="166" y="62" width="26" height="11" rx="5.5" fill="#f7f3e9" transform="rotate(-18 192 62)"/>
+        <rect x="132" y="88" width="12" height="30" rx="6" fill="#2b3a5c"/>
+        <rect x="156" y="88" width="12" height="30" rx="6" fill="#2b3a5c"/>
+        <g fill="#e8c46a"><circle cx="150" cy="50" r="3"/><circle cx="150" cy="66" r="3"/>
+          <circle cx="122" cy="76" r="3"/><circle cx="178" cy="74" r="3"/>
+          <circle cx="138" cy="90" r="3"/><circle cx="162" cy="90" r="3"/></g>
+        <text x="196" y="80" font-size="9" fill="#c9a94f">피벗</text>
+        <g opacity=".8"><rect x="228" y="24" width="22" height="9" rx="4.5" fill="#b03042"/>
+          <rect x="228" y="40" width="22" height="9" rx="4.5" fill="#f7f3e9"/>
+          <rect x="228" y="56" width="9" height="22" rx="4.5" fill="#2b3a5c"/>
+          <text x="224" y="96" font-size="9" fill="#8a7a55">부품 분해</text></g>
+        <text x="16" y="22" font-size="10" fill="#c9a94f" font-family="Consolas">bake once</text>
+        <text x="16" y="36" font-size="9" fill="#8a7a55">→ 리지드 변환만</text>
+      </svg>
+      <ul>
+        <li>부품 ~20개를 <b>초기화 때 1회만</b> 오프스크린 캔버스에 굽는다</li>
+        <li>매 프레임은 <b>씬그래프 리지드 변환만</b> — pivot·rot·z순서 (Spine 방식)</li>
+        <li><b>키프레임 트랙 + 큐빅 이징</b>, 애니 간 크로스페이드</li>
+        <li>손·검끝 <b>드래그 → 실시간 IK</b>, 놓으면 스프링 복귀</li>
+        <li>「부품 분해」 뷰 — 조각들이 이름표 달고 날아가는 컷아웃 증명샷</li>
+      </ul>
+    </div>
+    <div class="tcard l">
+      <h3>메시 디포메이션 (Live2D식)</h3>
+      <div class="who">hero-live.html · 카이렌</div>
+      <svg viewBox="0 0 300 150" aria-hidden="true">
+        <defs><clipPath id="mf"><ellipse cx="150" cy="75" rx="52" ry="60"/></clipPath></defs>
+        <ellipse cx="150" cy="75" rx="52" ry="60" fill="#241d2e"/>
+        <ellipse cx="146" cy="80" rx="40" ry="48" fill="#f6e8dc"/>
+        <g clip-path="url(#mf)" stroke="#8a76e8" stroke-width=".8" opacity=".75" fill="none">
+          <path d="M98 35q52 14 104 0M96 55q54 16 108 0M96 75q54 14 108 0M98 95q52 12 104 0M100 115q50 10 100 0"/>
+          <path d="M110 18q-4 58 2 116M130 15q-3 60 2 122M150 14q0 62 0 124M170 15q3 60-2 122M190 18q4 58-2 116"/>
+        </g>
+        <circle cx="132" cy="72" r="5" fill="#e8b34a"/><circle cx="164" cy="72" r="5" fill="#e8b34a"/>
+        <path d="M216 46q20-8 34-2" stroke="#b3a6f0" stroke-width="1.5" fill="none" marker-end="none"/>
+        <text x="216" y="36" font-size="9" fill="#8a76e8">yaw +30°</text>
+        <text x="216" y="66" font-size="9" fill="#6d6880">앞머리 +시차</text>
+        <text x="216" y="80" font-size="9" fill="#6d6880">뒷머리 −시차</text>
+        <text x="16" y="22" font-size="10" fill="#8a76e8" font-family="Consolas">Σ param·weight</text>
+        <text x="16" y="36" font-size="9" fill="#5c527a">정점 블렌드셰이프</text>
+      </svg>
+      <ul>
+        <li>레이어 15~20장(홍채·눈꺼풀·앞머리 가닥까지 분리)을 <b>1회 텍스처링</b></li>
+        <li>레이어마다 <b>삼각 격자 메시 + 정점 가중치</b> — 파라미터 합산으로 정점 이동</li>
+        <li>파라미터: yaw·pitch·roll / 시선 / blink / breath / hairSway…</li>
+        <li>Canvas2D <b>텍스처 삼각형</b>(clip+setTransform+drawImage), 실금 방지 팽창</li>
+        <li><b>레이어 깊이 시차</b>로 3D 착시 + 머리카락 스프링 물리 + 마우스 추적</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="no">04</span>공통 설계 원칙</h2>
+  <div class="rule"></div>
+  <div class="princ">
+    <div class="pc"><b>단일 파일 · 외부 리소스 0</b>폰트·이미지·CDN 없이 모든 그래픽을 코드로 그린다. 파일 하나 = 배포 단위 하나 = URL 하나.</div>
+    <div class="pc"><b>Canvas 2D 전용</b>WebGL 금지 — <code>--disable-gpu</code> 헤드리스에서도 100% 동일 렌더 → 스크린샷 검증 파이프라인이 성립한다.</div>
+    <div class="pc"><b>결정론 몽타주 모드</b><code>?montage</code>가 붙으면 rAF 대신 고정 시각 t로 동기 렌더. Row A 주모션 6칸 / Row B 액션 6칸 / Row C 뷰티·얼굴 클로즈업·리깅 오버레이·기법 특화 컷. 심사가 항상 같은 그림을 본다.</div>
+    <div class="pc"><b>에러 가시화</b><code>window.onerror</code>를 화면 위 빨간 텍스트로 — 헤드리스 스크린샷에서도 버그가 "보인다".</div>
+    <div class="pc"><b>포즈 = 순수함수</b>시간 → 포즈 계산을 부작용 없이 분리. 실시간 루프와 몽타주가 같은 함수를 공유해 검증 대상과 실물이 어긋나지 않는다.</div>
+    <div class="pc"><b>애니메이션 문법</b>선형 보간 금지, 예비동작→급가속→임팩트 홀드→회수, 머리카락·망토는 지연 추종(오버랩), 발 미끄러짐 금지.</div>
+  </div>
+
+  <footer>
+    <a href="heroes.html">용사 전시관</a> · <a href="index.html">바퀴성 대전</a> · <a href="spiderbot.html">ORB WEAVER</a><br>
+    2D Rigging Trilogy — built by a multi-agent studio, judged by a three-lens panel.
+  </footer>
+</main>
+</body>
+</html>
