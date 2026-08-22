@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>펌킨조 — 이빨호박 · 컷아웃 리깅</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#2a1a10;
+    font-family:"Segoe UI","Malgun Gothic",sans-serif;}
+  #cv{display:block;width:100vw;height:100vh;}
+  #err{position:fixed;top:4px;left:4px;color:#ff5252;font:bold 13px "Segoe UI","Malgun Gothic",sans-serif;
+    z-index:99;white-space:pre-wrap;max-width:90vw;pointer-events:none;text-shadow:0 1px 2px #000;}
+  #back{position:fixed;top:10px;left:12px;z-index:10;color:#ffb964;text-decoration:none;font-size:13px;opacity:.85;}
+  #back:hover{opacity:1;text-decoration:underline;}
+  #badge{position:fixed;top:10px;right:14px;z-index:10;color:#ffe9d2;background:rgba(255,154,60,.14);
+    border:1px solid rgba(255,154,60,.45);border-radius:20px;padding:4px 14px;font-size:12px;letter-spacing:.5px;}
+  #title{position:fixed;top:34px;left:0;right:0;text-align:center;pointer-events:none;z-index:5;}
+  #title h1{margin:0;color:#ffb964;font-size:26px;font-weight:700;letter-spacing:3px;
+    text-shadow:0 2px 12px rgba(224,120,32,.45);}
+  #title p{margin:2px 0 0;color:#d8a070;font-size:12px;letter-spacing:1px;}
+  #ui{position:fixed;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:8px;
+    flex-wrap:wrap;z-index:10;align-items:center;}
+  #ui button{background:rgba(90,50,20,.6);color:#ffe9d2;border:1px solid rgba(255,154,60,.5);
+    border-radius:8px;padding:8px 15px;font-family:inherit;font-size:14px;cursor:pointer;
+    transition:background .15s;}
+  #ui button:hover{background:rgba(224,120,32,.45);}
+  #ui button.on{background:#ff9a3c;color:#2a1208;font-weight:700;}
+  #ui button.dv.on{background:#b06cff;color:#14041e;}
+  #ui .sep{width:1px;height:24px;background:rgba(255,154,60,.4);margin:0 4px;}
+  #ui label{color:#d8a070;font-size:12px;display:flex;align-items:center;gap:6px;}
+  #ui input[type=range]{width:100px;accent-color:#ff9a3c;}
+  #hint{position:fixed;bottom:66px;left:0;right:0;text-align:center;color:rgba(216,160,112,.8);
+    font-size:12px;pointer-events:none;z-index:5;letter-spacing:.5px;}
+</style>
+</head>
+<body>
+<div id="err"></div>
+<a id="back" href="heroes.html">← 용사 전시관</a>
+<div id="badge">컷아웃 리깅 · 부품 아틀라스 2세트</div>
+<div id="title"><h1>펌킨조</h1><p>이빨호박 · 황무지의 필드 몬스터</p></div>
+<canvas id="cv"></canvas>
+<div id="hint">죽음 → 뿅! 맛있는 호박 조각 · 부활로 역재생 복원</div>
+<div id="ui">
+  <button data-anim="idle" class="on">대기</button>
+  <button data-anim="walk">걷기</button>
+  <button data-anim="bite">앙! 물기</button>
+  <button data-anim="hit">피격</button>
+  <div class="sep"></div>
+  <button id="btnDie">죽음</button>
+  <button id="btnRev">부활</button>
+  <div class="sep"></div>
+  <button id="avBase" class="on">기본</button>
+  <button id="avDemon" class="dv">악마</button>
+  <div class="sep"></div>
+  <button id="btnBones">뼈대 보기</button>
+  <button id="btnExplode">부품 분해</button>
+  <label>속도 <input id="spd" type="range" min="0.2" max="2" step="0.1" value="1"></label>
+</div>
+<script>
+"use strict";
+// ============================================================================
+// ==== 섹션 맵 ==============================================================
+// ==== 1. 팔레트/유틸       2. 파트 베이크 (아바타별 아틀라스 2세트)       ====
+// ==== 3. 리그 (씬그래프)   4. 애니 (키프레임 트랙 + pose 순수함수)        ====
+// ==== 5. 죽음/부활 (조각 결정론 물리)   6. 렌더/배경/이펙트              ====
+// ==== 7. UI/메인루프       8. 몽타주 (?montage)                          ====
+// ============================================================================
+const errBox=document.getElementById('err');
+window.onerror=function(m,s,l){errBox.textContent+='ERR: '+m+' @'+(s||'').split('/').pop()+':'+l+'\n';};
+window.addEventListener('unhandledrejection',e=>{errBox.textContent+='REJ: '+e.reason+'\n';});
+
+// ==== 1. 팔레트 / 유틸 ======================================================
+const TAU=Math.PI*2, D=Math.PI/180;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const sstep=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+const easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
+const easeIn=t=>Math.pow(clamp(t,0,1),3);
+const rnd=i=>{const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x);};
+function ell(c,x,y,rx,ry,rot){c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,TAU);}
+function path(c,d){c.beginPath();c.moveTo(d[0],d[1]);
+  for(let i=2;i<d.length;i++){const s=d[i];
+    if(s.length===6)c.bezierCurveTo(s[0],s[1],s[2],s[3],s[4],s[5]);
+    else if(s.length===4)c.quadraticCurveTo(s[0],s[1],s[2],s[3]);
+    else c.lineTo(s[0],s[1]);}}
+function star(c,x,y,r,pts,rot,fill){c.beginPath();
+  for(let i=0;i<pts*2;i++){const a=(rot||0)+i*Math.PI/pts,rr=i%2?r*.42:r;
+    const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?c.lineTo(px,py):c.moveTo(px,py);}
+  c.closePath();c.fillStyle=fill;c.fill();}
+
+// 아바타별 팔레트 — 「기본 호박」 / 「악마 호박」
+const PALS={
+ base:{ out:'#3a1e0e', out2:'#5a3018',
+  body:'#ff9a3c', bodySh:'#e07820', bodyHi:'#ffb964', bodyDeep:'#c05e14',
+  gum:'#6b3212', tooth:'#f2ead2', toothSh:'#d6c9ab', toothLine:'#3a2410', mouthIn:'#2a1208',
+  arm:'#5a9a3c', armSh:'#3c7028', armHi:'#7ab858', spike:'#2e5a20',
+  stem:'#4e8034', stemD:'#356020', leaf:'#63a842', leafD:'#3c7028',
+  goo:'#e07820', gooHi:'#ffd98a',
+  foot:'#e8821e', footHi:'#ffab52,',
+  flesh:'#ffd9a0', fleshHi:'#ffeed2', rind:'#ff9a3c', rindD:'#e07820',
+  seed:'#f7e8b0', seedD:'#b89454', eye:'#2a1208' },
+ demon:{ out:'#160b1e', out2:'#2c1a38',
+  body:'#3a2440', bodySh:'#261232', bodyHi:'#56366c', bodyDeep:'#180c22',
+  gum:'#1c0f26', tooth:'#2c1a3a', toothSh:'#1c0f28', toothLine:'#0e0716', mouthIn:'#140824',
+  glowA:'#b06cff', glowB:'#7cff8a',
+  arm:'#7e2438', armSh:'#4e1424', armHi:'#a03a50', spike:'#d89aa8',
+  stem:'#4a2a54', stemD:'#301a3a', leaf:'#6a3a78', leafD:'#4a2454',
+  goo:'#9a5ce0', gooHi:'#dcc2ff',
+  foot:'#2e1a38', footHi:'#4c3260',
+  flesh:'#ecd8ff', fleshHi:'#f8f0ff', rind:'#3a2440', rindD:'#261232',
+  seed:'#e2d0f4', seedD:'#8a6cb0', horn:'#241826', hornHi:'#443050', eye:'#000' }
+};
+PALS.base.footHi='#ffab52';
+
+// ==== 2. 파트 베이크 ========================================================
+// 각 부품은 초기화 때 딱 1회 오프스크린 캔버스에 굽는다. 피벗 = 부품 로컬 (0,0).
+// 매 프레임은 씬그래프 리지드 변환(translate·rotate·scale)만 적용한다.
+const BS=3; // 베이크 배율
+function makePart(atlas,name,x0,y0,x1,y1,fn){
+  const w=Math.ceil((x1-x0)*BS)+6,h=Math.ceil((y1-y0)*BS)+6;
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const c=cv.getContext('2d');
+  c.translate(-x0*BS+3,-y0*BS+3);c.scale(BS,BS);
+  c.lineJoin='round';c.lineCap='round';
+  fn(c);
+  atlas[name]={cv,x0:x0-1/BS,y0:y0-1/BS,w:w/BS,h:h/BS};
+}
+function drawPart(c,atlas,name,alpha){
+  const p=atlas[name];if(!p)return;
+  if(alpha!==undefined&&alpha<1){c.save();c.globalAlpha*=alpha;
+    c.drawImage(p.cv,p.x0,p.y0,p.w,p.h);c.restore();}
+  else c.drawImage(p.cv,p.x0,p.y0,p.w,p.h);
+}
