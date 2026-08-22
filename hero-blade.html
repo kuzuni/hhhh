@@ -241,11 +241,11 @@ function buildSkeleton(P){
 function gaitFoot(ph,S1,S2,lift,stance){
   ph=fract(ph);
   if(ph<stance){ const u=ph/stance;
-    return {x:lerp(S1,-S2,u), y:0, pitch:lerp(-0.20,0.42,E.in2(u)), st:true};
+    return {x:lerp(S1,-S2,u), y:0, pitch:lerp(-0.28,0.55,E.in2(u)), st:true};
   }
   const u=(ph-stance)/(1-stance);
   return {x:lerp(-S2,S1,E.io3(u)), y:-lift*Math.sin(Math.PI*u),
-          pitch:lerp(0.42,-0.20,E.io2(u)), st:false};
+          pitch:lerp(0.55,-0.28,E.io2(u)), st:false};
 }
 function poseIdle(P,t){
   const br=Math.sin(t*TAU/3.4), sway=Math.sin(t*0.52);
@@ -263,7 +263,7 @@ function poseIdle(P,t){
   P.face={blink:blinkAmt(t),brow:0,narrow:0,mouth:0,px:0.25,py:0.05};
   return P;
 }
-const WALK={T:1.05,S1:58,S2:48,st:0.58,lift:32}; // 몽타주 접지 마커와 공유
+const WALK={T:1.05,S1:74,S2:66,st:0.52,lift:44}; // 몽타주 접지 마커와 공유
 function poseWalk(P,t){
   const p=fract(t/WALK.T);
   const fN=gaitFoot(p,     WALK.S1,WALK.S2,WALK.lift,WALK.st);
@@ -271,16 +271,16 @@ function poseWalk(P,t){
   P.footN={x:fN.x,y:fN.y,pitch:fN.pitch};
   P.footF={x:fF.x,y:fF.y,pitch:fF.pitch};
   P.groundedN=fN.st; P.groundedF=fF.st;
-  // 골반 상하 서지 — 접지(양발 벌림)에서 낮고, 중간지지에서 높다
-  P.py=B.hipY+3.5+5.5*Math.cos(2*TAU*p);
+  // 골반 상하 서지 — 접지(가위 개각)에서 깊게 낮고, 중간지지에서 높다 (과장)
+  P.py=B.hipY+10+8*Math.cos(2*TAU*p);
   P.px=1.5*Math.sin(TAU*p);
-  P.pelvisA=0.05+0.03*Math.sin(TAU*p);
-  P.spineA=[0.02+0.015*Math.cos(TAU*p),0.025,0.012-0.022*Math.cos(TAU*p)];
-  P.neckA=-0.05; P.headA=-0.015+0.012*Math.cos(2*TAU*p);
-  P.shoulderDX=-9*Math.cos(TAU*p);               // 어깨 역회전 (접지에서 극값)
-  const sw=Math.cos(TAU*p);                       // 팔 스윙 — 접지 프레임에서 최대 진폭
-  P.armN={mode:"fk",a1:-0.62*sw,a2:0.25+0.38*Math.max(0,-sw)};
-  P.armF={mode:"fk",a1: 0.62*sw,a2:0.25+0.38*Math.max(0, sw)};
+  P.pelvisA=0.06+0.045*Math.sin(TAU*p);
+  P.spineA=[0.02+0.03*Math.cos(2*TAU*p),0.03,0.015-0.035*Math.cos(TAU*p)];
+  P.neckA=-0.06; P.headA=-0.015+0.018*Math.cos(2*TAU*p);
+  P.shoulderDX=-12*Math.cos(TAU*p);              // 어깨 역회전 (접지에서 극값)
+  const sw=Math.cos(TAU*p);                       // 팔 스윙 — 다리와 역위상, 접지에서 최대
+  P.armN={mode:"fk",a1:-0.80*sw,a2:0.28+0.50*Math.max(0,-sw)};
+  P.armF={mode:"fk",a1: 0.80*sw,a2:0.28+0.50*Math.max(0, sw)};
   P.sword={hold:"none",angle:0,gripX:0,gripY:0,drawn:0,showSaya:true,sayaA:200*RAD};
   P.hairSway=1.2; P.coatSway=1.4;
   P.face={blink:blinkAmt(t),brow:0,narrow:0,mouth:0,px:0.5,py:0};
@@ -373,13 +373,13 @@ function poseSlash(P,t){
 // --- 발도(시그니처): 납도→예비→섬광 스텝→극점 일섬→잔심→납도, 4.6s ---
 const BT={T:4.6};
 // 예비(~t=1.0-1.2): 무게중심 후방 + 크라우칭(신장 압축) + 어깨 와인드업 → 대비 후 발도
-BT.px=ch([[0,0],[0.86,0],[1.06,-12,"io2"],[1.18,-14,"io2"],[1.30,118,"out3"],[3.30,118],
+BT.px=ch([[0,0],[0.86,0],[1.06,-16,"io2"],[1.18,-19,"io2"],[1.30,118,"out3"],[3.30,118],
   [3.70,64,"io2"],[4.10,10,"io2"],[4.45,0,"io2"]]);
-BT.py=ch([[0,3],[0.85,3],[1.04,14,"io2"],[1.24,12,"lin"],[1.30,9,"out2"],
+BT.py=ch([[0,3],[0.85,3],[1.04,20,"io2"],[1.24,18,"lin"],[1.30,9,"out2"],
   [2.60,9],[3.60,3,"io2"]]);
-BT.lean=ch([[0,0.05],[0.85,0.05],[1.04,-0.16,"io2"],[1.30,0.30,"out4"],
+BT.lean=ch([[0,0.05],[0.85,0.05],[1.04,-0.24,"io2"],[1.30,0.30,"out4"],
   [2.60,0.30],[3.60,0.05,"io2"]]);
-BT.wind=ch([[0,0],[0.90,0],[1.06,9,"io2"],[1.36,-7,"out4"],[2.60,-7],[3.60,0,"io2"]]);
+BT.wind=ch([[0,0],[0.90,0],[1.06,14,"io2"],[1.36,-7,"out4"],[2.60,-7],[3.60,0,"io2"]]);
 BT.drawn=ch([[0,0],[1.285,0],[1.345,1,"out4"],[3.55,1],[3.98,0.12,"io2"],[4.06,0,"in2"]]);
 BT.ang=ch([[0,155],[1.285,155],[1.345,-6,"out5"],[2.60,-6],[3.20,-30,"io2"],
   [3.60,60,"io2"],[3.98,140,"io2"],[4.06,155,"in2"]]);

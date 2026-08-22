@@ -1223,8 +1223,8 @@ function drawMontage(){
   cell(x0+i*(cw6+gap),8,cw6,450,ra.lb,
    exprP(ra.e,{yaw:ra.yaw,roll:ra.yaw*.18,eyeX:ra.yaw/30*.85,sway:-ra.yaw*.55,swayTip:-ra.yaw*.5}),500,430,640);
  }
- cell(x0+5*(cw6+gap),8,cw6,450,'피치 업 +18° (턱 상승·앞머리 후퇴)',
-  exprP(0,{pitch:18,eyeY:-.7,sway:3}),500,430,640);
+ cell(x0+5*(cw6+gap),8,cw6,450,'피치 업 +20° (하관 압축·눈썹 하강·앞머리 상승)',
+  exprP(0,{pitch:20,eyeY:-1,sway:4}),500,430,640);
  // ---- Row B: 발도 액션 시퀀스 (시간축 키프레임 6컷) ----
  var by=466,bh=450;
  cell(x0+0*(cw6+gap),by,cw6,bh,'① 발도 준비 · 0.00s',
