@@ -73,7 +73,7 @@ var CW=1000, CH=1150, HCX=500, HCY=405, NKX=500, NKY=585;
 
 // ==== 2. 텍스처 페인트 (아트 코어) ====
 // 테이퍼 머리카락 가닥: 2차 베지어 중심선 + 폭 감쇠 → 닫힌 도형
-function strandPath(g,p,w0,w1,k){
+function strandPts(p,w0,w1,k){
  var N=16,L=[],R=[],i,t,mt,x,y,dx,dy,dl,w;
  w1=w1==null?0.7:w1; k=k==null?0.8:k;
  for(i=0;i<=N;i++){t=i/N;mt=1-t;
@@ -81,10 +81,21 @@ function strandPath(g,p,w0,w1,k){
   dx=2*(mt*(p[2]-p[0])+t*(p[4]-p[2])); dy=2*(mt*(p[3]-p[1])+t*(p[5]-p[3]));
   dl=Math.hypot(dx,dy)||1; w=w0*Math.pow(1-t,k)+w1*t;
   L.push(x-dy/dl*w,y+dx/dl*w); R.push(x+dy/dl*w,y-dx/dl*w);}
+ return [L,R,N];
+}
+function strandPath(g,p,w0,w1,k){
+ var s=strandPts(p,w0,w1,k),L=s[0],R=s[1],N=s[2],i;
  g.beginPath(); g.moveTo(L[0],L[1]);
  for(i=1;i<=N;i++)g.lineTo(L[i*2],L[i*2+1]);
  for(i=N;i>=0;i--)g.lineTo(R[i*2],R[i*2+1]);
  g.closePath();
+}
+function strandSideStroke(g,p,w0,w1,k){ // 뿌리 캡 없이 양측 엣지만 스트로크
+ var s=strandPts(p,w0,w1,k),L=s[0],R=s[1],N=s[2],i;
+ g.beginPath(); g.moveTo(L[0],L[1]);
+ for(i=1;i<=N;i++)g.lineTo(L[i*2],L[i*2+1]);
+ for(i=N;i>=0;i--)g.lineTo(R[i*2],R[i*2+1]);
+ g.stroke();
 }
 function softEllipse(g,x,y,rx,ry,col,a){
  var gr=g.createRadialGradient(x,y,0,x,y,Math.max(rx,ry));
@@ -251,9 +262,9 @@ function paintMouth(g,idx){
  }else{
   g.strokeStyle='#6d3a44'; g.lineWidth=2.4;
   g.beginPath();
-  if(idx===1){ g.moveTo(481,498); g.quadraticCurveTo(500,508,519,495.5); }
-  else if(idx===2){ g.moveTo(483,502); g.quadraticCurveTo(500,501,517,503); }
-  else{ g.moveTo(483,500); g.quadraticCurveTo(500,504.5,517,500); }
+  if(idx===1){ g.moveTo(479,498); g.quadraticCurveTo(500,508.5,521,495); }
+  else if(idx===2){ g.moveTo(481,502); g.quadraticCurveTo(500,501,519,503); }
+  else{ g.moveTo(481,500); g.quadraticCurveTo(500,505,519,500); }
   g.stroke();
   if(idx===1){ // 입꼬리 딤플
    g.beginPath(); g.arc(483,497.4,1.4,0,TAU); g.arc(517,495.4,1.4,0,TAU); g.fillStyle='rgba(109,58,68,.8)'; g.fill();
@@ -266,7 +277,6 @@ function paintMouth(g,idx){
  g.beginPath(); g.moveTo(494,517); g.quadraticCurveTo(500,519.5,506,517);
  g.strokeStyle='rgba(196,168,164,.4)'; g.lineWidth=1.8; g.stroke();
 }
-// 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스
 // 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스 (source-atop 셰이딩)
 function paintBackHair(g){
  // 짧은 샤기컷 실루엣: 턱~목 높이의 스파이키 팁 + 얇은 롱 위스프 2가닥
@@ -276,21 +286,21 @@ function paintBackHair(g){
  g.bezierCurveTo(366,394,368,414,366,430);
  g.quadraticCurveTo(358,468,356,498);   // 팁1
  g.quadraticCurveTo(368,496,384,480);
- g.quadraticCurveTo(378,530,378,584);   // 팁2
+ g.quadraticCurveTo(378,526,378,572);   // 팁2
  g.quadraticCurveTo(390,566,404,556);
- g.quadraticCurveTo(400,616,400,660);   // 팁3
+ g.quadraticCurveTo(400,608,400,644);   // 팁3
  g.quadraticCurveTo(412,634,428,620);
- g.quadraticCurveTo(432,664,436,700);   // 네이프 팁
+ g.quadraticCurveTo(432,656,436,684);   // 네이프 팁
  g.quadraticCurveTo(446,668,456,650);
  g.bezierCurveTo(460,610,462,580,462,560);
  g.lineTo(538,560);
  g.bezierCurveTo(538,580,540,610,544,650);
- g.quadraticCurveTo(554,668,564,700);
- g.quadraticCurveTo(568,664,572,620);
- g.quadraticCurveTo(588,634,600,660);
- g.quadraticCurveTo(600,616,596,556);
- g.quadraticCurveTo(610,566,622,584);
- g.quadraticCurveTo(622,530,616,480);
+ g.quadraticCurveTo(554,656,564,684);
+ g.quadraticCurveTo(568,656,572,620);
+ g.quadraticCurveTo(588,634,600,644);
+ g.quadraticCurveTo(600,608,596,556);
+ g.quadraticCurveTo(610,566,622,572);
+ g.quadraticCurveTo(622,526,616,480);
  g.quadraticCurveTo(632,496,644,498);
  g.quadraticCurveTo(642,468,634,430);
  g.bezierCurveTo(632,414,634,394,628,352);
@@ -299,9 +309,9 @@ function paintBackHair(g){
  g.fillStyle=C.hair; g.fill();
  g.strokeStyle=C.line; g.lineWidth=3; g.lineJoin='round'; g.stroke();
  // 얇은 롱 위스프 (남는 우아함)
- strandPath(g,[368,440, 352,570, 356,706],5.5,1,.6);
+ strandPath(g,[368,440, 352,560, 356,668],5,1,.6);
  g.fillStyle=C.hair; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
- strandPath(g,[632,440, 648,570, 644,706],5.5,1,.6);
+ strandPath(g,[632,440, 648,560, 644,668],5,1,.6);
  g.fillStyle=C.hair; g.fill(); g.stroke();
  g.save(); g.globalCompositeOperation='source-atop';
  // 흐름 스트로크
@@ -365,18 +375,19 @@ function paintStrands(g,arr,base){
   g.save(); if(sd.a!=null)g.globalAlpha=sd.a;
   strandPath(g,sd.p,sd.w,sd.w1!=null?sd.w1:1.2,.68);
   g.fillStyle=base||C.hairF; g.fill();
-  g.strokeStyle=C.line; g.lineWidth=2.2; g.stroke();
+  g.strokeStyle=C.line; g.lineWidth=2.2; g.lineCap='round';
+  strandSideStroke(g,sd.p,sd.w,sd.w1!=null?sd.w1:1.2,.68); // 뿌리 캡 라인 없음
   var p=sd.p, hx0=lerp(p[0],p[2],.3), hy0=lerp(p[1],p[3],.3),
       hx1=lerp(p[2],p[4],.6), hy1=lerp(p[3],p[5],.6);
   g.beginPath(); g.moveTo(lerp(p[0],p[2],.12),lerp(p[1],p[3],.12));
   g.quadraticCurveTo(hx0,hy0,hx1,hy1);
-  g.strokeStyle='rgba(179,166,240,.42)'; g.lineWidth=2; g.lineCap='round'; g.stroke();
+  g.strokeStyle='rgba(179,166,240,.42)'; g.lineWidth=2; g.stroke();
   g.restore();
  });
  g.save(); g.globalCompositeOperation='source-atop';
- var gr=g.createLinearGradient(0,226,0,330);
- gr.addColorStop(0,'rgba(18,14,22,.6)'); gr.addColorStop(1,'rgba(18,14,22,0)');
- g.fillStyle=gr; g.fillRect(340,220,340,260);
+ var gr=g.createLinearGradient(0,214,0,300);
+ gr.addColorStop(0,'rgba(18,14,22,.42)'); gr.addColorStop(1,'rgba(18,14,22,0)');
+ g.fillStyle=gr; g.fillRect(340,200,340,260);
  g.restore();
 }
 // 앞머리 가닥 (총 13가닥, 얇은 2가닥은 alpha .85로 눈이 비침)
@@ -396,7 +407,7 @@ var BANGS_L=[
 ];
 var BANGS_R=[
  {p:[558,230, 608,294, 612,392],w:20,w1:1.4},
- {p:[572,236, 624,326, 622,428],w:13},
+ {p:[572,236, 622,322, 618,420],w:13},
  {p:[550,232, 584,316, 590,388],w:10}
 ];
 function paintSideHair(g,s){ // 얼굴 옆 짧은 프레이밍 가닥 (물리 스윙)
@@ -829,7 +840,7 @@ function drawWisp(ctx,x,y,r,ang,a,col){
 var WISPS=[],EMBERS=[];
 (function(){
  var R=rng(777),i;
- for(i=0;i<13;i++)WISPS.push({ph:R()*TAU,rad:190+R()*200,sp:.14+R()*.2,r:10+R()*16,vy:.35+R()*.4,front:R()<.35});
+ for(i=0;i<13;i++)WISPS.push({ph:R()*TAU,rad:230+R()*260,sp:.14+R()*.2,r:8+R()*13,vy:.35+R()*.4,front:R()<.35});
  for(i=0;i<40;i++)EMBERS.push({x:R(),y:R(),sp:.02+R()*.05,r:.8+R()*1.8,tw:R()*TAU});
 })();
 function drawWisps(ctx,t,view,front){
@@ -839,7 +850,7 @@ function drawWisps(ctx,t,view,front){
       cy=430-((t*w.vy*60+i*90)%620)+240+Math.sin(a*2.3)*30,
       sx=cx*view.s+view.ox, sy=cy*view.s+view.oy,
       fade=Math.sin(((t*w.vy*60+i*90)%620)/620*Math.PI);
-  drawWisp(ctx,sx,sy,w.r*view.s,Math.sin(a*1.7)*.5,.5*fade,i%3?'rgba(124,92,255,.85)':'rgba(179,154,255,.8)');
+  drawWisp(ctx,sx,sy,w.r*view.s,Math.sin(a*1.7)*.5,.38*fade,i%3?'rgba(124,92,255,.85)':'rgba(179,154,255,.8)');
  });
 }
 function drawBG(ctx,w,h,t){
@@ -949,7 +960,7 @@ function drawMontage(){
  ['panel','hud','back'].forEach(function(id){document.getElementById(id).style.display='none'});
  cv.width=1680; cv.height=1500; cv.style.width='1680px'; cv.style.height='1500px';
  ctx.fillStyle='#0b0912'; ctx.fillRect(0,0,1680,1500);
- var mt=7.7; // 고정 시각 (위스프 결정론)
+ var mt=13.4; // 고정 시각 (위스프 결정론)
  function cell(x,y,w,h,label,P,fx,fy,charH,opts){
   ctx.save();
   ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
