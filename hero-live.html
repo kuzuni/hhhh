@@ -74,15 +74,24 @@ var CW=1000, CH=1150, HCX=500, HCY=405, NKX=500, NKY=585;
 // ==== 2. 텍스처 페인트 (아트 코어) ====
 // 테이퍼 머리카락 가닥: 2차 베지어 중심선 + 폭 감쇠 → 닫힌 도형
 function strandPts(p,w0,w1,k){
- var N=16,L=[],R=[],i,t,mt,x,y,dx,dy,dl,w;
+ // p 6개=2차 베지어, 8개=3차 베지어(S커브 가능)
+ var N=16,L=[],R=[],i,t,mt,x,y,dx,dy,dl,w,cub=p.length>=8;
  w1=w1==null?0.7:w1; k=k==null?0.8:k;
  for(i=0;i<=N;i++){t=i/N;mt=1-t;
-  x=mt*mt*p[0]+2*mt*t*p[2]+t*t*p[4]; y=mt*mt*p[1]+2*mt*t*p[3]+t*t*p[5];
-  dx=2*(mt*(p[2]-p[0])+t*(p[4]-p[2])); dy=2*(mt*(p[3]-p[1])+t*(p[5]-p[3]));
+  if(cub){
+   x=mt*mt*mt*p[0]+3*mt*mt*t*p[2]+3*mt*t*t*p[4]+t*t*t*p[6];
+   y=mt*mt*mt*p[1]+3*mt*mt*t*p[3]+3*mt*t*t*p[5]+t*t*t*p[7];
+   dx=3*mt*mt*(p[2]-p[0])+6*mt*t*(p[4]-p[2])+3*t*t*(p[6]-p[4]);
+   dy=3*mt*mt*(p[3]-p[1])+6*mt*t*(p[5]-p[3])+3*t*t*(p[7]-p[5]);
+  }else{
+   x=mt*mt*p[0]+2*mt*t*p[2]+t*t*p[4]; y=mt*mt*p[1]+2*mt*t*p[3]+t*t*p[5];
+   dx=2*(mt*(p[2]-p[0])+t*(p[4]-p[2])); dy=2*(mt*(p[3]-p[1])+t*(p[5]-p[3]));
+  }
   dl=Math.hypot(dx,dy)||1; w=w0*Math.pow(1-t,k)+w1*t;
   L.push(x-dy/dl*w,y+dx/dl*w); R.push(x+dy/dl*w,y-dx/dl*w);}
  return [L,R,N];
 }
+function strandEnd(p){return p.length>=8?[p[6],p[7]]:[p[4],p[5]]}
 function strandPath(g,p,w0,w1,k){
  var s=strandPts(p,w0,w1,k),L=s[0],R=s[1],N=s[2],i;
  g.beginPath(); g.moveTo(L[0],L[1]);
@@ -121,7 +130,7 @@ function headPath(g){
 function eyeGeo(s){
  var ex=500+s*59, ey=415;
  return {ex:ex,ey:ey, inx:ex-s*34,iny:ey+8, outx:ex+s*36,outy:ey-7,
-  tcx:ex+s*1,tcy:ey-19, bcx:ex-s*2,bcy:ey+16.5};
+  tcx:ex+s*1,tcy:ey-21.5, bcx:ex-s*2,bcy:ey+16.5};
 }
 // 눈꺼풀 개구부 샘플 폴리곤 (위 커브 + 아래 커브)
 function apPoly(s){
@@ -143,37 +152,42 @@ function paintFace(g){
  // 이마 헤어 캐스트 섀도 (은은히)
  softEllipse(g,500,300,118,40,'rgba(200,176,196,1)',.12);
  // 눈꼬리 쪽 아주 옅은 쿨섀도
- softEllipse(g,412,408,16,8,'rgba(190,160,200,1)',.13);
- softEllipse(g,588,408,16,8,'rgba(190,160,200,1)',.13);
- // 볼 혈색: 작고 옅게 + 사선 하이라이트 2획 (애니식)
- softEllipse(g,447,463,19,8.5,'#f6b8be',.17);
- softEllipse(g,553,463,19,8.5,'#f6b8be',.17);
- g.strokeStyle='rgba(244,168,176,.30)'; g.lineWidth=1.7; g.lineCap='round';
- [[438,468,450,458],[448,470,460,460],[540,460,552,468],[550,458,562,466]].forEach(function(q){
+ softEllipse(g,414,408,15,7,'rgba(190,160,200,1)',.11);
+ softEllipse(g,586,408,15,7,'rgba(190,160,200,1)',.11);
+ // 볼 혈색: 낮은 채도 소프트 타원 + 아주 가는 사선 2획 (긁힘처럼 안 보이게)
+ softEllipse(g,450,465,13,6,'#eba9ab',.13);
+ softEllipse(g,550,465,13,6,'#eba9ab',.13);
+ g.strokeStyle='rgba(232,158,164,.18)'; g.lineWidth=.9; g.lineCap='round';
+ [[444,469,454,462],[452,471,462,464],[538,464,548,471],[546,462,556,469]].forEach(function(q){
   g.beginPath(); g.moveTo(q[0],q[1]); g.lineTo(q[2],q[3]); g.stroke();});
- softEllipse(g,500,458,8,5,'#f6b8be',.12);
- // 턱밑 셀셰이딩 1톤
+ // 턱밑 셀셰이딩 1톤 (좁은 V턱 기준)
  g.fillStyle='rgba(216,196,188,.5)';
- g.beginPath(); g.moveTo(468,540); g.quadraticCurveTo(500,566,532,540);
- g.quadraticCurveTo(500,552,468,540); g.closePath(); g.fill();
+ g.beginPath(); g.moveTo(475,546); g.quadraticCurveTo(500,570,525,546);
+ g.quadraticCurveTo(500,558,475,546); g.closePath(); g.fill();
  g.restore();
- // 귀
+ // 귀 (두상 실루엣에 밀착)
  [-1,1].forEach(function(s){
-  var x=500+s*106,y=436;
+  var x=500+s*99,y=431;
   g.beginPath(); g.moveTo(x,y-16);
   g.bezierCurveTo(x+s*16,y-20,x+s*20,y+2,x+s*11,y+18);
   g.bezierCurveTo(x+s*6,y+26,x-s*2,y+26,x-s*3,y+16); g.closePath();
   g.fillStyle=C.skin; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.4; g.lineJoin='round'; g.stroke();
   g.beginPath(); g.moveTo(x+s*10,y-8); g.quadraticCurveTo(x+s*13,y+4,x+s*5,y+10);
   g.strokeStyle='rgba(180,140,140,.7)'; g.lineWidth=1.6; g.stroke();
-  softEllipse(g,x+s*6,y+4,9,11,C.blush,.22);
+  softEllipse(g,x+s*6,y+4,9,11,C.blush,.14);
  });
- // 코: 콧대 생략, 코끝 짧은 획 + 점그림자
- g.strokeStyle='rgba(88,58,66,.6)'; g.lineWidth=1.8; g.lineCap='round';
- g.beginPath(); g.moveTo(504,448); g.quadraticCurveTo(505,455,500,458); g.stroke();
- softEllipse(g,499,461,5.5,2.6,'rgba(198,158,156,1)',.35);
  // 외곽선 (실루엣 굵게)
  headPath(g); g.strokeStyle=C.line; g.lineWidth=3.4; g.lineJoin='round'; g.stroke();
+}
+// 코 (별도 레이어 — 요/피치 시차 앵커): 콧대 옆 음영 1획 + 코끝 그림자 + 콧등 하이라이트
+function paintNose(g){
+ g.lineCap='round';
+ g.strokeStyle='rgba(96,62,72,.40)'; g.lineWidth=1.6;
+ g.beginPath(); g.moveTo(505,431); g.quadraticCurveTo(508,445,504.5,454); g.stroke(); // 콧대 측면 음영
+ g.strokeStyle='rgba(74,46,56,.8)'; g.lineWidth=2;
+ g.beginPath(); g.moveTo(504.5,451); g.quadraticCurveTo(506.5,458,500,461); g.stroke(); // 코끝 획
+ softEllipse(g,499,464.5,6.5,3,'rgba(176,130,130,1)',.5); // 코끝 아래 옅은 그림자 셰이프
+ g.beginPath(); g.ellipse(497.5,447,1.7,3.6,-.14,0,TAU); g.fillStyle='rgba(255,247,240,.8)'; g.fill(); // 콧등 하이라이트
 }
 // 흰자 + 아래 속눈썹 + 눈매 그림자
 function paintEyeWhite(g,s){
@@ -181,9 +195,9 @@ function paintEyeWhite(g,s){
  tracePoly(g,p); g.fillStyle=C.white; g.fill();
  g.save(); tracePoly(g,p); g.clip();
  // 윗꺼풀이 드리우는 소켓 그림자
- var gr=g.createLinearGradient(0,e.ey-16,0,e.ey-2);
- gr.addColorStop(0,'rgba(150,120,150,.55)'); gr.addColorStop(1,'rgba(150,120,150,0)');
- g.fillStyle=gr; g.fillRect(e.ex-40,e.ey-20,80,22);
+ var gr=g.createLinearGradient(0,e.ey-18,0,e.ey-6);
+ gr.addColorStop(0,'rgba(150,120,150,.34)'); gr.addColorStop(1,'rgba(150,120,150,0)');
+ g.fillStyle=gr; g.fillRect(e.ex-40,e.ey-23,80,20);
  g.restore();
  // 아래 라인: 얇고 연하게 바깥 2/3만
  g.beginPath(); g.moveTo(e.ex-s*10,e.ey+14.5);
@@ -203,14 +217,14 @@ function paintIris(g,s){
  // 하단 밝은 링 하이라이트
  g.beginPath(); g.arc(cx,cy,ry*.62,Math.PI*.15,Math.PI*.85);
  g.strokeStyle='rgba(246,217,138,.9)'; g.lineWidth=2.6; g.stroke();
- // 위 눈꺼풀 캐스트 어두운 띠
- g.beginPath(); g.arc(cx,cy-ry*.55,ry*.9,0,TAU); g.fillStyle='rgba(60,34,20,.30)'; g.fill();
+ // 위 눈꺼풀 캐스트 어두운 띠 (옅게 — 졸려 보이지 않게)
+ g.beginPath(); g.arc(cx,cy-ry*.6,ry*.85,0,TAU); g.fillStyle='rgba(60,34,20,.20)'; g.fill();
  g.restore();
  // 동공 (세로 타원)
  g.save(); g.translate(cx,cy+1); g.scale(.6,1); g.translate(-cx,-(cy+1));
  g.beginPath(); g.arc(cx,cy+1,7,0,TAU); g.fillStyle='#231407'; g.fill(); g.restore();
  // 상단 큰 하이라이트 + 하단 작은 반사광 2
- g.beginPath(); g.ellipse(cx-4.6,cy-6.6,5.2,6.2,-.3,0,TAU); g.fillStyle='rgba(255,252,244,.97)'; g.fill();
+ g.beginPath(); g.ellipse(cx-4.6,cy-6.4,5.9,7,-.3,0,TAU); g.fillStyle='rgba(255,252,244,.97)'; g.fill();
  g.beginPath(); g.arc(cx+5,cy+9.2,2.4,0,TAU); g.fillStyle='rgba(255,240,200,.9)'; g.fill();
  g.beginPath(); g.arc(cx-1.5,cy+12.6,1.3,0,TAU); g.fillStyle='rgba(246,217,138,.75)'; g.fill();
 }
@@ -243,22 +257,22 @@ function paintLash(g,s){
  g.quadraticCurveTo(e.tcx,e.tcy+2.5,e.outx-s*5,e.outy-1);
  g.strokeStyle='rgba(179,166,240,.35)'; g.lineWidth=1.2; g.stroke();
 }
-// 눈썹: 얇고 긴 곡선, 눈보다 살짝 길게
+// 눈썹: 살짝 굵고 낮게 (중성적 미소년 — 날카로운 인상)
 function paintBrow(g,s){
  var ex=500+s*59;
- strandPath(g,[ex-s*33,388, ex+s*3,373.5, ex+s*44,385],2.1,.4,.55);
+ strandPath(g,[ex-s*33,390, ex+s*4,376.5, ex+s*45,387.5],2.8,.5,.55);
  g.fillStyle='#221a2b'; g.fill();
- g.save(); g.globalAlpha=.4; strandPath(g,[ex-s*33,390.5, ex+s*3,376, ex+s*44,387],.9,.3,.5);
+ g.save(); g.globalAlpha=.4; strandPath(g,[ex-s*33,392.5, ex+s*4,379, ex+s*45,389.5],1,.3,.5);
  g.fillStyle=C.hairRim; g.fill(); g.restore();
 }
 // 입 텍스처 4종 (0기본 1미소 2진지 3놀람) — 공용 bbox (455~545, 480~540)
 function paintMouth(g,idx){
  g.lineCap='round'; g.lineJoin='round';
- if(idx===3){ // 놀람: 작은 o
-  g.beginPath(); g.ellipse(500,503,6,8,0,0,TAU); g.fillStyle='#5b2b34'; g.fill();
-  g.beginPath(); g.ellipse(500,506,4.2,5,0,0,TAU); g.fillStyle='#3d1b23'; g.fill();
-  g.beginPath(); g.ellipse(500,512,4.6,1.8,0,0,TAU); g.fillStyle='rgba(240,170,160,.6)'; g.fill();
-  g.beginPath(); g.ellipse(500,496,5.4,1.6,0,0,TAU); g.fillStyle='rgba(140,80,90,.5)'; g.fill();
+ if(idx===3){ // 놀람: 뚜렷한 O (눈 개방과 세트)
+  g.beginPath(); g.ellipse(500,504,8,11,0,0,TAU); g.fillStyle='#5b2b34'; g.fill();
+  g.beginPath(); g.ellipse(500,507.5,5.8,7,0,0,TAU); g.fillStyle='#3d1b23'; g.fill();
+  g.beginPath(); g.ellipse(500,512.5,5.6,2.4,0,0,TAU); g.fillStyle='rgba(240,170,160,.6)'; g.fill();
+  g.beginPath(); g.ellipse(500,495,6.6,2,0,0,TAU); g.fillStyle='rgba(140,80,90,.5)'; g.fill();
  }else{
   g.strokeStyle='#6d3a44'; g.lineWidth=2.4;
   g.beginPath();
@@ -368,17 +382,24 @@ function paintHairTop(g){
  g.closePath(); g.fillStyle=C.hairHi; g.globalAlpha=.55; g.fill();
  g.restore();
 }
-// 앞머리 그룹 렌더 + 뿌리 그림자 (source-atop)
+// 앞머리 그룹 렌더 + 뿌리 그림자 + 천사링 하이라이트 밴드 (source-atop)
 function paintStrands(g,arr,base){
  g.lineJoin='round';
  arr.forEach(function(sd){
   g.save(); if(sd.a!=null)g.globalAlpha=sd.a;
+  var p=sd.p, e=strandEnd(p), fill=base||C.hairF;
+  if(sd.fade){ // 끝단 투명 — 눈이 비치는 가닥
+   var fg=g.createLinearGradient(p[0],p[1],e[0],e[1]);
+   fg.addColorStop(0,'rgba(42,34,54,1)'); fg.addColorStop(.55,'rgba(42,34,54,.95)');
+   fg.addColorStop(1,'rgba(42,34,54,.28)');
+   fill=fg;
+  }
   strandPath(g,sd.p,sd.w,sd.w1!=null?sd.w1:1.2,.68);
-  g.fillStyle=base||C.hairF; g.fill();
-  g.strokeStyle=C.line; g.lineWidth=2.2; g.lineCap='round';
+  g.fillStyle=fill; g.fill();
+  g.strokeStyle=sd.fade?'rgba(26,21,32,.55)':C.line; g.lineWidth=2.2; g.lineCap='round';
   strandSideStroke(g,sd.p,sd.w,sd.w1!=null?sd.w1:1.2,.68); // 뿌리 캡 라인 없음
-  var p=sd.p, hx0=lerp(p[0],p[2],.3), hy0=lerp(p[1],p[3],.3),
-      hx1=lerp(p[2],p[4],.6), hy1=lerp(p[3],p[5],.6);
+  var hx0=lerp(p[0],p[2],.3), hy0=lerp(p[1],p[3],.3),
+      hx1=lerp(p[2],e[0],.6), hy1=lerp(p[3],e[1],.6);
   g.beginPath(); g.moveTo(lerp(p[0],p[2],.12),lerp(p[1],p[3],.12));
   g.quadraticCurveTo(hx0,hy0,hx1,hy1);
   g.strokeStyle='rgba(179,166,240,.42)'; g.lineWidth=2; g.stroke();
@@ -388,35 +409,48 @@ function paintStrands(g,arr,base){
  var gr=g.createLinearGradient(0,214,0,300);
  gr.addColorStop(0,'rgba(18,14,22,.42)'); gr.addColorStop(1,'rgba(18,14,22,0)');
  g.fillStyle=gr; g.fillRect(340,200,340,260);
+ // 천사링: 정수리 곡률을 따르는 밝은 남보라 하이라이트 밴드 (톱니 활)
+ var i,x,yb,top=[],bot=[];
+ for(i=0;i<=20;i++){x=376+i*(248/20);
+  yb=316-40*Math.sin(Math.PI*i/20)+(i%2?5:-4);
+  top.push([x,yb]); bot.push([x,yb+(i%2?9:15)]);}
+ g.beginPath(); g.moveTo(top[0][0],top[0][1]);
+ for(i=1;i<=20;i++)g.lineTo(top[i][0],top[i][1]);
+ for(i=20;i>=0;i--)g.lineTo(bot[i][0],bot[i][1]);
+ g.closePath(); g.fillStyle=C.hairHi; g.globalAlpha=.34; g.fill();
+ g.beginPath(); g.moveTo(top[0][0],top[0][1]+3);
+ for(i=1;i<=20;i++)g.lineTo(top[i][0],top[i][1]+3);
+ for(i=20;i>=0;i--)g.lineTo(bot[i][0],bot[i][1]-4);
+ g.closePath(); g.fillStyle='#d9d2f8'; g.globalAlpha=.2; g.fill();
  g.restore();
 }
-// 앞머리 가닥 (총 13가닥, 얇은 2가닥은 alpha .85로 눈이 비침)
+// 앞머리 가닥 (3차 S커브 다발 — 눈을 덮는 가닥은 끝단 페이드로 눈이 비침)
 var BANGS_C=[
- {p:[534,232, 464,292, 430,394],w:27,w1:1.6},
- {p:[546,232, 540,312, 527,420],w:19},
- {p:[540,230, 498,288, 462,360],w:12},
- {p:[542,234, 500,308, 479,414],w:11,a:.85},
- {p:[552,232, 578,308, 581,406],w:10,a:.85},
- {p:[549,230, 562,314, 553,384],w:9},
- {p:[537,232, 476,326, 452,400],w:9}
+ {p:[536,230, 488,268, 428,320, 434,398],w:26,w1:1.8},
+ {p:[544,230, 558,292, 520,352, 528,418],w:17,w1:1.5},
+ {p:[540,229, 504,282, 468,330, 458,378],w:12},
+ {p:[543,232, 518,300, 482,352, 478,412],w:10.5,a:.9,fade:1},
+ {p:[551,231, 578,296, 588,352, 579,408],w:10,a:.9,fade:1},
+ {p:[548,229, 568,286, 548,338, 552,382],w:8.5},
+ {p:[538,231, 498,296, 464,344, 452,396],w:9,fade:1}
 ];
 var BANGS_L=[
- {p:[468,236, 418,292, 396,398],w:22,w1:1.4},
- {p:[450,242, 406,326, 384,436],w:14},
- {p:[480,234, 444,314, 428,392],w:11}
+ {p:[470,234, 432,262, 406,318, 398,398],w:21,w1:1.6},
+ {p:[452,240, 414,288, 396,352, 386,432],w:13,w1:1.2},
+ {p:[478,233, 450,272, 432,330, 430,388],w:10,fade:1}
 ];
 var BANGS_R=[
- {p:[558,230, 608,294, 612,392],w:20,w1:1.4},
- {p:[572,236, 622,322, 618,420],w:13},
- {p:[550,232, 584,316, 590,388],w:10}
+ {p:[556,229, 598,258, 616,320, 610,394],w:19,w1:1.6},
+ {p:[570,234, 612,290, 624,360, 616,424],w:12,w1:1.2},
+ {p:[552,230, 582,270, 594,330, 588,386],w:9,fade:1}
 ];
-function paintSideHair(g,s){ // 얼굴 옆 짧은 프레이밍 가닥 (물리 스윙)
- var x=500+s*114;
- strandPath(g,[x-s*6,318, x+s*18,420, x+s*4,528],10.5,1.2,.6);
+function paintSideHair(g,s){ // 얼굴 옆 프레이밍 가닥 (뿌리를 두상 안쪽에 앵커)
+ var x=500+s*103;
+ strandPath(g,[x-s*8,310, x+s*20,418, x+s*6,528],11,1.3,.6);
  g.fillStyle=C.hairF; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.4; g.lineJoin='round'; g.stroke();
- strandPath(g,[x+s*2,330, x+s*24,440, x+s*16,552],6,1,.6);
+ strandPath(g,[x-s*2,322, x+s*26,440, x+s*18,552],6.5,1,.6);
  g.fillStyle=C.hair; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
- g.beginPath(); g.moveTo(x-s*2,354); g.quadraticCurveTo(x+s*14,430,x+s*4,502);
+ g.beginPath(); g.moveTo(x-s*4,348); g.quadraticCurveTo(x+s*16,430,x+s*6,502);
  g.strokeStyle='rgba(179,166,240,.4)'; g.lineWidth=2; g.lineCap='round'; g.stroke();
 }
 // 목: 가늘게 + 턱밑 캐스트 섀도

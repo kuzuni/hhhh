@@ -453,6 +453,20 @@ function limb(g,A,M,B2,w0,w1,w2,fill,lw){
   g.fillStyle=fill; g.fill();
   if(lw){g.strokeStyle=PAL.line;g.lineWidth=lw;g.lineJoin="round";g.stroke();}
 }
+// 달빛 림라이트 — limb의 전면(+x)측 에지 1선
+function rimEdge(g,A,M,B2,w0,w1,w2,color,lw){
+  const n=(p,q)=>{const dx=q.x-p.x,dy=q.y-p.y,l=Math.hypot(dx,dy)||1;
+    return {x:-dy/l,y:dx/l};};
+  const n0=n(A,M), n2=n(M,B2);
+  let nm={x:n0.x+n2.x,y:n0.y+n2.y};
+  const l=Math.hypot(nm.x,nm.y)||1; nm.x/=l; nm.y/=l;
+  const k=1.12;
+  g.strokeStyle=color; g.lineWidth=lw; g.lineCap="round";
+  g.beginPath();
+  g.moveTo(A.x-n0.x*w0,A.y-n0.y*w0);
+  g.quadraticCurveTo(M.x-nm.x*w1*k,M.y-nm.y*w1*k,B2.x-n2.x*w2,B2.y-n2.y*w2);
+  g.stroke();
+}
 // 테이퍼 머리카락 가닥: 스파인 폴리라인 + 뿌리→끝 폭 감소, 닫힌 도형
 function strand(g,pts,w0,w1,fill,outline,olw){
   if(pts.length<3)return;
@@ -653,7 +667,7 @@ function hairBack(g,P){
   // 묶은 매듭
   g.beginPath(); g.ellipse(nape.x,nape.y,3.6,2.8,0.4,0,TAU);
   g.fillStyle=PAL.hairSh; g.fill();
-  g.strokeStyle=PAL.line; g.lineWidth=0.7; g.stroke();
+  g.strokeStyle="#3a4158"; g.lineWidth=0.7*LW; g.stroke();
   g.beginPath(); g.ellipse(nape.x,nape.y,1.7,1.3,0.4,0,TAU);
   g.fillStyle="#4c5a78"; g.fill();
 }
@@ -668,10 +682,10 @@ function hairFront(g,P){
     [15,-11.2],[8,-13.8],[-2,-14.3],[-10,-12.2],[-14.6,-15]]);
   g.closePath();
   g.fillStyle=PAL.hairCap; g.fill();
-  g.strokeStyle=PAL.line; g.lineWidth=0.7;
+  g.strokeStyle="#3a4158"; g.lineWidth=0.7*LW;
   g.beginPath();
   bez(g,[[-14.6,-15],[-9,-23.8],[0,-26],[10,-24.6],[18.4,-14]]);
-  g.stroke(); // 크라운 실루엣만 외곽선
+  g.stroke(); // 크라운 실루엣만 외곽선 (톤 완화 — 헬멧 테두리 방지)
   // 그늘 언더레이어 (가닥 사이 톤 — 눈 위는 침범 금지)
   const und=[[-7.5,-13,-8.8,-4,-9.4,2.0,4.2],[-1.5,-15,-2.4,-7,-2.8,-0.2,4.0],
     [4.0,-15.5,4.2,-7,4.0,0.0,3.8],[9.5,-15,10.4,-7,10.6,0.2,3.6],
@@ -691,6 +705,22 @@ function hairFront(g,P){
   for(const s of S)
     strand(g,[{x:s[0],y:s[1]},{x:s[2],y:s[3]},{x:s[4]+tip(s[0]*0.33),y:s[5]}],
       s[6],1.0,PAL.hair,null);
+  // 큰 덩어리 2갈래 분할 — 격번 가닥 끝에 그늘톤 노치 (끝 뾰족)
+  for(let i=0;i<S.length;i+=2){
+    const s=S[i], tx=s[4]+tip(s[0]*0.33), ty=s[5];
+    g.beginPath(); g.moveTo(tx-1.1,ty-3.4); g.lineTo(tx-0.15,ty+0.3); g.lineTo(tx+0.85,ty-3.5);
+    g.closePath(); g.fillStyle=PAL.hairSh; g.fill();
+  }
+  // 덩어리 내부 가닥 라인 — 그늘선 1 + 은발 하이라이트선 1 (클로즈업 디테일)
+  g.lineCap="round";
+  for(const s of S){
+    g.strokeStyle="rgba(139,151,173,0.7)"; g.lineWidth=0.30;
+    g.beginPath(); g.moveTo(s[0]+1.2,s[1]+1.6);
+    g.quadraticCurveTo(s[2]+1.1,s[3], s[4]+0.9,s[5]-1.2); g.stroke();
+    g.strokeStyle="rgba(255,255,255,0.55)"; g.lineWidth=0.28;
+    g.beginPath(); g.moveTo(s[0]-0.9,s[1]+2.0);
+    g.quadraticCurveTo(s[2]-1.0,s[3]+0.5, s[4]-1.0,s[5]-1.6); g.stroke();
+  }
   // 눈을 스치는 반투명 가닥 2개 (고급 연출: 눈이 비침)
   g.globalAlpha=0.32;
   strand(g,[{x:6.2,y:-16.3},{x:6.0,y:-6},{x:5.6+tip(1.2),y:3.8}],1.5,0.5,PAL.hair,null);
@@ -713,21 +743,24 @@ function hairFront(g,P){
   // 사이드락(원): 광대 앞 가늘게
   strand(g,[{x:18.2,y:-11},{x:20.4,y:-4},{x:20.8+tip(2.5)*0.4,y:5.0}],2.3,0.7,
     PAL.hair,"rgba(25,22,36,0.35)",0.4);
-  // 정수리 림라이트 — 지그재그 톱니 활 (캡 안쪽)
-  g.beginPath();
+  // 정수리 림라이트 — 천사고리형 지그재그 밴드 (그늘 언더라인 → 백색 밴드 2중)
   const N=9, a0=150*RAD, a1=34*RAD, cyR=-8.5;
-  for(let i=0;i<=N;i++){
-    const u=i/N, a=a0+(a1-a0)*u;
-    const r=(i%2===0)?16.8:14.0;
-    const X=1.5+Math.cos(a)*r*1.06, Y=cyR-Math.sin(a)*r*0.98;
-    if(i===0)g.moveTo(X,Y); else g.lineTo(X,Y);
+  function ring(dy,rHi,rLo,rIn,fill){
+    g.beginPath();
+    for(let i=0;i<=N;i++){
+      const u=i/N, a=a0+(a1-a0)*u;
+      const r=(i%2===0)?rHi:rLo;
+      const X=1.5+Math.cos(a)*r*1.06, Y=cyR+dy-Math.sin(a)*r*0.98;
+      if(i===0)g.moveTo(X,Y); else g.lineTo(X,Y);
+    }
+    for(let i=N;i>=0;i--){
+      const u=i/N, a=a0+(a1-a0)*u;
+      g.lineTo(1.5+Math.cos(a)*rIn*1.06, cyR+dy-Math.sin(a)*rIn*0.98);
+    }
+    g.closePath(); g.fillStyle=fill; g.fill();
   }
-  for(let i=N;i>=0;i--){
-    const u=i/N, a=a0+(a1-a0)*u;
-    g.lineTo(1.5+Math.cos(a)*12.4*1.06, cyR-Math.sin(a)*12.4*0.98);
-  }
-  g.closePath();
-  g.fillStyle="rgba(255,255,255,0.85)"; g.fill();
+  ring(1.4,16.8,14.0,12.4,"rgba(139,151,173,0.5)");   // 그늘 언더라인
+  ring(0,16.8,14.0,12.4,"rgba(255,255,255,0.9)");     // 백색 밴드
   g.restore();
 }
 // --- 검/칼집 ---------------------------------------------------------
@@ -791,10 +824,13 @@ function drawLegs(g,P,side){
   const f=P["foot"+side];
   const col=far?shade(PAL.pants,-14):PAL.pants;
   limb(g,hip,knee,ank,12.5,8.5,5.2,col,1.0);
+  rimEdge(g,hip,knee,ank,12.5,8.5,5.2,far?PAL.rimDim:PAL.rim,far?1.0:1.6);
   // 부츠 (정강이 하부 덮기)
   const bootTop={x:lerp(knee.x,ank.x,0.42),y:lerp(knee.y,ank.y,0.42)};
-  limb(g,bootTop,{x:lerp(bootTop.x,ank.x,0.5),y:lerp(bootTop.y,ank.y,0.5)},ank,
+  const bootMid={x:lerp(bootTop.x,ank.x,0.5),y:lerp(bootTop.y,ank.y,0.5)};
+  limb(g,bootTop,bootMid,ank,
     7.2,6.2,5.4,far?shade(PAL.boots,-10):PAL.boots,1.0);
+  rimEdge(g,bootTop,bootMid,ank,7.2,6.2,5.4,far?PAL.rimDim:PAL.rim,far?1.0:1.5);
   g.strokeStyle=PAL.trim; g.lineWidth=1.1;
   g.beginPath(); g.moveTo(bootTop.x-6,bootTop.y+1); g.lineTo(bootTop.x+6.4,bootTop.y-1);
   g.stroke();
@@ -809,12 +845,17 @@ function drawLegs(g,P,side){
   g.closePath();
   g.fillStyle=far?shade(PAL.boots,-10):PAL.boots; g.fill();
   g.strokeStyle=PAL.line; g.lineWidth=1.0; g.lineJoin="round"; g.stroke();
+  // 발등 달빛 에지 — 발-지면 컨택트 가독성
+  g.strokeStyle=far?PAL.rimDim:PAL.rim; g.lineWidth=far?0.9:1.3; g.lineCap="round";
+  g.beginPath(); g.moveTo(ank.x-3.5,ank.y-2.6);
+  g.lineTo(j["toe"+side].x-0.5,j["toe"+side].y-0.4); g.stroke();
 }
 function drawArm(g,P,side){
   const j=P.j, far=side==="F";
   const sh=j["sh"+side], el=j["el"+side], wr=j["wr"+side];
   const col=far?shade(PAL.coat,-16):PAL.coat;
   limb(g,sh,el,wr,9.8,7.2,5.6,col,1.0);
+  if(!far)rimEdge(g,sh,el,wr,9.8,7.2,5.6,"rgba(190,218,250,0.55)",1.3);
   // 커프스
   const cu={x:lerp(el.x,wr.x,0.72),y:lerp(el.y,wr.y,0.72)};
   limb(g,cu,{x:lerp(cu.x,wr.x,0.5),y:lerp(cu.y,wr.y,0.5)},wr,6.4,6.0,5.8,
@@ -856,6 +897,12 @@ function coatTails(g,P){
       g.quadraticCurveTo(ex+6,ey-6, bx-4-lag, w.y+50);
       g.strokeStyle=PAL.lining; g.lineWidth=3; g.globalAlpha=0.8; g.stroke();
       g.globalAlpha=1;
+      // 자락 전면 달빛 림
+      g.strokeStyle="rgba(190,215,245,0.5)"; g.lineWidth=1.4;
+      g.beginPath();
+      g.moveTo(w.x+10+off,w.y+8);
+      g.quadraticCurveTo(w.x+14+off, w.y+52, w.x+6+off+sway*0.4, w.y+87-flap*8);
+      g.stroke();
     }
   }
 }
@@ -887,10 +934,16 @@ function drawTorso(g,P){
   g.quadraticCurveTo(w.x-6,w.y-14, c.x-8,c.y+16);
   g.closePath();
   g.fillStyle=PAL.coatSh; g.globalAlpha=0.85; g.fill(); g.globalAlpha=1;
-  g.strokeStyle="rgba(207,224,242,0.55)"; g.lineWidth=1.4;
+  g.strokeStyle="rgba(207,224,242,0.7)"; g.lineWidth=1.6;
   g.beginPath();
   g.moveTo(shF.x-2,shF.y+2);
   g.quadraticCurveTo(c.x-23*cs,c.y+26, w.x-14,w.y-6);
+  g.stroke();
+  // 전면(달 방향) 청백 림라이트 1선 — 2단 셀 + 역광
+  g.strokeStyle="rgba(214,232,252,0.85)"; g.lineWidth=1.7; g.lineCap="round";
+  g.beginPath();
+  g.moveTo(shN.x+1.5,shN.y+5);
+  g.quadraticCurveTo(c.x+22*cs,c.y+30, w.x+13,w.y-6);
   g.stroke();
   // 은 트림: 앞선 + 벨트
   g.strokeStyle=PAL.trim; g.lineWidth=1.5;
@@ -905,7 +958,7 @@ function drawTorso(g,P){
   // 목 (턱밑까지 이어 붙임 — 틈 방지) + 쇄골 힌트
   const nt=j.neckTop;
   limb(g,{x:nt.x-0.5,y:nt.y+19},{x:nt.x+0.5,y:nt.y+4},{x:nt.x+1.5,y:nt.y-12},
-    7.0,6.4,5.6,PAL.skin,0.8);
+    7.0,6.4,5.6,PAL.skin,0.8*LW);
   g.fillStyle=PAL.skinSh; g.globalAlpha=0.45; // 목 셀셰이드(턱그림자)
   g.beginPath(); g.ellipse(nt.x+1,nt.y-6,5.2,4.2,0,0,Math.PI); g.fill();
   g.globalAlpha=1;
@@ -921,7 +974,7 @@ function drawTorso(g,P){
   g.quadraticCurveTo(nt.x,nt.y+19.5, nt.x+8.6,nt.y+16.5);
   g.closePath();
   g.fillStyle=shade(PAL.coat,12); g.fill();
-  g.strokeStyle=PAL.line; g.lineWidth=0.9; g.stroke();
+  g.strokeStyle=PAL.line; g.lineWidth=0.9*LW; g.stroke();
   g.strokeStyle=PAL.trim; g.lineWidth=0.8;
   g.beginPath(); g.moveTo(nt.x-6.8,nt.y+6.6); g.lineTo(nt.x+6.6,nt.y+7.4); g.stroke();
 }
@@ -950,8 +1003,9 @@ function drawGhostInline(g,P,alpha){ // 현재 변환=모델공간 가정
   gCtx.globalCompositeOperation="source-over";
   gCtx.translate(240,500);
   drawChar(gCtx,P);
-  gCtx.globalCompositeOperation="source-in";
-  gCtx.fillStyle="rgb(122,168,214)";
+  // 디테일(머리·코트 라인) 유지한 채 청색 틴트만 — 민무늬 실루엣 방지
+  gCtx.globalCompositeOperation="source-atop";
+  gCtx.fillStyle="rgba(122,168,214,0.45)";
   gCtx.fillRect(-240,-500,760,540);
   g.save();
   g.globalAlpha=alpha;
