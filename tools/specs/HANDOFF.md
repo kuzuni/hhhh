@@ -26,6 +26,16 @@
   또는 `chromium --headless --disable-gpu --screenshot=out.png --window-size=1680,1500 "file://..."`
 - 찍은 PNG를 **직접 보고** 결함을 고쳐라. `?montage` 모드가 심사용 그리드다.
 
+## 파일별 현재 상태 (2026-08-23 06:35 기준)
+| 파일 | 상태 |
+|---|---|
+| boar-bone.html | 거의 완성 (자가검증 4회까지 진행됨) — 스펙 대비 점검 후 마무리만 |
+| pump-bone.html | 본편 완성, 검증 1회 — 검증 루프 마저 돌리기 |
+| pump-puppet.html | 본편 완성, 검증 1회 — 검증 루프 마저 돌리기 |
+| boar-puppet.html | 중간 초안 (33KB) — 스펙 대비 부족분 완성 필요 |
+| chibi-puppet.html | 초안 스텁 (18KB) — 사실상 재작성 필요 |
+| chibi-bone.html | 잘린 스텁 (7KB) — 재작성 필요 |
+
 ## 완성 기준
 - `?montage`에 Row A/B/C가 스펙 레이아웃대로 렌더, 빈칸·에러 텍스트 없음
 - 아바타 2벌이 몽타주에 모두 등장, 몬스터는 죽음(음식 조각) 시퀀스 필수 (잔인함 0)
