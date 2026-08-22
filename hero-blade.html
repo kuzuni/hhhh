@@ -755,3 +755,152 @@ function drawSaya(g,P){
   g.fillRect(-4,-3.2,3,6.4); g.fillRect(52,-2.7,2.2,5.4); g.fillRect(108,-2.4,3,4.8);
   g.restore();
 }
+
+// --- 몸통/사지/코트 ---------------------------------------------------
+function drawLegs(g,P,side){
+  const j=P.j, far=side==="F";
+  const hip=j["hip"+side], knee=j["knee"+side], ank=j["ankle"+side];
+  const f=P["foot"+side];
+  const col=far?shade(PAL.pants,-14):PAL.pants;
+  limb(g,hip,knee,ank,12.5,8.5,5.2,col,1.0);
+  // 부츠 (정강이 하부 덮기)
+  const bootTop={x:lerp(knee.x,ank.x,0.42),y:lerp(knee.y,ank.y,0.42)};
+  limb(g,bootTop,{x:lerp(bootTop.x,ank.x,0.5),y:lerp(bootTop.y,ank.y,0.5)},ank,
+    7.2,6.2,5.4,far?shade(PAL.boots,-10):PAL.boots,1.0);
+  g.strokeStyle=PAL.trim; g.lineWidth=1.1;
+  g.beginPath(); g.moveTo(bootTop.x-6,bootTop.y+1); g.lineTo(bootTop.x+6.4,bootTop.y-1);
+  g.stroke();
+  // 발: 발목→발끝 웨지
+  g.beginPath();
+  g.moveTo(ank.x-4.5,ank.y-3);
+  g.quadraticCurveTo(ank.x+f.x*0+8*Math.cos(f.pitch)-2, ank.y+3+Math.sin(f.pitch)*2,
+    j["toe"+side].x, j["toe"+side].y);
+  g.lineTo(j["toe"+side].x-2, j["toe"+side].y+2.6);
+  g.lineTo(j["heel"+side].x, j["heel"+side].y+3.4);
+  g.quadraticCurveTo(ank.x-5.6,ank.y+2, ank.x-4.5,ank.y-3);
+  g.closePath();
+  g.fillStyle=far?shade(PAL.boots,-10):PAL.boots; g.fill();
+  g.strokeStyle=PAL.line; g.lineWidth=1.0; g.lineJoin="round"; g.stroke();
+}
+function drawArm(g,P,side){
+  const j=P.j, far=side==="F";
+  const sh=j["sh"+side], el=j["el"+side], wr=j["wr"+side];
+  const col=far?shade(PAL.coat,-16):PAL.coat;
+  limb(g,sh,el,wr,9.8,7.2,5.6,col,1.0);
+  // 커프스
+  const cu={x:lerp(el.x,wr.x,0.72),y:lerp(el.y,wr.y,0.72)};
+  limb(g,cu,{x:lerp(cu.x,wr.x,0.5),y:lerp(cu.y,wr.y,0.5)},wr,6.4,6.0,5.8,
+    far?shade("#3a4c74",-14):"#3a4c74",0.9);
+  // 장갑 손 (라운드 미튼 + 엄지 힌트)
+  const dx=wr.x-el.x, dy=wr.y-el.y, l=Math.hypot(dx,dy)||1;
+  const hx=wr.x+dx/l*B.hand*0.55, hy=wr.y+dy/l*B.hand*0.55;
+  g.beginPath(); g.ellipse(hx,hy,6.2,4.6,Math.atan2(dy,dx),0,TAU);
+  g.fillStyle=far?shade(PAL.glove,-10):PAL.glove; g.fill();
+  g.strokeStyle=PAL.line; g.lineWidth=0.95; g.stroke();
+  g.beginPath(); g.ellipse(hx-dy/l*3.4,hy+dx/l*3.4,2.4,1.8,Math.atan2(dy,dx),0,TAU);
+  g.fillStyle=far?shade(PAL.glove,-10):PAL.glove; g.fill();
+  g.strokeStyle=PAL.line; g.lineWidth=0.7; g.stroke();
+}
+function shade(hex,d){ // #rrggbb 명도 시프트
+  const n=parseInt(hex.slice(1),16);
+  const r=clamp((n>>16)+d,0,255),g2=clamp(((n>>8)&255)+d,0,255),b=clamp((n&255)+d,0,255);
+  return "rgb("+r+","+g2+","+b+")";
+}
+// 코트 자락(뒤) — 스프링 스웨이하는 2장 플랩
+function coatTails(g,P){
+  const j=P.j, t=P.t;
+  const w=j.pelvis, sway=Math.sin(t*2.3)*3*P.coatSway, flap=P.coatFlap;
+  for(const[s,off,col]of[[1,-4,PAL.coatSh],[0,3,shade(PAL.coat,-6)]]){
+    const lag=Math.sin(t*2.3-0.6-s*0.5)*4*P.coatSway;
+    const bx=w.x-14+off, ex=bx-16-lag-flap*26, ey=w.y+92-flap*20;
+    g.beginPath();
+    g.moveTo(w.x+10+off,w.y+6);
+    g.quadraticCurveTo(w.x+14+off, w.y+52, w.x+6+off+sway*0.4, w.y+88-flap*8);
+    g.lineTo(ex+16, ey+4);
+    g.quadraticCurveTo(ex-6-lag*0.5, ey-18, bx-8-lag, w.y+34);
+    g.quadraticCurveTo(bx+2, w.y+12, w.x-12+off, w.y+4);
+    g.closePath();
+    g.fillStyle=col; g.fill();
+    g.strokeStyle=PAL.line; g.lineWidth=1.0; g.stroke();
+    if(s===0){ // 안감 힌트
+      g.beginPath();
+      g.moveTo(ex+16,ey+4);
+      g.quadraticCurveTo(ex+6,ey-6, bx-4-lag, w.y+50);
+      g.strokeStyle=PAL.lining; g.lineWidth=3; g.globalAlpha=0.8; g.stroke();
+      g.globalAlpha=1;
+    }
+  }
+}
+function drawTorso(g,P){
+  const j=P.j;
+  const c=j.chest, w=j.pelvis, ca=j.chestA;
+  const cs=Math.cos(ca), sn=Math.sin(ca);
+  const R=(ox,oy)=>({x:c.x+ox*cs-oy*sn, y:c.y+ox*sn+oy*cs});
+  const shN=R(B.shNX+P.shoulderDX+2,-4), shF=R(B.shFX-P.shoulderDX-2,-3);
+  const nk=R(6,-6), nk2=R(-9,-6);
+  // 코트 몸판
+  g.beginPath();
+  g.moveTo(nk.x,nk.y);
+  g.quadraticCurveTo(shN.x+4,shN.y-3, shN.x+3,shN.y+6);
+  g.quadraticCurveTo(c.x+22*cs,c.y+30, w.x+13,w.y-6);
+  g.quadraticCurveTo(w.x+15,w.y+7, w.x+9,w.y+9);
+  g.lineTo(w.x-12,w.y+9);
+  g.quadraticCurveTo(w.x-17,w.y+6, w.x-15,w.y-8);
+  g.quadraticCurveTo(c.x-24*cs,c.y+28, shF.x-3,shF.y+6);
+  g.quadraticCurveTo(shF.x-4,shF.y-3, nk2.x,nk2.y);
+  g.closePath();
+  g.fillStyle=PAL.coat; g.fill();
+  g.strokeStyle=PAL.line; g.lineWidth=1.15; g.lineJoin="round"; g.stroke();
+  // 뒷면 셀셰이드 + 달빛 림
+  g.beginPath();
+  g.moveTo(nk2.x,nk2.y);
+  g.quadraticCurveTo(shF.x-4,shF.y-3, shF.x-3,shF.y+6);
+  g.quadraticCurveTo(c.x-24*cs,c.y+28, w.x-15,w.y-8);
+  g.quadraticCurveTo(w.x-6,w.y-14, c.x-8,c.y+16);
+  g.closePath();
+  g.fillStyle=PAL.coatSh; g.globalAlpha=0.85; g.fill(); g.globalAlpha=1;
+  g.strokeStyle="rgba(207,224,242,0.55)"; g.lineWidth=1.4;
+  g.beginPath();
+  g.moveTo(shF.x-2,shF.y+2);
+  g.quadraticCurveTo(c.x-23*cs,c.y+26, w.x-14,w.y-6);
+  g.stroke();
+  // 은 트림: 앞선 + 벨트
+  g.strokeStyle=PAL.trim; g.lineWidth=1.5;
+  g.beginPath();
+  g.moveTo(nk.x-2,nk.y+3);
+  g.quadraticCurveTo(c.x+8*cs,c.y+26, w.x+2,w.y+8);
+  g.stroke();
+  g.fillStyle="#39466b";
+  g.fillRect(w.x-14,w.y-2,28,6);
+  g.strokeStyle=PAL.trim; g.lineWidth=0.9; g.strokeRect(w.x-14,w.y-2,28,6);
+  g.fillStyle=PAL.trim; g.fillRect(w.x-2.4,w.y-3,5,8);
+  // 하이칼라
+  g.beginPath();
+  g.moveTo(nk.x+3,nk.y+1);
+  g.quadraticCurveTo(c.x+7*cs-sn*8, c.y-8*cs-14, nk2.x-2,nk2.y+0.5);
+  g.lineTo(nk2.x-1,nk2.y+7); g.quadraticCurveTo(c.x,c.y+2, nk.x+2,nk.y+7);
+  g.closePath();
+  g.fillStyle=shade(PAL.coat,10); g.fill();
+  g.strokeStyle=PAL.line; g.lineWidth=1.0; g.stroke();
+  // 목 + 쇄골 힌트
+  const nt=j.neckTop;
+  limb(g,{x:nt.x,y:nt.y+16},{x:nt.x+(c.x-nt.x)*0.2,y:nt.y+8},{x:nt.x,y:nt.y-2},
+    6.6,6.2,6.0,PAL.skin,0.9);
+  g.strokeStyle=PAL.skinSh; g.lineWidth=0.7;
+  g.beginPath(); g.moveTo(nt.x-2,nt.y+15); g.quadraticCurveTo(nt.x+5,nt.y+17,nt.x+9,nt.y+14);
+  g.stroke();
+}
+// --- 캐릭터 합성 (페인터 순서) --------------------------------------
+function drawChar(g,P){
+  drawArm(g,P,"F");
+  drawLegs(g,P,"F");
+  coatTails(g,P);
+  hairBack(g,P);
+  drawSaya(g,P);
+  drawLegs(g,P,"N");
+  drawTorso(g,P);
+  drawHead(g,P);
+  hairFront(g,P);
+  drawSword(g,P);
+  drawArm(g,P,"N");
+}
