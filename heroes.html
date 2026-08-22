@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>용사 전시관 — 2D 리깅 3부작</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+<style>
+  :root{
+    --ink:#f2ede2; --dim:#9a94a8; --bg:#0c0a12;
+    --blade:#7fa7e8; --blade-deep:#2c3e63;
+    --gold:#e8c46a; --gold-deep:#8a6d2f;
+    --viol:#8a76e8; --viol-deep:#3a2a6b;
+    --disp:"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--disp)}
+  body{overflow-x:hidden}
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 30%,transparent 40%,rgba(6,4,10,.72) 100%)}
+  main{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:56px 22px 80px}
+
+  header{text-align:center;margin-bottom:14px}
+  .eyebrow{letter-spacing:.42em;font-size:12px;color:var(--dim);text-transform:uppercase;margin-bottom:14px}
+  h1{margin:0;font-size:clamp(30px,5.4vw,52px);font-weight:800;letter-spacing:.08em;
+     background:linear-gradient(180deg,#fff8e8 20%,#cbb98a 90%);
+     -webkit-background-clip:text;background-clip:text;color:transparent;
+     filter:drop-shadow(0 2px 18px rgba(232,196,106,.22))}
+  .sub{color:var(--dim);margin:14px auto 0;max-width:560px;line-height:1.7;font-size:14.5px}
+  .rule{width:180px;height:1px;margin:30px auto 40px;
+    background:linear-gradient(90deg,transparent,rgba(232,196,106,.55),transparent)}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;max-width:460px;margin:0 auto}}
+
+  a.card{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);
+    border-radius:18px;padding:30px 26px 26px;position:relative;overflow:hidden;
+    background:linear-gradient(165deg,rgba(255,255,255,.045),rgba(255,255,255,.012) 55%),#131019;
+    border:1px solid rgba(255,255,255,.08);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.2), box-shadow .35s ease, border-color .35s ease}
+  a.card:hover{transform:translateY(-7px)}
+  a.card::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .4s ease;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 0%,var(--glow) 0%,transparent 62%)}
+  a.card:hover::before{opacity:.28}
+  .c-blade{--glow:var(--blade)} .c-puppet{--glow:var(--gold)} .c-live{--glow:var(--viol)}
+  .c-blade:hover{border-color:rgba(127,167,232,.55);box-shadow:0 18px 44px -14px rgba(127,167,232,.35)}
+  .c-puppet:hover{border-color:rgba(232,196,106,.55);box-shadow:0 18px 44px -14px rgba(232,196,106,.35)}
+  .c-live:hover{border-color:rgba(138,118,232,.6);box-shadow:0 18px 44px -14px rgba(138,118,232,.4)}
+
+  .emblem{width:96px;height:96px;margin:2px auto 20px;display:block;
+    filter:drop-shadow(0 0 14px color-mix(in srgb,var(--glow) 45%,transparent))}
+  .badge{align-self:center;font-size:11px;letter-spacing:.14em;padding:5px 12px;border-radius:999px;
+    border:1px solid color-mix(in srgb,var(--glow) 55%,transparent);
+    color:color-mix(in srgb,var(--glow) 85%,#fff);margin-bottom:16px;white-space:nowrap}
+  h2{margin:0;text-align:center;font-size:22px;letter-spacing:.04em}
+  .epithet{text-align:center;color:color-mix(in srgb,var(--glow) 70%,#cfc9dd);font-size:13px;margin:6px 0 14px;letter-spacing:.18em}
+  .desc{color:var(--dim);font-size:13.5px;line-height:1.75;text-align:center;margin:0 0 22px;flex:1}
+  .enter{align-self:center;font-size:13px;letter-spacing:.22em;color:var(--ink);
+    padding:9px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
+    transition:background .3s,border-color .3s}
+  a.card:hover .enter{background:color-mix(in srgb,var(--glow) 22%,transparent);
+    border-color:color-mix(in srgb,var(--glow) 70%,transparent)}
+
+  footer{margin-top:64px;text-align:center;color:var(--dim);font-size:13px;line-height:2}
+  footer a{color:#cfc4a4;text-decoration:none;border-bottom:1px dotted rgba(207,196,164,.4);padding-bottom:1px}
+  footer a:hover{color:#f2e6c2}
+  .foot-rule{width:120px;height:1px;margin:0 auto 22px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="vig"></div>
+<main>
+  <header>
+    <div class="eyebrow">2D Rigging Trilogy</div>
+    <h1>⚔ 용사 전시관 ⚔</h1>
+    <p class="sub">세 명의 미소년 용사, 세 가지 2D 리깅 기법.<br>
+      절차적 스켈레톤 · 컷아웃 퍼펫 · 메시 디포메이션 — 각 캐릭터가 하나의 기법을 살아 움직이며 증명합니다.</p>
+    <div class="rule"></div>
+  </header>
+
+  <div class="grid">
+    <a class="card c-blade" href="hero-blade.html">
+      <svg class="emblem" viewBox="0 0 96 96" aria-hidden="true">
+        <defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f2f5fb"/><stop offset="1" stop-color="#8fa3c9"/></linearGradient></defs>
+        <circle cx="48" cy="48" r="30" fill="none" stroke="#39496e" stroke-width="1.5" opacity=".8"/>
+        <path d="M60 18a34 34 0 1 0 0 60 38 38 0 0 1 0-60z" fill="url(#gm)"/>
+        <path d="M30 78 66 30l2.5 2.5L34 82z" fill="#dfe6f2"/>
+        <path d="M28 84l6-8 2.5 2.5-8.5 5.5z" fill="#7fa7e8"/>
+      </svg>
+      <span class="badge">절차적 스켈레톤 · IK</span>
+      <h2>아스렐</h2>
+      <div class="epithet">銀月의 검성</div>
+      <p class="desc">뼈대를 매 프레임 코드로 계산하고, IK로 발을 땅에 심는다.
+        은빛 달 아래 발도(拔刀) 한 획 — 잔상과 검격 궤적까지 전부 절차적으로.</p>
+      <span class="enter">관람하기 →</span>
+    </a>
+
+    <a class="card c-puppet" href="hero-puppet.html">
+      <svg class="emblem" viewBox="0 0 96 96" aria-hidden="true">
+        <defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f6df9e"/><stop offset="1" stop-color="#b8923e"/></linearGradient></defs>
+        <path d="M20 62V40l10 8 8-16 10 12 10-12 8 16 10-8v22z" fill="url(#gc)"/>
+        <rect x="20" y="64" width="56" height="7" rx="2.5" fill="#d4af5a"/>
+        <circle cx="28" cy="38" r="3.4" fill="#f6df9e"/><circle cx="68" cy="38" r="3.4" fill="#f6df9e"/>
+        <circle cx="48" cy="30" r="4" fill="#fff0c4"/>
+        <circle cx="38" cy="55" r="2.2" fill="#7e2231"/><circle cx="48" cy="53" r="2.2" fill="#2b3a5c"/><circle cx="58" cy="55" r="2.2" fill="#7e2231"/>
+      </svg>
+      <span class="badge">컷아웃 리깅 · 퍼펫</span>
+      <h2>루시엘</h2>
+      <div class="epithet">황금 사자의 왕자</div>
+      <p class="desc">한 번 그린 부품을 피벗 계층으로 움직이는 종이인형 리깅.
+        손을 잡아 끌면 IK로 팔이 따라오고, 버튼 하나로 전신이 분해되는 퍼펫 극장.</p>
+      <span class="enter">관람하기 →</span>
+    </a>
+
+    <a class="card c-live" href="hero-live.html">
+      <svg class="emblem" viewBox="0 0 96 96" aria-hidden="true">
+        <defs><linearGradient id="gf" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#4a2f8f"/><stop offset=".55" stop-color="#8a76e8"/><stop offset="1" stop-color="#c9b8ff"/></linearGradient></defs>
+        <path d="M48 12c9 14 20 20 20 38a20 20 0 0 1-40 0c0-10 5-14 8-22 4 6 7 8 7 8s5-12 5-24z" fill="url(#gf)"/>
+        <path d="M48 42c4 7 9 10 9 17a9 9 0 0 1-18 0c0-5 3-7 5-11 1.5 2.5 4-6 4-6z" fill="#f6d98a"/>
+      </svg>
+      <span class="badge">메시 디포메이션 · Live2D식</span>
+      <h2>카이렌</h2>
+      <div class="epithet">흑염의 마검사</div>
+      <p class="desc">삼각 메시에 가중치를 심어 이미지를 부드럽게 휘게 하는 Live2D식 리깅.
+        마우스를 따라 고개를 돌리고, 숨 쉬고, 깜빡이는 — 살아있는 초상.</p>
+      <span class="enter">관람하기 →</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="foot-rule"></div>
+    다른 작품 —
+    <a href="index.html">바퀴성 대전: 드릴 vs 로켓</a> ·
+    <a href="spiderbot.html">ORB WEAVER</a>
+  </footer>
+</main>
+<script>
+// 은은한 별 + 유성 배경
+(() => {
+  const cv = document.getElementById('stars'), cx = cv.getContext('2d');
+  let W, H, stars = [], t = 0;
+  function fit() {
+    W = cv.width = innerWidth * devicePixelRatio;
+    H = cv.height = innerHeight * devicePixelRatio;
+    cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
+    stars = Array.from({length: Math.floor(innerWidth * innerHeight / 9000)}, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: (Math.random() * 1.1 + .35) * devicePixelRatio,
+      p: Math.random() * Math.PI * 2, s: .5 + Math.random() * 1.4,
+      hue: Math.random() < .16 ? '232,196,106' : (Math.random() < .5 ? '176,196,240' : '226,222,240'),
+    }));
+  }
+  addEventListener('resize', fit); fit();
+  let last = performance.now();
+  (function loop(now) {
+    const dt = Math.min(50, now - last) / 1000; last = now; t += dt;
+    cx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      const a = .18 + .55 * (0.5 + 0.5 * Math.sin(s.p + t * s.s));
+      cx.fillStyle = `rgba(${s.hue},${a})`;
+      cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 7); cx.fill();
+    }
+    requestAnimationFrame(loop);
+  })(last);
+})();
+</script>
+</body>
+</html>
