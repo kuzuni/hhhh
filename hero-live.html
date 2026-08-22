@@ -780,9 +780,9 @@ function drawMesh(ctx,L,P,view,alpha,tex){
  if(alpha!=null)ctx.globalAlpha=1;
  if(L.clip)ctx.restore();
 }
-function drawWire(ctx,L,P,view){
+function drawWire(ctx,L,P,view,col){
  var out=deformLayer(L,P), tris=L.tris, s=view.s, ox=view.ox, oy=view.oy, i;
- ctx.strokeStyle='rgba(0,229,255,.38)'; ctx.lineWidth=.8;
+ ctx.strokeStyle=col||'rgba(0,229,255,.38)'; ctx.lineWidth=.8;
  for(i=0;i<tris.length;i++){
   var t0=tris[i][0],t1=tris[i][1],t2=tris[i][2];
   ctx.beginPath();
@@ -868,15 +868,15 @@ function stepAnim(dt,w,h,manual){
      breath=(Math.sin(a.t*TAU/3.2-Math.PI/2)+1)/2;
  if(manual.blink!=null){blinkL=manual.blink;blinkR=manual.blink}
  return {yaw:a.spYaw.x, pitch:a.spPitch.x, roll:a.spRoll.x,
-  eyeX:a.spEyeX.x, eyeY:a.spEyeY.x, blinkL:blinkL, blinkR:blinkR,
+  eyeX:a.spEyeX.x, eyeY:a.spEyeY.x, blinkL:blinkL, blinkR:blinkR, irisS:cc.irs,
   breath:ease(breath), sway:a.spSway.x+(manual.hairSway!=null?manual.hairSway:0),
   swayTip:a.spTip.x, earAng:a.spEar.x,
   browLift:{L:cc.blL,R:cc.blR}, browTilt:{L:cc.btL,R:cc.btR},
   mouthA:a.mouthA, mouthB:a.mouthB, mouthFade:a.mouthFade};
 }
 function defaultP(o){
- var P={yaw:0,pitch:0,roll:0,eyeX:0,eyeY:0,blinkL:.09,blinkR:.09,breath:.45,
-  sway:3,swayTip:2,earAng:.04,browLift:{L:0,R:0},browTilt:{L:0,R:0},
+ var P={yaw:0,pitch:0,roll:0,eyeX:0,eyeY:0,blinkL:.03,blinkR:.03,irisS:1,breath:.45,
+  sway:3,swayTip:2,earAng:.04,browLift:{L:-.05,R:-.05},browTilt:{L:.3,R:.3},
   mouthA:0,mouthB:0,mouthFade:1},k;
  for(k in o)P[k]=o[k];
  return P;
@@ -887,6 +887,7 @@ function renderScene(ctx,P,view,opts){
  opts=opts||{};
  var mouthL=null;
  LAYERS.forEach(function(L){
+  if(opts.noSword&&L.n==='sword')return;
   if(L.kind==='mouth'){mouthL=L;
    if(P.mouthFade<1&&P.mouthA!==P.mouthB){
     drawMesh(ctx,L,P,view,1,L.texs[P.mouthA]);
@@ -896,7 +897,15 @@ function renderScene(ctx,P,view,opts){
   var alpha=null;
   drawMesh(ctx,L,P,view,alpha);
  });
- if(opts.mesh){LAYERS.forEach(function(L){drawWire(ctx,L,P,view)})}
+ if(opts.mesh){
+  // 아트메시가 있는 머리 레이어만 (배경까지 뻗는 직사각 격자 배제)
+  var wl=LAYERS.filter(function(l){return l.n!=='body'&&l.n!=='sword'&&l.n!=='backHair'});
+  if(opts.meshNeutral){ // 중립 격자 반투명 회색 (before/after 대비)
+   var P0=defaultP({breath:0,sway:0,swayTip:0,earAng:0});
+   wl.forEach(function(l){drawWire(ctx,l,P0,view,'rgba(178,178,196,.22)')});
+  }
+  wl.forEach(function(l){drawWire(ctx,l,P,view,opts.meshNeutral?'rgba(0,229,255,.55)':'rgba(0,229,255,.38)')});
+ }
 }
 // 흑염 위스프: 티어드롭 + additive 글로우
 function drawWisp(ctx,x,y,r,ang,a,col){

@@ -534,18 +534,18 @@ function drawHead(g,P){
   // -- 눈 --
   eye(g, 2.6,3.8, 5.3,2.55, false, F);
   eye(g,15.2,3.4, 4.0,2.40, true,  F);
-  // 눈썹: 가늘게, 눈에서 띄운 완만한 아치 — 서늘한 인상
-  g.strokeStyle=PAL.brow; g.lineWidth=0.30; g.lineCap="round";
+  // 눈썹: 가늘게(기존 55%), 눈 위로 띄운 완만한 아치 — 서늘한 인상
+  g.strokeStyle="#6a7186"; g.lineWidth=0.34; g.lineCap="round";
   const bl=F.brow*1.1;
-  g.beginPath(); g.moveTo(-2.8,-3.2+bl);
-  g.quadraticCurveTo(3.0,-5.1+bl*0.4, 9.0,-3.9+bl*1.2); g.stroke();
-  g.beginPath(); g.moveTo(12.0,-3.8+bl);
-  g.quadraticCurveTo(15.8,-5.3+bl*0.4, 19.6,-4.1+bl*1.2); g.stroke();
-  // 코: 콧대 그림자 한 획(짧은 단선) + 밝은 하이라이트 점 (콧구멍 점·블러 없음)
+  g.beginPath(); g.moveTo(-2.8,-2.4+bl);
+  g.quadraticCurveTo(3.0,-4.2+bl*0.4, 9.0,-3.0+bl*1.2); g.stroke();
+  g.beginPath(); g.moveTo(12.0,-3.0+bl);
+  g.quadraticCurveTo(15.8,-4.4+bl*0.4, 19.6,-3.2+bl*1.2); g.stroke();
+  // 코: 콧대 그림자 한 획(짧은 단선) + 살짝 밝은 하이라이트 점 (콧구멍 점·블러 없음)
   g.strokeStyle="rgba(199,150,140,0.6)"; g.lineWidth=0.5; g.lineCap="round";
   g.beginPath(); g.moveTo(19.0,6.3); g.quadraticCurveTo(20.2,8.2,19.7,9.6); g.stroke();
-  g.fillStyle="rgba(255,255,255,0.55)";
-  g.beginPath(); g.ellipse(20.3,7.3,0.5,0.5,0,0,TAU); g.fill();
+  g.fillStyle="rgba(255,255,255,0.8)";
+  g.beginPath(); g.ellipse(19.9,7.1,0.35,0.35,0,0,TAU); g.fill();
   // 입: 눈 폭의 ~62% — 절제된 직선적 입매
   g.strokeStyle="#b06a63"; g.lineWidth=0.55; g.lineCap="round";
   g.beginPath(); g.moveTo(10.2,15.3+F.mouth*0.5);
@@ -573,7 +573,7 @@ function eye(g,cx,cy,hw,hh,far,F){
     g.quadraticCurveTo(cx,cy+1.9,ox,cy-0.2); g.stroke();
     return;
   }
-  const topY=cy-H, outY=cy-H*0.50;                          // 눈꼬리 살짝 상승
+  const topY=cy-H, outY=cy-H*0.45;                          // 눈꼬리 살짝 상승
   g.save();
   g.beginPath();
   g.moveTo(ix,cy+0.4);
