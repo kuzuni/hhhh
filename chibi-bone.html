@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>리코 ver.A — 절차적 스켈레톤 · IK</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#87cdf5;
+    font-family:"Segoe UI","Malgun Gothic",sans-serif;}
+  #cv{display:block;}
+  #err{position:fixed;top:4px;left:4px;z-index:99;color:#ff2222;background:rgba(255,255,255,.92);
+    font:bold 13px "Segoe UI","Malgun Gothic",sans-serif;padding:4px 8px;border-radius:6px;
+    white-space:pre-wrap;max-width:90vw;display:none;}
+  #back{position:fixed;top:10px;left:12px;z-index:20;font-size:13px;color:#155a8a;
+    background:rgba(255,255,255,.75);padding:4px 10px;border-radius:14px;text-decoration:none;}
+  #back:hover{background:#fff;}
+  #badge{position:fixed;top:10px;right:12px;z-index:20;font-size:12px;color:#fff;
+    background:rgba(30,60,120,.65);padding:5px 12px;border-radius:14px;}
+  #ui{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;
+    background:rgba(255,255,255,.78);padding:8px 12px;border-radius:18px;
+    box-shadow:0 4px 14px rgba(30,60,120,.25);}
+  #ui button{font:bold 13px "Segoe UI","Malgun Gothic",sans-serif;border:2px solid #3a7bd5;
+    background:#fff;color:#2a5aa0;border-radius:12px;padding:6px 12px;cursor:pointer;}
+  #ui button:hover{background:#e8f2ff;}
+  #ui button.on{background:#3a7bd5;color:#fff;}
+  #ui button.av{border-color:#e8663c;color:#c04a20;}
+  #ui button.av.on{background:#e8663c;color:#fff;}
+  #ui .sl{display:flex;align-items:center;gap:4px;font-size:12px;color:#2a5aa0;}
+  .montage #ui,.montage #back,.montage #badge{display:none;}
+</style>
+</head>
+<body>
+<div id="err"></div>
+<a id="back" href="heroes.html">← 용사 전시관</a>
+<div id="badge">기법: 절차적 스켈레톤 · IK · 스쿼시&스트레치</div>
+<canvas id="cv"></canvas>
+<div id="ui">
+  <button data-anim="idle" class="on">대기</button>
+  <button data-anim="walk">총총 걷기</button>
+  <button data-anim="swing">대검 풀스윙</button>
+  <button data-anim="jump">폴짝 점프</button>
+  <button data-anim="joy">기쁨</button>
+  <button id="avbtn" class="av">아바타: 해적 ⇄ 마법사</button>
+  <button id="bonebtn">뼈대 보기</button>
+  <span class="sl">속도 <input id="spd" type="range" min="0.3" max="2" step="0.1" value="1"></span>
+</div>
+<script>
+"use strict";
+// ============================================================================
+// ==== 섹션 맵 ====
+// ==== 0. 에러 핸들러 / 유틸 ====
+// ==== 1. 팔레트 ====
+// ==== 2. 리그 (뼈대 상수 · 2본 IK · solve) ====
+// ==== 3. 애니 (pose 순수함수: idle/walk/swing/jump/joy) ====
+// ==== 4. 렌더 (얼굴 · 머리 · 몸 · 아바타 드로잉 세트 · 무기 · 이펙트 · 뼈대 오버레이) ====
+// ==== 5. UI / 라이브 루프 ====
+// ==== 6. 몽타주 ====
+// ============================================================================
+
+// ==== 0. 에러 핸들러 / 유틸 ====
+function showErr(m){var e=document.getElementById('err');e.style.display='block';e.textContent+=m+"\n";}
+window.onerror=function(msg,src,ln){showErr("ERR: "+msg+" @"+ln);return false;};
+window.addEventListener('unhandledrejection',function(ev){showErr("REJ: "+ev.reason);});
+
+var TAU=Math.PI*2;
+function clamp(v,a,b){return v<a?a:(v>b?b:v);}
+function lerp(a,b,t){return a+(b-a)*t;}
+function seg01(t,a,b){return clamp((t-a)/(b-a),0,1);}
+function ease(t){t=clamp(t,0,1);return t*t*(3-2*t);}
+function easeOut(t){t=clamp(t,0,1);return 1-(1-t)*(1-t);}
+function easeIn(t){t=clamp(t,0,1);return t*t;}
+function hash(n){var x=Math.sin(n*127.1+31.7)*43758.5453;return x-Math.floor(x);}
+function dirv(a){return {x:Math.cos(a),y:Math.sin(a)};}
+
+// 부드러운 닫힌 블롭 경로 (중점 quadratic)
+function blob(g,pts){
+  var n=pts.length;
+  g.beginPath();
+  g.moveTo((pts[0][0]+pts[n-1][0])/2,(pts[0][1]+pts[n-1][1])/2);
+  for(var i=0;i<n;i++){var p=pts[i],q=pts[(i+1)%n];
+    g.quadraticCurveTo(p[0],p[1],(p[0]+q[0])/2,(p[1]+q[1])/2);}
+  g.closePath();
+}
+// 테이퍼 캡슐 (팔다리)
+function limb(g,x1,y1,x2,y2,r1,r2,fill,line,lw){
+  var a=Math.atan2(y2-y1,x2-x1);
+  g.beginPath();
+  g.arc(x1,y1,r1,a+Math.PI/2,a-Math.PI/2);
+  g.arc(x2,y2,r2,a-Math.PI/2,a+Math.PI/2);
+  g.closePath();
+  if(fill){g.fillStyle=fill;g.fill();}
+  if(line){g.strokeStyle=line;g.lineWidth=lw||LW;g.stroke();}
+}
+function star5(g,x,y,R,r,rot){
+  g.beginPath();
+  for(var i=0;i<10;i++){var a=rot+i*Math.PI/5-Math.PI/2,rr=(i%2===0)?R:r;
+    if(i===0)g.moveTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);
+    else g.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}
+  g.closePath();
+}
+function heartP(g,x,y,s){
+  g.beginPath();
+  g.moveTo(x,y+s*0.9);
+  g.bezierCurveTo(x-s*1.3,y-s*0.1,x-s*0.7,y-s*1.0,x,y-s*0.35);
+  g.bezierCurveTo(x+s*0.7,y-s*1.0,x+s*1.3,y-s*0.1,x,y+s*0.9);
+  g.closePath();
+}
+function sparkle4(g,x,y,r,rot){
+  g.beginPath();
+  for(var i=0;i<8;i++){var a=rot+i*Math.PI/4,rr=(i%2===0)?r:r*0.32;
+    if(i===0)g.moveTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);
+    else g.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}
+  g.closePath();
+}
+
+// ==== 1. 팔레트 ====
+var LW=2.1;                                   // 기본 외곽선 (치비: 굵고 균일)
+var LINE='#47262e';                           // 톤 있는 다크 외곽선
+var SKIN={base:'#ffe4cd',shade:'#f2b795',blush:'rgba(255,124,116,0.42)',line:LINE};
+var HAIR={base:'#f25a30',dark:'#c23a1d',deep:'#95271607',shadow:'#c23a1d',hi:'#ffa763',line:'#5c2012'};
+var EYECOL={top:'#7c3a10',mid:'#ea8a2a',low:'#ffd678',pupil:'#3d1d0a',line:'#38202b'};
+var PIRATE={
+  key:'pirate',name:'해적',
+  bandana:'#2f6fd8',bandanaDk:'#2151a8',skull:'#f7f9ff',
+  scarf:'#e8453c',scarfDk:'#b52f2c',
+  top:'#fdfdff',topShade:'#d9dde8',trim:'#2f6fd8',
+  denim:'#5677b5',denimDk:'#41598c',denimHi:'#7f9bd8',
+  belt:'#7a4a2a',buckle:'#eab84c',
+  boot:'#8a5a34',bootDk:'#6b4226',bootCuff:'#a06a40',
+  blade:'#c9d3de',bladeDk:'#9aa6b6',bladeHi:'#eff3f9',guard:'#e0b054',gripc:'#7a4a2c'
+};
+var MAGE={
+  key:'mage',name:'마법사',
+  hat:'#6d4bc7',hatDk:'#523697',hatBand:'#f2b64a',
+  robe:'#8a63e0',robeDk:'#6a48b8',cape:'#5d3fae',capeDk:'#4a3190',
+  starc:'#ffd75e',
+  stockA:'#6d4bc7',stockB:'#ece6fa',
+  boot:'#3a2a6e',bootDk:'#2b1f52',
+  staff:'#8a5a34',gem:'#7ef0e8',gemDk:'#38b8ae'
+};
