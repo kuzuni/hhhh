@@ -480,25 +480,32 @@ function mechaPose(o){
   if(slashK>=0){
     const k=slashK;
     let shR,elR,roll,yaw,pitch,coil,step;
-    if(k<0.26){                    /* jodan-no-kamae: raise HIGH over the right shoulder, coil back */
-      const e=easeInOut(k/0.26);
-      shR=lerp(-0.32,-2.35,e);     /* grip up above the head */
-      elR=lerp(0,-1.7,e);          /* elbow folds ~90deg, blade lies over the shoulder */
-      roll=lerp(0,0.55,e);         /* cocked to the right for a diagonal */
-      yaw=lerp(0,-0.18,e); pitch=lerp(0,-0.13,e); coil=lerp(0,0.16,e); step=lerp(0,-0.08,e);
-    }else if(k<0.36){              /* kiru: fast diagonal downstroke, arm EXTENDS forward */
-      const e=easeOut((k-0.26)/0.10);
-      shR=lerp(-2.35,0.35,e);      /* whip down past the front */
-      elR=lerp(-1.7,-0.04,e);      /* elbow extends ~straight -> reach */
-      roll=lerp(0.55,-0.55,e);     /* sweep to the opposite (left) hip = diagonal */
-      yaw=lerp(-0.18,0.4,e); pitch=lerp(-0.13,0.42,e); coil=lerp(0.16,0.5,e); step=lerp(-0.08,0.42,e);
-    }else if(k<0.46){             /* contact hold: extended diagonal finish, low across body */
-      shR=0.4; elR=-0.06; roll=-0.6; yaw=0.4; pitch=0.4; coil=0.46; step=0.4;
-    }else{                        /* zanshin: small overshoot then settle to guard */
-      const e=easeInOut((k-0.46)/0.14);
-      const os=Math.sin(Math.min(1,(k-0.46)/0.14)*PI)*0.12;
-      shR=lerp(0.4,-0.32,e)-os; elR=lerp(-0.06,0,e); roll=lerp(-0.6,0,e);
-      yaw=lerp(0.4,0,e); pitch=lerp(0.4,0,e); coil=lerp(0.46,0,e); step=lerp(0.4,0,e);
+    if(k<0.16){                    /* furikaburi: SNAP the blade high to jodan (fast up, ease into top) */
+      const e=easeOut(k/0.16);
+      shR=lerp(-0.32,-2.5,e);      /* grip up above the head */
+      elR=lerp(0,-1.78,e);         /* elbow folds ~90deg, blade lies back over the shoulder */
+      roll=lerp(0,0.62,e);         /* cocked to the right for a diagonal */
+      yaw=lerp(0,-0.22,e); pitch=lerp(0,-0.16,e); coil=lerp(0,0.2,e); step=lerp(0,-0.12,e);
+    }else if(k<0.24){              /* tame: held anticipation beat -- weight loads back, blade cocks */
+      const e=easeInOut((k-0.16)/0.08);
+      shR=lerp(-2.5,-2.56,e); elR=-1.78; roll=lerp(0.62,0.68,e);
+      yaw=-0.22; pitch=lerp(-0.16,-0.18,e); coil=lerp(0.2,0.26,e); step=lerp(-0.12,-0.18,e);
+    }else if(k<0.30){              /* kiru: explosive diagonal downstroke ACCELERATING into contact */
+      const e=easeIn((k-0.24)/0.06);
+      shR=lerp(-2.56,0.44,e);      /* whip down past the front */
+      elR=lerp(-1.78,-0.02,e);     /* elbow extends ~straight -> reach */
+      roll=lerp(0.68,-0.64,e);     /* sweep to the opposite (left) hip = diagonal */
+      yaw=lerp(-0.22,0.46,e); pitch=lerp(-0.18,0.48,e); coil=lerp(0.26,0.54,e); step=lerp(-0.18,0.48,e);
+    }else if(k<0.40){             /* kime: DEAD STOP -- blade held across the body, the impact reads here */
+      shR=0.44; elR=-0.02; roll=-0.64; yaw=0.46; pitch=0.48; coil=0.54; step=0.48;
+    }else if(k<0.46){             /* hikite: sharp recoil kick-back off the impact */
+      const e=easeOut((k-0.40)/0.06);
+      shR=lerp(0.44,0.24,e); elR=lerp(-0.02,-0.12,e); roll=lerp(-0.64,-0.52,e);
+      yaw=lerp(0.46,0.36,e); pitch=lerp(0.48,0.36,e); coil=lerp(0.54,0.42,e); step=lerp(0.48,0.42,e);
+    }else{                        /* zanshin: settle to guard */
+      const e=easeInOut(clamp((k-0.46)/0.14));
+      shR=lerp(0.24,-0.32,e); elR=lerp(-0.12,0,e); roll=lerp(-0.52,0,e);
+      yaw=lerp(0.36,0,e); pitch=lerp(0.36,0,e); coil=lerp(0.42,0,e); step=lerp(0.42,0,e);
     }
     saber={shR,elR,roll,yaw,pitch,coil,step};
   }
@@ -3737,7 +3744,7 @@ function integrate(c,dt){
       breath:Math.sin(elapsed*1.6), headBob:Math.sin(elapsed*1.1)
     });
     /* apply joint targets with smoothing (snappier during the saber strike) */
-    const base=c.mSlashT>0?34:12;
+    const base=c.mSlashT>0?44:12;
     for(const name in pose.joints){
       const j=J[name]; if(!j) continue;
       const tgt=pose.joints[name];
