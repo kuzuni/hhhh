@@ -360,3 +360,145 @@ function paintStrands(g,arr,base){
   g.restore();
  });
 }
+// 앞머리 가닥 정의 (뿌리 정수리 → 눈썹/눈 덮는 테이퍼)
+var BANGS_C=[ // 중앙: 오른가르마에서 좌하로 스윕, 2가닥은 반투명으로 눈 위
+ {p:[534,258, 470,320, 432,412],w:15},
+ {p:[540,262, 508,330, 486,428],w:13,a:.85},   // 좌눈 위 반투명
+ {p:[546,262, 540,330, 528,432],w:12},
+ {p:[552,260, 566,330, 566,424],w:12,a:.85},   // 우눈 위 반투명
+ {p:[542,256, 486,316, 458,400],w:9},
+ {p:[550,258, 528,340, 508,398],w:7}
+];
+var BANGS_L=[
+ {p:[470,260, 420,310, 398,404],w:14},
+ {p:[452,266, 408,330, 386,442],w:11},
+ {p:[478,262, 438,320, 422,378],w:7}
+];
+var BANGS_R=[
+ {p:[560,256, 606,308, 610,400],w:14},
+ {p:[572,262, 622,330, 620,446],w:11},
+ {p:[556,258, 588,316, 590,372],w:7}
+];
+function paintSideHair(g,s){ // 얼굴 옆 긴 타래 (물리 스윙)
+ var x=500+s*112;
+ strandPath(g,[x-s*6,318, x+s*26,470, x+s*4,668],13,1.4,.6);
+ g.fillStyle=C.hairF; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.4; g.lineJoin='round'; g.stroke();
+ strandPath(g,[x+s*4,330, x+s*34,480, x+s*26,620],7,1,.6);
+ g.fillStyle=C.hair; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
+ g.beginPath(); g.moveTo(x+s*2,360); g.quadraticCurveTo(x+s*22,470,x+s*8,600);
+ g.strokeStyle='rgba(179,166,240,.35)'; g.lineWidth=1.8; g.lineCap='round'; g.stroke();
+}
+// 목: 가늘게 + 턱밑 캐스트 섀도
+function paintNeck(g){
+ g.beginPath();
+ g.moveTo(473,536); g.bezierCurveTo(474,590,470,620,458,648);
+ g.lineTo(542,648); g.bezierCurveTo(530,620,526,590,527,536); g.closePath();
+ g.fillStyle=C.skin; g.fill();
+ g.save(); g.clip();
+ var gr=g.createLinearGradient(0,540,0,600);
+ gr.addColorStop(0,'rgba(178,138,138,.85)'); gr.addColorStop(1,'rgba(216,196,188,.0)');
+ g.fillStyle=gr; g.fillRect(450,536,100,80);
+ g.strokeStyle='rgba(196,168,164,.5)'; g.lineWidth=1.6;
+ g.beginPath(); g.moveTo(508,600); g.quadraticCurveTo(512,622,508,640); g.stroke();
+ g.restore();
+ g.strokeStyle=C.line; g.lineWidth=2.6;
+ g.beginPath(); g.moveTo(473,536); g.bezierCurveTo(474,590,470,620,458,648); g.stroke();
+ g.beginPath(); g.moveTo(527,536); g.bezierCurveTo(526,590,530,620,542,648); g.stroke();
+}
+// 하이칼라 (진홍 안감 + 은 트림)
+function paintCollar(g){
+ [-1,1].forEach(function(s){
+  var x=500;
+  g.beginPath();
+  g.moveTo(x+s*34,656); g.bezierCurveTo(x+s*30,610,x+s*36,576,x+s*48,556);
+  g.bezierCurveTo(x+s*66,560,x+s*88,576,x+s*96,600);
+  g.bezierCurveTo(x+s*100,626,x+s*96,648,x+s*90,668);
+  g.closePath();
+  g.fillStyle=C.coat; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.8; g.lineJoin='round'; g.stroke();
+  // 진홍 안감 (안쪽 가장자리)
+  g.beginPath();
+  g.moveTo(x+s*36,650); g.bezierCurveTo(x+s*33,612,x+s*38,580,x+s*49,562);
+  g.bezierCurveTo(x+s*55,563,x+s*60,566,x+s*64,570);
+  g.bezierCurveTo(x+s*52,590,x+s*46,620,x+s*47,652); g.closePath();
+  g.fillStyle=C.crimson; g.fill();
+  g.beginPath(); g.moveTo(x+s*49,562); g.bezierCurveTo(x+s*42,584,x+s*38,616,x+s*38,648);
+  g.strokeStyle=C.crimsonHi; g.lineWidth=1.6; g.stroke();
+  // 은 트림
+  g.beginPath(); g.moveTo(x+s*48,556); g.bezierCurveTo(x+s*66,560,x+s*88,576,x+s*96,600);
+  g.strokeStyle=C.silver; g.lineWidth=2.2; g.stroke();
+ });
+}
+// 몸통·코트
+function paintBody(g){
+ // 어깨~가슴 실루엣
+ g.beginPath();
+ g.moveTo(500,610);
+ g.bezierCurveTo(432,614,368,628,330,652);
+ g.bezierCurveTo(292,678,272,720,262,790);
+ g.bezierCurveTo(252,880,258,1000,262,1150);
+ g.lineTo(738,1150);
+ g.bezierCurveTo(742,1000,748,880,738,790);
+ g.bezierCurveTo(728,720,708,678,670,652);
+ g.bezierCurveTo(632,628,568,614,500,610);
+ g.closePath();
+ g.fillStyle=C.coat; g.fill(); g.strokeStyle=C.line; g.lineWidth=3.2; g.lineJoin='round'; g.stroke();
+ g.save(); g.clip();
+ // 몸 음영
+ var gr=g.createLinearGradient(260,0,740,0);
+ gr.addColorStop(0,'rgba(14,11,22,0)'); gr.addColorStop(.5,'rgba(14,11,22,.0)'); gr.addColorStop(1,'rgba(14,11,22,.75)');
+ g.fillStyle=gr; g.fillRect(260,600,480,560);
+ // 가슴 중앙 여밈 + 은 클래스프
+ g.strokeStyle='rgba(20,16,28,1)'; g.lineWidth=2.4;
+ g.beginPath(); g.moveTo(500,668); g.lineTo(496,1150); g.stroke();
+ g.beginPath(); g.moveTo(452,700); g.bezierCurveTo(440,800,444,950,450,1150); g.stroke();
+ g.beginPath(); g.moveTo(548,700); g.bezierCurveTo(560,800,556,950,550,1150); g.stroke();
+ var yy; for(yy=730;yy<1120;yy+=95){
+  g.beginPath(); g.moveTo(496,yy); g.lineTo(452,yy+16);
+  g.strokeStyle=C.silverDk; g.lineWidth=3; g.stroke();
+  g.beginPath(); g.arc(496,yy,5,0,TAU); g.fillStyle=C.silver; g.fill();
+  g.beginPath(); g.arc(494.4,yy-1.6,1.8,0,TAU); g.fillStyle='#fff'; g.fill();
+ }
+ // 어깨 재봉선 + 견장 힌트
+ g.strokeStyle='rgba(140,146,160,.5)'; g.lineWidth=2;
+ g.beginPath(); g.moveTo(340,656); g.quadraticCurveTo(368,700,372,760); g.stroke();
+ g.beginPath(); g.moveTo(660,656); g.quadraticCurveTo(632,700,628,760); g.stroke();
+ // 좌측 보라 림라이트 (흑염 환경광)
+ g.strokeStyle='rgba(138,118,232,.5)'; g.lineWidth=4;
+ g.beginPath(); g.moveTo(330,654); g.bezierCurveTo(292,680,272,722,263,792); g.stroke();
+ // 주름
+ g.strokeStyle='rgba(10,8,16,.8)'; g.lineWidth=2;
+ g.beginPath(); g.moveTo(420,760); g.quadraticCurveTo(430,860,414,980); g.stroke();
+ g.beginPath(); g.moveTo(580,760); g.quadraticCurveTo(572,880,588,1000); g.stroke();
+ g.restore();
+}
+// 어깨 너머 검자루 (뷰어 좌측 위)
+function paintSword(g){
+ g.save(); g.translate(300,560); g.rotate(-1.05);
+ // 자루 랩
+ g.beginPath(); g.rect(-9,-160,18,150); g.fillStyle='#241a2e'; g.fill();
+ g.strokeStyle=C.line; g.lineWidth=2.6; g.stroke();
+ var i; g.strokeStyle='rgba(138,118,232,.55)'; g.lineWidth=2;
+ for(i=0;i<7;i++){g.beginPath(); g.moveTo(-9,-150+i*20); g.lineTo(9,-140+i*20); g.stroke();}
+ // 가드 (은)
+ g.beginPath(); g.ellipse(0,-8,26,10,0,0,TAU);
+ var gr=g.createLinearGradient(-26,0,26,0);
+ gr.addColorStop(0,C.silverDk); gr.addColorStop(.4,'#eef0f4'); gr.addColorStop(1,C.silverDk);
+ g.fillStyle=gr; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.4; g.stroke();
+ // 폼멜 + 참
+ g.beginPath(); g.arc(0,-166,11,0,TAU); g.fillStyle=gr; g.fill(); g.stroke();
+ g.beginPath(); g.arc(0,-166,4.5,0,TAU); g.fillStyle=C.ember; g.fill();
+ g.beginPath(); g.moveTo(8,-160); g.quadraticCurveTo(22,-150,24,-134);
+ g.strokeStyle=C.silver; g.lineWidth=1.8; g.stroke();
+ g.beginPath(); g.arc(25,-128,4,0,TAU); g.fillStyle=C.hairRim; g.fill();
+ g.restore();
+}
+// 이어링 (뷰어 우측 귀 아래 은사슬 + 자수정)
+function paintEarring(g){
+ var x=612,y=458;
+ g.strokeStyle=C.silver; g.lineWidth=1.8;
+ g.beginPath(); g.moveTo(x,y); g.lineTo(x+1,y+14); g.stroke();
+ g.beginPath(); g.arc(x+1,y+7,2.2,0,TAU); g.strokeStyle='#fff'; g.lineWidth=1; g.stroke();
+ g.beginPath(); g.moveTo(x+1,y+14); g.lineTo(x+5,y+27); g.lineTo(x-3,y+27); g.closePath();
+ g.fillStyle=C.hairRim; g.fill(); g.strokeStyle=C.line; g.lineWidth=1.4; g.stroke();
+ g.beginPath(); g.arc(x,y+22,1.4,0,TAU); g.fillStyle='#e6dcff'; g.fill();
+}
