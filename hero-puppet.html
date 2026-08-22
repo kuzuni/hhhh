@@ -171,7 +171,7 @@ function bakeEye(name,dir,ew,state){
     c.restore();
     // 위 눈꺼풀: 굵은 라인 + 눈꼬리 속눈썹 뭉침
     c.strokeStyle=PAL.outline;c.lineCap='round';
-    c.lineWidth=2.6;
+    c.lineWidth=2.2;
     c.beginPath();c.moveTo(ic,.8);c.quadraticCurveTo(ic*.4,lidY-1.6,oc*.4,lidY-1.2);c.stroke();
     c.lineWidth=3.1;
     c.beginPath();c.moveTo(oc*.35,lidY-1.25);c.quadraticCurveTo(oc*.8,lidY,oc,-1);c.stroke();
@@ -1148,6 +1148,7 @@ function montage(){
     opt=opt||{};
     cell(x,y,w,h,label,(cx,cy,cw,ch)=>{
       const po=pose(anim,t);
+      if(anim==='lunge'&&t===.63)errBox.textContent+='DBG fx='+JSON.stringify(po.fx)+' optfx='+JSON.stringify(opt.fx)+'\n';
       const ps=opt.ps||Math.min(ch*.85/730,cw/430);
       const px=cx+cw/2-((po.over.root&&po.over.root.x)||0)*ps*.5+(opt.dx||0);
       const py=cy+ch-34-FLOOR*ps+(opt.dy||0);

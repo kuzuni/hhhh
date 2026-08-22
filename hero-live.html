@@ -270,68 +270,63 @@ function paintMouth(g,idx){
 // 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스 (source-atop 셰이딩)
 function paintBackHair(g){
  g.beginPath();
- g.moveTo(500,206);
- g.bezierCurveTo(400,208,344,266,338,352);
- g.bezierCurveTo(332,420,344,470,332,540);
- g.bezierCurveTo(322,610,294,660,276,726);   // 좌측 흘러내림
- g.quadraticCurveTo(298,712,312,688);
- g.quadraticCurveTo(314,748,300,800);
- g.quadraticCurveTo(330,776,346,730);
- g.quadraticCurveTo(356,800,346,862);        // 좌 최장 타래
- g.quadraticCurveTo(382,824,392,760);
- g.quadraticCurveTo(410,800,408,850);
- g.quadraticCurveTo(434,806,436,720);
- g.bezierCurveTo(442,640,432,600,440,560);
- g.lineTo(560,560);
- g.bezierCurveTo(568,600,558,640,564,720);   // 우측 대칭
- g.quadraticCurveTo(566,806,592,850);
- g.quadraticCurveTo(590,800,608,760);
- g.quadraticCurveTo(618,824,654,862);
- g.quadraticCurveTo(644,800,654,730);
- g.quadraticCurveTo(670,776,700,800);
- g.quadraticCurveTo(686,748,688,688);
- g.quadraticCurveTo(702,712,724,726);
- g.bezierCurveTo(706,660,678,610,668,540);
- g.bezierCurveTo(656,470,668,420,662,352);
- g.bezierCurveTo(656,266,600,208,500,206);
+ g.moveTo(500,232);
+ g.bezierCurveTo(426,236,372,286,362,352);   // 좌상 (하이탑 돔 뒤에 숨음)
+ g.bezierCurveTo(354,412,358,470,352,520);   // 좌측면 (얼굴 가까이)
+ g.bezierCurveTo(348,572,338,624,320,672);   // 어깨 뒤로
+ g.quadraticCurveTo(342,658,352,628);
+ g.quadraticCurveTo(354,706,338,758);        // 스파이크 타래 1
+ g.quadraticCurveTo(366,730,376,688);
+ g.quadraticCurveTo(384,766,374,824);        // 최장 타래
+ g.quadraticCurveTo(400,782,404,716);
+ g.bezierCurveTo(412,656,408,600,412,556);   // 안쪽 복귀
+ g.lineTo(588,556);
+ g.bezierCurveTo(592,600,588,656,596,716);   // 우측 대칭
+ g.quadraticCurveTo(600,782,626,824);
+ g.quadraticCurveTo(616,766,624,688);
+ g.quadraticCurveTo(634,730,662,758);
+ g.quadraticCurveTo(646,706,648,628);
+ g.quadraticCurveTo(658,658,680,672);
+ g.bezierCurveTo(662,624,652,572,648,520);
+ g.bezierCurveTo(642,470,646,412,638,352);
+ g.bezierCurveTo(628,286,574,236,500,232);
  g.closePath();
  g.fillStyle=C.hair; g.fill();
  g.strokeStyle=C.line; g.lineWidth=3; g.lineJoin='round'; g.stroke();
- // 흐름 스트로크
  g.save(); g.globalCompositeOperation='source-atop';
+ // 흐름 스트로크
  g.strokeStyle='rgba(16,12,20,.75)'; g.lineWidth=2.2; g.lineCap='round';
- [[364,290,344,470,308,668],[392,272,378,470,346,710],[420,300,414,500,400,700],
-  [636,290,656,470,692,668],[608,272,622,470,654,710],[580,300,586,500,600,700]].forEach(function(p){
+ [[382,300,362,470,336,660],[404,280,392,470,368,720],[424,310,420,500,408,660],
+  [618,300,638,470,664,660],[596,280,608,470,632,720],[576,310,580,500,592,660]].forEach(function(p){
   g.beginPath(); g.moveTo(p[0],p[1]); g.quadraticCurveTo(p[2],p[3],p[4],p[5]); g.stroke();});
- // 안쪽(목덜미) 어둡게 + 하단 어둡게
- var gr=g.createLinearGradient(0,340,0,880);
+ // 하단·안쪽 어둡게
+ var gr=g.createLinearGradient(0,340,0,830);
  gr.addColorStop(0,'rgba(20,16,25,0)'); gr.addColorStop(1,'rgba(12,9,16,.85)');
- g.fillStyle=gr; g.fillRect(230,200,540,700);
- var gc=g.createRadialGradient(500,430,120,500,470,300);
+ g.fillStyle=gr; g.fillRect(300,220,400,620);
+ var gc=g.createRadialGradient(500,430,110,500,470,290);
  gc.addColorStop(0,'rgba(12,9,16,.8)'); gc.addColorStop(1,'rgba(12,9,16,0)');
- g.fillStyle=gc; g.fillRect(330,330,340,420);
- // 보라 림 시어(양측)
+ g.fillStyle=gc; g.fillRect(340,320,320,420);
+ // 보라 림 시어 (양측)
  g.strokeStyle='rgba(138,118,232,.5)'; g.lineWidth=5;
- g.beginPath(); g.moveTo(348,320); g.quadraticCurveTo(334,430,322,540); g.stroke();
- g.beginPath(); g.moveTo(652,320); g.quadraticCurveTo(666,430,678,540); g.stroke();
- g.strokeStyle='rgba(179,166,240,.28)'; g.lineWidth=2.4;
- g.beginPath(); g.moveTo(356,330); g.quadraticCurveTo(343,430,332,530); g.stroke();
- g.beginPath(); g.moveTo(644,330); g.quadraticCurveTo(657,430,668,530); g.stroke();
+ g.beginPath(); g.moveTo(366,330); g.quadraticCurveTo(354,440,348,540); g.stroke();
+ g.beginPath(); g.moveTo(634,330); g.quadraticCurveTo(646,440,652,540); g.stroke();
+ g.strokeStyle='rgba(179,166,240,.3)'; g.lineWidth=2.4;
+ g.beginPath(); g.moveTo(374,340); g.quadraticCurveTo(363,440,357,530); g.stroke();
+ g.beginPath(); g.moveTo(626,340); g.quadraticCurveTo(637,440,643,530); g.stroke();
  g.restore();
 }
-// 정수리 돔 + 안쪽 지그재그 림라이트 밴드
 function paintHairTop(g){
  function dome(){
   g.beginPath();
-  g.moveTo(390,372);
-  g.bezierCurveTo(378,296,416,234,500,228);
-  g.bezierCurveTo(584,234,622,296,610,372);
-  g.bezierCurveTo(596,336,566,318,544,320);
-  g.quadraticCurveTo(552,334,546,352);
-  g.bezierCurveTo(528,322,492,312,470,318);
+  g.moveTo(384,376);
+  g.bezierCurveTo(370,292,414,222,500,216);
+  g.bezierCurveTo(586,222,630,292,616,376);
+  g.bezierCurveTo(600,336,568,316,546,318);
+  g.quadraticCurveTo(554,334,548,352);
+  g.bezierCurveTo(528,320,492,310,470,316);
   g.quadraticCurveTo(478,334,472,352);
-  g.bezierCurveTo(452,326,418,326,406,340);
-  g.quadraticCurveTo(410,354,402,372);
+  g.bezierCurveTo(450,324,414,324,402,340);
+  g.quadraticCurveTo(408,356,396,376);
   g.closePath();
  }
  dome(); g.fillStyle=C.hairF; g.fill();
@@ -529,7 +524,7 @@ function paintEarring(g){
 // ==== 3. 레이어 · 메시 리그 ====
 // depth: 요/피치 시차 계수(음수=뒤). headW: 머리 추종 가중. sway: 헤어 스윙 진폭.
 var LAYERS=[
- {n:'backHair', bb:[220,186,560,700], grid:[7,8], depth:-.42, headW:1, rollW:.75, sway:26, paint:paintBackHair},
+ {n:'backHair', bb:[304,224,392,610], grid:[7,8], depth:-.42, headW:1, rollW:.75, sway:26, paint:paintBackHair},
  {n:'sword',    bb:[128,450,215,215], grid:[4,4], depth:0, headW:0, rollW:.04, breathW:.8, breathTaper:1, paint:paintSword},
  {n:'body',     bb:[240,600,520,552], grid:[7,6], depth:.05, headW:.12, rollW:.08, breathW:1, breathTaper:1, paint:paintBody},
  {n:'neck',     bb:[440,520,120,140], grid:[3,4], depth:.42, headW:1, taperV:1, rollW:.5, paint:paintNeck},
@@ -547,10 +542,10 @@ var LAYERS=[
  {n:'earring',  bb:[596,446,42,52], grid:[2,3], depth:.5, headW:1, rollW:1, kind:'ear', paint:paintEarring},
  {n:'sideL',    bb:[344,300,104,384], grid:[3,8], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,-1)}},
  {n:'sideR',    bb:[552,300,104,384], grid:[3,8], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,1)}},
- {n:'hairTop',  bb:[368,216,264,168], grid:[6,3], depth:.8, headW:1, rollW:1, sway:6, paint:paintHairTop},
- {n:'bangsL',   bb:[364,236,132,224], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_L)}},
- {n:'bangsR',   bb:[532,236,116,224], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_R)}},
- {n:'bangsC',   bb:[404,236,196,214], grid:[5,6], depth:1, headW:1, rollW:1, sway:20, paint:function(g){paintStrands(g,BANGS_C)}}
+ {n:'hairTop',  bb:[364,208,272,178], grid:[6,3], depth:.8, headW:1, rollW:1, sway:6, paint:paintHairTop},
+ {n:'bangsL',   bb:[364,212,132,248], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_L)}},
+ {n:'bangsR',   bb:[532,212,116,248], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_R)}},
+ {n:'bangsC',   bb:[404,208,196,242], grid:[5,6], depth:1, headW:1, rollW:1, sway:20, paint:function(g){paintStrands(g,BANGS_C)}}
 ];
 var TS=2, PAD=14; // 텍스처 해상도 배율·패딩
 var EXPAND=/[?&]ex0/.test(location.search)?0:2.6; // 삼각 팽창량 px (실금 방지)
@@ -712,7 +707,7 @@ Spring.prototype.to=function(target,dt){
  this.x+=this.v*dt; return this.x;
 };
 var EXPRS=[
- {name:'기본', m:0, lidL:.13,lidR:.13, blL:0,blR:0, btL:0,btR:0},
+ {name:'기본', m:0, lidL:.09,lidR:.09, blL:0,blR:0, btL:0,btR:0},
  {name:'미소', m:1, lidL:.34,lidR:.34, blL:.18,blR:.18, btL:-.25,btR:-.25},
  {name:'진지', m:2, lidL:.1,lidR:.1, blL:-.1,blR:-.1, btL:1,btR:1},
  {name:'놀람', m:3, lidL:-.14,lidR:-.14, blL:1,blR:1, btL:-.3,btR:-.3},
@@ -786,7 +781,7 @@ function stepAnim(dt,w,h,manual){
   mouthA:a.mouthA, mouthB:a.mouthB, mouthFade:a.mouthFade};
 }
 function defaultP(o){
- var P={yaw:0,pitch:0,roll:0,eyeX:0,eyeY:0,blinkL:.13,blinkR:.13,breath:.45,
+ var P={yaw:0,pitch:0,roll:0,eyeX:0,eyeY:0,blinkL:.09,blinkR:.09,breath:.45,
   sway:3,swayTip:2,earAng:.04,browLift:{L:0,R:0},browTilt:{L:0,R:0},
   mouthA:0,mouthB:0,mouthFade:1},k;
  for(k in o)P[k]=o[k];
@@ -825,7 +820,7 @@ function drawWisp(ctx,x,y,r,ang,a,col){
 var WISPS=[],EMBERS=[];
 (function(){
  var R=rng(777),i;
- for(i=0;i<13;i++)WISPS.push({ph:R()*TAU,rad:190+R()*200,sp:.14+R()*.2,r:15+R()*24,vy:.35+R()*.4,front:R()<.35});
+ for(i=0;i<13;i++)WISPS.push({ph:R()*TAU,rad:190+R()*200,sp:.14+R()*.2,r:10+R()*16,vy:.35+R()*.4,front:R()<.35});
  for(i=0;i<40;i++)EMBERS.push({x:R(),y:R(),sp:.02+R()*.05,r:.8+R()*1.8,tw:R()*TAU});
 })();
 function drawWisps(ctx,t,view,front){
@@ -985,8 +980,8 @@ function drawMontage(){
  // Row C: 뷰티샷 / 클로즈업 / 와이어프레임 / 극단 변형
  var cw4=410;
  cell(8,924,cw4,568,'버스트 뷰티샷',defaultP({yaw:8,roll:2.5,eyeX:.25,sway:5}),500,560,1080,{wisps:true});
- cell(8+(cw4+gap),924,cw4,568,'얼굴 클로즈업 (머리 세로 530px)',
-  defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,398,378);
+ cell(8+(cw4+gap),924,cw4,568,'얼굴 클로즈업 (머리 세로 527px)',
+  defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,390,380);
  cell(8+2*(cw4+gap),924,cw4,568,'리깅: 삼각 메시 와이어프레임',
   defaultP({yaw:12,sway:6}),500,430,640,{mesh:true});
  cell(8+3*(cw4+gap),924,cw4,568,'극단 변형: 요+30 피치+16 롤+9 헤어스윙',
