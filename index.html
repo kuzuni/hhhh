@@ -472,29 +472,35 @@ function mechaPose(o){
   const slashK=(o.state==='slash')?o.slashK:-1;
   const runBlend=clamp((gait-0.55)/0.45);   /* walk -> run as speed rises */
 
-  /* ---- saber swing: samurai step-through cut (kesa-giri) ---- */
+  /* ---- saber swing: samurai kesa-giri (diagonal overhead cut) ----
+     roll tilts the blade off vertical so the cut travels shoulder->opposite hip;
+     the raise is monotonic to a high jodan, the strike is a fast committed
+     extension held at contact, then a small overshoot settles to guard. */
   let saber=null;
   if(slashK>=0){
     const k=slashK;
-    let shR,elR,yaw,pitch,coil,step;
-    if(k<0.2){                     /* jodan-no-kamae: raise overhead, weight back, gather */
-      const e=easeIn(k/0.2);
-      shR=lerp(-0.32,-2.7,e); elR=lerp(0,-2.0,e); yaw=lerp(0,-0.4,e);
-      pitch=lerp(0,-0.14,e); coil=lerp(0,0.14,e); step=lerp(0,-0.1,e);
-    }else if(k<0.32){              /* kiru: step in, twist hips, drop the cut, extend */
-      const e=easeOut((k-0.2)/0.12);
-      shR=lerp(-2.7,-0.25,e); elR=lerp(-2.0,-0.02,e); yaw=lerp(-0.4,0.5,e);
-      pitch=lerp(-0.14,0.42,e); coil=lerp(0.14,0.52,e); step=lerp(-0.1,0.42,e);
-    }else if(k<0.44){             /* follow-through low across the body */
-      const e=easeOut((k-0.32)/0.12);
-      shR=lerp(-0.25,0.5,e); elR=lerp(-0.02,-0.18,e); yaw=lerp(0.5,0.32,e);
-      pitch=lerp(0.42,0.16,e); coil=lerp(0.52,0.12,e); step=lerp(0.42,0.28,e);
-    }else{                        /* zanshin: recover to guard */
-      const e=easeInOut((k-0.44)/0.16);
-      shR=lerp(0.5,-0.32,e); elR=lerp(-0.18,0,e); yaw=lerp(0.32,0,e);
-      pitch=lerp(0.16,0,e); coil=lerp(0.12,0,e); step=lerp(0.28,0,e);
+    let shR,elR,roll,yaw,pitch,coil,step;
+    if(k<0.26){                    /* jodan-no-kamae: raise HIGH over the right shoulder, coil back */
+      const e=easeInOut(k/0.26);
+      shR=lerp(-0.32,-2.35,e);     /* grip up above the head */
+      elR=lerp(0,-1.7,e);          /* elbow folds ~90deg, blade lies over the shoulder */
+      roll=lerp(0,0.55,e);         /* cocked to the right for a diagonal */
+      yaw=lerp(0,-0.18,e); pitch=lerp(0,-0.13,e); coil=lerp(0,0.16,e); step=lerp(0,-0.08,e);
+    }else if(k<0.36){              /* kiru: fast diagonal downstroke, arm EXTENDS forward */
+      const e=easeOut((k-0.26)/0.10);
+      shR=lerp(-2.35,0.35,e);      /* whip down past the front */
+      elR=lerp(-1.7,-0.04,e);      /* elbow extends ~straight -> reach */
+      roll=lerp(0.55,-0.55,e);     /* sweep to the opposite (left) hip = diagonal */
+      yaw=lerp(-0.18,0.4,e); pitch=lerp(-0.13,0.42,e); coil=lerp(0.16,0.5,e); step=lerp(-0.08,0.42,e);
+    }else if(k<0.46){             /* contact hold: extended diagonal finish, low across body */
+      shR=0.4; elR=-0.06; roll=-0.6; yaw=0.4; pitch=0.4; coil=0.46; step=0.4;
+    }else{                        /* zanshin: small overshoot then settle to guard */
+      const e=easeInOut((k-0.46)/0.14);
+      const os=Math.sin(Math.min(1,(k-0.46)/0.14)*PI)*0.12;
+      shR=lerp(0.4,-0.32,e)-os; elR=lerp(-0.06,0,e); roll=lerp(-0.6,0,e);
+      yaw=lerp(0.4,0,e); pitch=lerp(0.4,0,e); coil=lerp(0.46,0,e); step=lerp(0.4,0,e);
     }
-    saber={shR,elR,yaw,pitch,coil,step};
+    saber={shR,elR,roll,yaw,pitch,coil,step};
   }
 
   /* ---- legs: retargeted human gait (right leg leads, left is phase+0.5) ---- */
@@ -532,11 +538,11 @@ function mechaPose(o){
   /* subtle upper-body counter-rotation for walk swagger */
   torsoYaw+=Math.sin(ph)*0.05*gait;
   let shR=-0.32+tbl(RD.walk.sh,phase)*0.35*gait*(1-runBlend);   /* rifle arm barely swings */
-  let elR=0;
+  let elR=0, shRoll=0;
   if(o.state==='aim'){ shR=-1.32; elR=-0.15; }
-  if(saber){ shR=saber.shR; elR=saber.elR; torsoYaw+=saber.yaw; torsoPitch+=saber.pitch; }
+  if(saber){ shR=saber.shR; elR=saber.elR; shRoll=saber.roll; torsoYaw+=saber.yaw; torsoPitch+=saber.pitch; }
   if(o.state==='victory') shR=-2.6;
-  J.shoulderR=[shR,0,0]; J.elbowR=[elR,0,0];
+  J.shoulderR=[shR,0,shRoll]; J.elbowR=[elR,0,0];
   const shL=-0.12+tbl(RD.walk.sh,phase+0.5)*0.4*gait;           /* shield arm swings a bit more */
   J.shoulderL=[shL,0,0];
   J.torso=[torsoPitch, torsoYaw, 0];
