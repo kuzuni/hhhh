@@ -124,12 +124,15 @@ makePart('head',-46,-112,52,6,5,c=>{
   path(c,[-36,-56, [-44,-58,-46,-46,-40,-40], [-37,-37,-35,-42,-36,-50]]);
   c.closePath();c.fillStyle=PAL.skin;c.fill();c.lineWidth=1.3;c.stroke();
   path(c,[-40,-52,[-42,-48,-39,-44,-38,-46]]);c.lineWidth=.8;c.strokeStyle=PAL.skinSh;c.stroke();
-  // 턱 음영: 턱 끝 아래 얇은 한 줄만 (팔자/뭉갬 음영 금지)
-  c.strokeStyle='rgba(214,160,125,.30)';c.lineWidth=1.3;
-  c.beginPath();c.moveTo(1,-9.5);c.quadraticCurveTo(6,-7.6,10.5,-10);c.stroke();
-  // 혈색: 뺨/코끝
-  c.fillStyle=PAL.blush;
-  ell(c,-20,-30,7,4,-.2);c.fill();ell(c,32,-30,5.5,3.5,.2);c.fill();
+  // 턱 음영: 아주 옅은 짧은 단일 곡선 (alpha 0.12 — 이중턱/팔자 인상 금지)
+  c.strokeStyle='rgba(214,160,125,.12)';c.lineWidth=1.1;
+  c.beginPath();c.moveTo(3.5,-8.8);c.quadraticCurveTo(6.5,-7.9,9.5,-9.2);c.stroke();
+  // 혈색: 뺨 — radial gradient (가장자리 투명, 채도 낮춤 — 스티커 방지)
+  for(const[bx2,by2,br]of[[-20,-30,9],[28,-29,7]]){
+    const bgr=c.createRadialGradient(bx2,by2,0,bx2,by2,br);
+    bgr.addColorStop(0,'rgba(243,150,135,.26)');bgr.addColorStop(.65,'rgba(243,150,135,.12)');bgr.addColorStop(1,'rgba(243,150,135,0)');
+    c.fillStyle=bgr;ell(c,bx2,by2,br,br*.62,-.15);c.fill();
+  }
   // 코: 짧은 ㄴ자 한 획 + 점 하이라이트
   c.strokeStyle='rgba(150,95,70,.9)';c.lineWidth=1.4;
   c.beginPath();c.moveTo(23.4,-33.5);c.lineTo(24.6,-29.8);c.lineTo(22.6,-28.9);c.stroke();
@@ -193,8 +196,8 @@ for(const[st,sf]of[['open',''],['half','_h'],['closed','_c']]){
 // ---- 2c. 눈썹 ----
 function bakeBrow(name,dir){
   makePart(name,-17,-6,17,6,5,c=>{
-    // 얇고 긴 곡선 1획 — 머리색보다 한 톤 어두운 브라운
-    c.strokeStyle='#a3793d';c.lineWidth=1.45;c.lineCap='round';
+    // 얇고 긴 곡선 1획 — 머리색보다 한 톤 어두운 다크브라운
+    c.strokeStyle='#8f6a34';c.lineWidth=1.3;c.lineCap='round';
     c.beginPath();c.moveTo(-dir*14,1.5);
     c.quadraticCurveTo(0,-3.4,dir*14.5,-.3);c.stroke();
   });
