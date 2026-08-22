@@ -1251,8 +1251,8 @@ function drawMontage(){
   exprP(2,{yaw:8,pitch:2,roll:5,sway:-34,swayTip:-30,eyeX:.5,lean:34}),515,430,640,
   {noSword:true,fx:function(v){
    fxSmear(ctx,v,505,690,170,320,-2.6,-.55,.16);
-   fxBlade(ctx,v,516,634,-1.75,225,{a:.28,glow:.9});  // 잔상 1
-   fxBlade(ctx,v,592,612,-.95,230,{a:.5,glow:.9});    // 잔상 2
+   fxBlade(ctx,v,468,652,-2.1,225,{a:.26,glow:.9});   // 잔상 1 (스윙 궤적 후미)
+   fxBlade(ctx,v,586,622,-1,230,{a:.5,glow:.9});      // 잔상 2
    fxArm(ctx,v,[496,682, 578,690, 634,610],30,15);
    fxBlade(ctx,v,648,600,-.42,235,{glow:1});
   }});
@@ -1290,12 +1290,12 @@ function drawMontage(){
   }});
  cell(8+(cw4+gap),cy4,cw4,ch4,'얼굴 클로즈업 (머리 세로 528px)',
   defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,398,356);
- cell(8+2*(cw4+gap),cy4,cw4,ch4,'리깅: 요+30° 피치+16° · 시안=얼굴 마젠타=머리 앰버=의상 (회색=중립)',
+ cell(8+2*(cw4+gap),cy4,cw4,ch4,'리깅 메시: 시안=얼굴 · 마젠타=머리 · 앰버=의상',
   defaultP({yaw:30,pitch:16,sway:14,eyeX:.8}),500,430,640,{mesh:true,meshNeutral:true});
  cell(8+3*(cw4+gap),cy4,cw4,ch4,'극단 변형: 요+36 피치+20 롤+16 헤어스윙 MAX · 잔상 고스트',
-  exprP(2,{yaw:36,pitch:20,roll:16,sway:74,swayTip:66,eyeX:1}),520,420,620,
+  exprP(2,{yaw:36,pitch:20,roll:16,sway:74,swayTip:66,eyeX:1}),578,420,620,
   {ghost:[-18,6,.26],fx:function(v,cx0,cy0,cw0,ch0){
-   fxSpeed(ctx,cx0,cy0,cw0,ch0,520*v.s+v.ox,300*v.s+v.oy,16,.13);
+   fxSpeed(ctx,cx0,cy0,cw0,ch0,578*v.s+v.ox,300*v.s+v.oy,16,.13);
   }});
  // ---- 푸터 캡션 밴드 (셀 라벨과 분리 · 고대비 · 하단 패딩 확보) ----
  ctx.fillStyle='#0b0912'; ctx.fillRect(0,1464,1680,36);
