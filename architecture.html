@@ -45,6 +45,10 @@
   .node.root{border-color:rgba(232,196,106,.5);box-shadow:0 0 24px -8px rgba(232,196,106,.35)}
   .down{width:1px;height:22px;background:var(--line)}
   .fan{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;margin-top:0;max-width:640px;margin-left:auto;margin-right:auto}
+  .grpline{margin:20px auto 10px;font-size:11px;letter-spacing:.22em;color:var(--faint);text-align:center}
+  .plain .node::before{display:none}
+  .t-chibi{color:#ff8aa0;border-color:rgba(255,138,160,.45)}
+  .t-mon{color:#ff9a3c;border-color:rgba(255,154,60,.45)}
   .fan .node{height:100%}
   .fanwrap{position:relative;width:100%;padding-top:22px}
   .fanwrap::before{content:"";position:absolute;top:0;left:16.6%;right:16.6%;height:1px;background:var(--line)}
@@ -130,9 +134,22 @@
         <div class="node"><b>hero-puppet.html</b><small>루시엘 · 황금 사자의 왕자</small><br><span class="tag t-puppet">컷아웃 리깅 · 퍼펫</span></div>
       </div>
     </div>
+    <div class="grpline">CHIBI — 리코 · 아바타 ×2 (해적 ↔ 마법사)</div>
+    <div class="fan plain">
+      <div class="node"><b>chibi-bone.html</b><small>리코 ver.A · 홍련의 꼬마 모험가</small><br><span class="tag t-chibi">절차적 스켈레톤 · 스쿼시</span></div>
+      <div class="node"><b>chibi-puppet.html</b><small>리코 ver.B · 홍련의 꼬마 모험가</small><br><span class="tag t-chibi">컷아웃 퍼펫 · 아틀라스 스왑</span></div>
+    </div>
+    <div class="grpline">MONSTER — 아바타 ×2 · 죽으면 음식 조각 (잔인함 0)</div>
+    <div class="fan plain">
+      <div class="node"><b>boar-bone.html</b><small>투기 · 뚱멧돼지 (기본↔불속성)</small><br><span class="tag t-mon">절차적 스켈레톤</span></div>
+      <div class="node"><b>boar-puppet.html</b><small>투기 · 뚱멧돼지 (기본↔불속성)</small><br><span class="tag t-mon">컷아웃 퍼펫</span></div>
+      <div class="node"><b>pump-bone.html</b><small>펌킨조 · 이빨호박 (기본↔악마)</small><br><span class="tag t-mon">절차적 스켈레톤</span></div>
+      <div class="node"><b>pump-puppet.html</b><small>펌킨조 · 이빨호박 (기본↔악마)</small><br><span class="tag t-mon">컷아웃 퍼펫</span></div>
+    </div>
     <div class="etc">
       <div class="node">index.html — 바퀴성 대전</div>
       <div class="node">spiderbot.html — ORB WEAVER</div>
+      <div class="node">hero-live.html — 카이렌 (미채용 · 숨은 페이지)</div>
       <div class="node">architecture.html — 이 문서</div>
     </div>
   </div>
@@ -144,13 +161,13 @@
     <div class="step"><div class="ic">📜</div><div><b>스펙 — 아트 디렉션 계약서</b>
       <p>공통 스펙(미소년 얼굴 공식·비율·선·셰이딩·애니 원칙·몽타주 규격) + 캐릭터별 스펙(컨셉·팔레트·기법 정의·애니 목록). 빌더와 심사위원이 같은 문서를 본다.</p></div></div>
     <div class="conn"></div>
-    <div class="step"><div class="ic">🎨</div><div><b>빌더 ×3 — 병렬 제작</b>
-      <p>캐릭터당 1명. 단일 HTML을 작성한 뒤 <b>자가검증 루프 최소 4회</b>:
-      <code>bash tools/shot2.sh page.html?montage out.png</code> → 헤드리스 Edge 렌더 → 에이전트가 PNG를 <b>눈으로 보고</b> 결함 목록 → 수정 → 재촬영.</p>
+    <div class="step"><div class="ic">🎨</div><div><b>빌더 병렬 — 트랙 3개 동시 가동</b>
+      <p>페이지당 빌더 1명. 단일 HTML을 작성한 뒤 <b>자가검증 루프 최소 4회</b>:
+      <code>bash tools/shot2.sh page.html?montage out.png</code> → 헤드리스 Edge 렌더 → 에이전트가 PNG를 <b>눈으로 보고</b> 결함 목록 → 수정 → 재촬영. 트랙별 워크플로우가 서로 독립적으로 병렬 진행.</p>
       <div class="par">
-        <div class="mini"><b>blade 빌더</b>본·IK를 코드로</div>
-        <div class="mini"><b>puppet 빌더</b>부품 아틀라스+씬그래프</div>
-        <div class="mini"><b>live 빌더</b>메시+가중치 변형</div>
+        <div class="mini"><b>용사 트랙 ×2</b>아스렐·루시엘</div>
+        <div class="mini"><b>치비 트랙 ×2</b>리코 + 아바타 시스템</div>
+        <div class="mini"><b>몬스터 트랙 ×4</b>투기·펌킨조 + 음식조각 죽음</div>
       </div></div></div>
     <div class="conn"></div>
     <div class="step"><div class="ic">⚖️</div><div><b>심사 패널 ×3 — 렌즈 분리</b>
@@ -267,6 +284,8 @@
     <div class="pc"><b>에러 가시화</b><code>window.onerror</code>를 화면 위 빨간 텍스트로 — 헤드리스 스크린샷에서도 버그가 "보인다".</div>
     <div class="pc"><b>포즈 = 순수함수</b>시간 → 포즈 계산을 부작용 없이 분리. 실시간 루프와 몽타주가 같은 함수를 공유해 검증 대상과 실물이 어긋나지 않는다.</div>
     <div class="pc"><b>애니메이션 문법</b>선형 보간 금지, 예비동작→급가속→임팩트 홀드→회수, 머리카락·망토는 지연 추종(오버랩), 발 미끄러짐 금지.</div>
+    <div class="pc"><b>아바타 = 스킨, 리그 = 하나</b>몸·뼈·애니메이션은 공유하고 의상·무기 세트만 교체. 리코(해적↔마법사)·투기(기본↔불속성)·펌킨조(기본↔악마)가 전부 이 구조 — 유니티 Sprite Library로 그대로 이식되는 설계.</div>
+    <div class="pc"><b>무해한 죽음 연출</b>몬스터는 쓰러지면 뿅! 하고 음식 조각(햄·스테이크 / 호박 웨지)으로 치환. 조각에 신체 요소 금지, 피 금지 — 잔인함 0%, 맛있음 100%가 심사 기준.</div>
   </div>
 
   <footer>
