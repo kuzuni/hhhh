@@ -1076,7 +1076,7 @@ function fxArm(c2,v,p,w0,w1){ // 코트 소매 팔 (테이퍼 스트랜드)
   var e=strandEnd(p);
   c2.beginPath(); c2.moveTo(lerp(p[0],p[2],.2),lerp(p[1],p[3],.2));
   c2.quadraticCurveTo(p[2],p[3],lerp(p[2],e[0],.7),lerp(p[3],e[1],.7));
-  c2.strokeStyle='rgba(138,118,232,.35)'; c2.lineWidth=2.4; c2.lineCap='round'; c2.stroke();
+  c2.strokeStyle='rgba(150,132,240,.55)'; c2.lineWidth=2.6; c2.lineCap='round'; c2.stroke();
  });
 }
 function fxBlade(c2,v,cx,cy,ang,len,o){ // 손에 쥔 마검: 칼날·가드·자루·장갑 손
@@ -1227,70 +1227,76 @@ function drawMontage(){
   exprP(0,{pitch:20,eyeY:-1,sway:4}),500,430,640);
  // ---- Row B: 발도 액션 시퀀스 (시간축 키프레임 6컷) ----
  var by=466,bh=450;
- cell(x0+0*(cw6+gap),by,cw6,bh,'① 발도 준비 · 0.00s',
-  exprP(2,{yaw:-16,pitch:-5,roll:-7,sway:12,eyeX:-.7,eyeY:.2}),460,430,640,
+ cell(x0+0*(cw6+gap),by,cw6,bh,'① 발도 준비 (안티시페이션) · 0.00s',
+  exprP(2,{yaw:-16,pitch:-5,roll:-7,sway:16,eyeX:-.7,eyeY:.2,lean:-20}),450,430,640,
   {fx:function(v){
-   fxArm(ctx,v,[452,684, 372,702, 308,588],30,15);
+   fxArm(ctx,v,[442,688, 366,702, 289,588],30,15);
    withView(ctx,v,function(){ // 힐트를 쥐는 장갑 손
-    ctx.beginPath(); ctx.ellipse(296,576,13,16,-.7,0,TAU); ctx.fillStyle='#211a30'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(277,577,13,16,-.7,0,TAU); ctx.fillStyle='#211a30'; ctx.fill();
     ctx.strokeStyle=C.line; ctx.lineWidth=2; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(288,566); ctx.quadraticCurveTo(297,561,305,569);
+    ctx.beginPath(); ctx.moveTo(269,567); ctx.quadraticCurveTo(278,562,286,570);
     ctx.strokeStyle='rgba(10,8,16,.8)'; ctx.lineWidth=1.4; ctx.stroke();
    });
-   fxFlame(ctx,v,272,552,13,11);
+   fxFlame(ctx,v,256,552,12,11);
   }});
  cell(x0+1*(cw6+gap),by,cw6,bh,'② 발도 (칼 끌기) · 0.12s',
-  exprP(2,{yaw:-8,pitch:-2,roll:-4,sway:6,eyeX:-.3}),480,430,640,
+  exprP(2,{yaw:-8,pitch:-2,roll:-4,sway:8,eyeX:-.3,lean:-8}),475,430,640,
   {noSword:true,fx:function(v){
-   fxSmear(ctx,v,430,660,150,260,-2.5,-1.85,.1);
-   fxArm(ctx,v,[452,678, 434,702, 416,662],28,15);
-   fxBlade(ctx,v,398,632,-.5,235,{glow:.55});
-   fxFlame(ctx,v,340,470,11,23);
+   fxSmear(ctx,v,426,662,150,260,-2.5,-1.85,.1);
+   fxArm(ctx,v,[448,678, 430,702, 411,660],28,15);
+   fxBlade(ctx,v,394,630,-.5,235,{glow:.55});
+   fxFlame(ctx,v,333,468,11,23);
   }});
- cell(x0+2*(cw6+gap),by,cw6,bh,'③ 스윙 스미어 · 0.18s',
-  exprP(2,{yaw:6,pitch:2,roll:3,sway:-26,swayTip:-22,eyeX:.5}),500,430,640,
+ cell(x0+2*(cw6+gap),by,cw6,bh,'③ 베기 스매시 (스미어) · 0.18s',
+  exprP(2,{yaw:8,pitch:2,roll:5,sway:-34,swayTip:-30,eyeX:.5,lean:34}),515,430,640,
   {noSword:true,fx:function(v){
-   fxSmear(ctx,v,500,660,150,330,-2.75,-.45,.22);
-   fxBlade(ctx,v,545,548,-1.45,225,{a:.3,glow:.9});   // 잔상 1
-   fxBlade(ctx,v,610,585,-.85,230,{a:.55,glow:.9});   // 잔상 2
-   fxArm(ctx,v,[478,680, 560,690, 618,608],30,15);
-   fxBlade(ctx,v,635,595,-.42,235,{glow:1});
+   fxSmear(ctx,v,505,690,170,320,-2.6,-.55,.16);
+   fxBlade(ctx,v,516,634,-1.75,225,{a:.28,glow:.9});  // 잔상 1
+   fxBlade(ctx,v,592,612,-.95,230,{a:.5,glow:.9});    // 잔상 2
+   fxArm(ctx,v,[496,682, 578,690, 634,610],30,15);
+   fxBlade(ctx,v,648,600,-.42,235,{glow:1});
   }});
- cell(x0+3*(cw6+gap),by,cw6,bh,'④ 임팩트 (흑염 폭발) · 0.22s',
-  exprP(2,{yaw:4,pitch:6,roll:-2,sway:-20,blinkL:-.35,blinkR:-.35,irisS:.86,
-   browLift:{L:-.2,R:-.2},browTilt:{L:1.4,R:1.4},eyeX:.4,eyeY:.3}),500,430,640,
-  {noSword:true,shake:[5,-4],ghost:[-8,6,.26],fx:function(v,cx0,cy0,cw0,ch0){
-   fxSmear(ctx,v,500,620,170,330,-2.7,.35,.1);
-   fxArm(ctx,v,[472,688, 438,704, 424,608],28,15);
-   fxBlade(ctx,v,450,620,2.1,230,{glow:1});
-   fxImpact(ctx,v,610,700,125);
-   fxFlame(ctx,v,600,660,20,31);
-   fxSpeed(ctx,cx0,cy0,cw0,ch0,610*v.s+v.ox,700*v.s+v.oy,26,.22);
+ cell(x0+3*(cw6+gap),by,cw6,bh,'④ 임팩트 · 흑염 버스트 · 0.22s',
+  exprP(2,{yaw:6,pitch:6,roll:-3,sway:-26,blinkL:-.35,blinkR:-.35,irisS:.86,
+   browLift:{L:-.2,R:-.2},browTilt:{L:1.4,R:1.4},eyeX:.4,eyeY:.3,lean:40}),520,430,640,
+  {noSword:true,shake:[5,-4],ghost:[-9,6,.26],fx:function(v,cx0,cy0,cw0,ch0){
+   fxSmear(ctx,v,510,630,170,330,-2.7,.35,.1);
+   fxArm(ctx,v,[493,688, 459,704, 445,608],28,15);
+   fxBlade(ctx,v,471,618,2.1,230,{glow:1});
+   fxImpact(ctx,v,630,700,125);
+   fxFlame(ctx,v,618,660,20,31);
+   fxSpeed(ctx,cx0,cy0,cw0,ch0,630*v.s+v.ox,700*v.s+v.oy,26,.22);
   }});
  cell(x0+4*(cw6+gap),by,cw6,bh,'⑤ 팔로스루 · 0.34s',
-  exprP(2,{yaw:12,pitch:3,roll:7,sway:-34,swayTip:-30,eyeX:.6}),500,430,640,
+  exprP(2,{yaw:12,pitch:3,roll:8,sway:-40,swayTip:-36,eyeX:.6,lean:22}),505,430,640,
   {noSword:true,fx:function(v){
-   fxSmear(ctx,v,520,540,170,320,.5,2.1,.09);
-   fxArm(ctx,v,[480,690, 462,708, 446,664],28,15);
-   fxBlade(ctx,v,430,690,-2.7,230,{glow:.5});
-   fxFlame(ctx,v,382,800,15,47);
+   fxSmear(ctx,v,530,545,170,320,.5,2.1,.09);
+   fxArm(ctx,v,[502,690, 484,708, 468,664],28,15);
+   fxBlade(ctx,v,452,690,-2.7,230,{glow:.5});
+   fxFlame(ctx,v,404,798,15,47);
   }});
- cell(x0+5*(cw6+gap),by,cw6,bh,'⑥ 잔심 · 0.60s',
-  exprP(2,{yaw:6,pitch:-2,roll:1,sway:5,blinkL:.3,blinkR:.3,eyeX:.2}),500,430,640,
+ cell(x0+5*(cw6+gap),by,cw6,bh,'⑥ 잔심 (리커버리) · 0.60s',
+  exprP(2,{yaw:6,pitch:-2,roll:2,sway:6,blinkL:.3,blinkR:.3,eyeX:.2,lean:6}),500,430,640,
   {noSword:true,fx:function(v){
-   fxArm(ctx,v,[548,690, 572,708, 578,674],28,15);
-   fxBlade(ctx,v,585,700,2.9,230,{glow:.35});
-   fxFlame(ctx,v,620,790,10,53);
+   fxArm(ctx,v,[551,690, 575,708, 581,674],28,15);
+   fxBlade(ctx,v,588,700,2.9,230,{glow:.35});
+   fxFlame(ctx,v,623,790,10,53);
   }});
  // ---- Row C: 뷰티샷 / 클로즈업 / 리깅 오버레이 / 극단 변형 ----
  var cw4=410,cy4=924,ch4=540;
- cell(8,cy4,cw4,ch4,'버스트 뷰티샷',defaultP({yaw:8,roll:2.5,eyeX:.25,sway:5}),500,560,1080,{wisps:true});
+ cell(8,cy4,cw4,ch4,'버스트 뷰티샷',defaultP({yaw:8,roll:2.5,eyeX:.25,sway:5}),500,525,800,
+  {wisps:true,fx:function(v){
+   fxFlame(ctx,v,268,700,15,61); fxFlame(ctx,v,736,760,12,67);
+  }});
  cell(8+(cw4+gap),cy4,cw4,ch4,'얼굴 클로즈업 (머리 세로 528px)',
   defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,398,356);
- cell(8+2*(cw4+gap),cy4,cw4,ch4,'리깅: 요+30° 피치+16° 메시 변형 (회색=중립 격자)',
+ cell(8+2*(cw4+gap),cy4,cw4,ch4,'리깅: 요+30° 피치+16° · 시안=얼굴 마젠타=머리 앰버=의상 (회색=중립)',
   defaultP({yaw:30,pitch:16,sway:14,eyeX:.8}),500,430,640,{mesh:true,meshNeutral:true});
- cell(8+3*(cw4+gap),cy4,cw4,ch4,'극단 변형: 요+30 피치+18 롤+14 헤어스윙 MAX',
-  exprP(2,{yaw:30,pitch:18,roll:14,sway:40,swayTip:36,eyeX:.9}),500,420,620);
+ cell(8+3*(cw4+gap),cy4,cw4,ch4,'극단 변형: 요+36 피치+20 롤+16 헤어스윙 MAX · 잔상 고스트',
+  exprP(2,{yaw:36,pitch:20,roll:16,sway:74,swayTip:66,eyeX:1}),520,420,620,
+  {ghost:[-18,6,.26],fx:function(v,cx0,cy0,cw0,ch0){
+   fxSpeed(ctx,cx0,cy0,cw0,ch0,520*v.s+v.ox,300*v.s+v.oy,16,.13);
+  }});
  // ---- 푸터 캡션 밴드 (셀 라벨과 분리 · 고대비 · 하단 패딩 확보) ----
  ctx.fillStyle='#0b0912'; ctx.fillRect(0,1464,1680,36);
  ctx.strokeStyle='#2a2342'; ctx.lineWidth=1;

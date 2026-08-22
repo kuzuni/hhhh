@@ -387,10 +387,10 @@ BT.gx=ch([[0,-14],[1.10,-14],[1.345,34,"out5"],[2.60,34],[3.60,6,"io2"],[3.98,-1
 BT.gy=ch([[0,26],[1.10,26],[1.345,10,"out5"],[2.60,10],[3.60,22,"io2"],[3.98,26,"io2"]]);
 BT.arc=ch([[1.30,0],[1.35,1,"out2"],[1.60,0.85,"lin"],[2.30,0,"out2"]]);
 BT.flash=ch([[1.30,0],[1.345,0.85,"out2"],[1.55,0,"out2"]]);
-BT.fnx=ch([[0,16],[0.90,16],[1.08,24,"io2"],[1.30,152,"out3"],[3.30,152],[3.55,120,"io2"],
-  [3.90,60,"io2"],[4.30,16,"io2"]]);
-BT.ffx=ch([[0,-18],[0.90,-18],[1.08,-26,"io2"],[1.30,86,"out3"],[3.42,86],[3.70,40,"io2"],
-  [4.10,-18,"io2"]]);
+BT.fnx=ch([[0,16],[0.90,16],[1.06,26,"io2"],[1.18,26,"lin"],[1.32,152,"out3"],[3.30,152],
+  [3.55,120,"io2"],[3.90,60,"io2"],[4.30,16,"io2"]]);
+BT.ffx=ch([[0,-18],[0.90,-18],[1.06,-30,"io2"],[1.18,-30,"lin"],[1.32,86,"out3"],[3.42,86],
+  [3.70,40,"io2"],[4.10,-18,"io2"]]);
 function poseBattou(P,t){
   t=fract(t/BT.T)*BT.T;
   const sheathed=BT.drawn(t)<0.05;
@@ -399,8 +399,8 @@ function poseBattou(P,t){
   P.pelvisA=L*0.5; P.spineA=[L*0.3,L*0.35,L*0.3];
   P.neckA=-L*0.9; P.headA=-0.02;
   P.shoulderDX=BT.wind(t); // 예비 와인드업 → 일섬 반전
-  P.footN={x:BT.fnx(t),y:stepLift(t,[[1.08,1.30],[3.55,3.90],[3.90,4.30]]),pitch:0};
-  P.footF={x:BT.ffx(t),y:stepLift(t,[[1.08,1.30],[3.42,3.70],[3.70,4.10]]),pitch:0};
+  P.footN={x:BT.fnx(t),y:stepLift(t,[[1.18,1.32],[3.55,3.90],[3.90,4.30]]),pitch:0};
+  P.footF={x:BT.ffx(t),y:stepLift(t,[[1.18,1.32],[3.42,3.70],[3.70,4.10]]),pitch:0};
   P.groundedN=P.footN.y===0; P.groundedF=P.footF.y===0;
   P.sword={hold:sheathed?"none":"near",angle:BT.ang(t)*RAD,
            gripX:BT.gx(t),gripY:BT.gy(t),drawn:Math.max(0.12,BT.drawn(t)),
@@ -534,15 +534,17 @@ function drawHead(g,P){
   // -- 눈 --
   eye(g, 2.6,3.8, 5.3,2.55, false, F);
   eye(g,15.2,3.4, 4.0,2.40, true,  F);
-  // 코: 콧대 그림자 한 획(짧은 단선) + 살짝 밝은 하이라이트 점 (콧구멍 점·블러 없음)
-  g.strokeStyle="rgba(199,150,140,0.75)"; g.lineWidth=0.55; g.lineCap="round";
-  g.beginPath(); g.moveTo(19.0,6.3); g.quadraticCurveTo(20.2,8.2,19.7,9.6); g.stroke();
-  g.fillStyle="rgba(255,255,255,0.85)";
-  g.beginPath(); g.ellipse(19.4,6.8,0.3,0.3,0,0,TAU); g.fill();
-  // 입: 눈 폭의 ~62% — 절제된 직선적 입매
-  g.strokeStyle="#a96a63"; g.lineWidth=0.5; g.lineCap="round";
-  g.beginPath(); g.moveTo(10.2,15.3+F.mouth*0.5);
-  g.quadraticCurveTo(13.4,15.8+F.mouth*1.5, 16.6,15.0+F.mouth*0.2); g.stroke();
+  // 코: 콧대 그림자 한 획(면 안쪽, 짧은 단선) + 코끝 하이라이트 점 (콧구멍·블러 없음)
+  g.strokeStyle="rgba(196,148,140,0.62)"; g.lineWidth=0.48; g.lineCap="round";
+  g.beginPath(); g.moveTo(17.6,5.8); g.quadraticCurveTo(18.5,7.9,18.2,9.5); g.stroke();
+  g.strokeStyle="rgba(196,148,140,0.40)"; g.lineWidth=0.42;
+  g.beginPath(); g.moveTo(18.2,9.5); g.quadraticCurveTo(17.7,9.9,17.1,9.9); g.stroke();
+  g.fillStyle="rgba(255,255,255,0.9)";
+  g.beginPath(); g.ellipse(17.9,6.4,0.32,0.32,0,0,TAU); g.fill();
+  // 입: 눈 폭의 ~62% — 절제된 일자 입매 (냉정, 스머크 금지)
+  g.strokeStyle="#a96a63"; g.lineWidth=0.46; g.lineCap="round";
+  g.beginPath(); g.moveTo(10.3,15.3+F.mouth*0.5);
+  g.quadraticCurveTo(13.4,15.7+F.mouth*1.5, 16.4,15.4+F.mouth*0.2); g.stroke();
   if(F.mouth>0.05){
     g.beginPath(); g.moveTo(10.6,15.7);
     g.quadraticCurveTo(13.4,16.2+F.mouth*2.0,16.2,15.2); g.closePath();
@@ -559,12 +561,12 @@ function drawBrows(g,P,alpha){
   const F=P.face;
   g.save(); g.translate(P.j.head.x,P.j.head.y); g.rotate(P.j.headA);
   g.globalAlpha=alpha;
-  g.strokeStyle="#646b80"; g.lineWidth=0.36; g.lineCap="round";
+  g.strokeStyle="#7d8598"; g.lineWidth=0.27; g.lineCap="round";
   const bl=F.brow*1.1;
-  g.beginPath(); g.moveTo(-2.8,-2.2+bl);
-  g.quadraticCurveTo(3.0,-4.0+bl*0.4, 9.0,-2.8+bl*1.2); g.stroke();
-  g.beginPath(); g.moveTo(12.0,-2.8+bl);
-  g.quadraticCurveTo(15.8,-4.2+bl*0.4, 19.6,-3.0+bl*1.2); g.stroke();
+  g.beginPath(); g.moveTo(-2.4,-3.4+bl);
+  g.quadraticCurveTo(3.2,-5.0+bl*0.4, 8.8,-4.1+bl*1.2); g.stroke();
+  g.beginPath(); g.moveTo(12.2,-4.0+bl);
+  g.quadraticCurveTo(15.9,-5.3+bl*0.4, 19.4,-4.3+bl*1.2); g.stroke();
   g.restore();
 }
 // 아몬드 눈: 눈꼬리 상승, 3톤 홍채 + 이중 하이라이트. far=원안(폭 축소)
@@ -590,8 +592,8 @@ function eye(g,cx,cy,hw,hh,far,F){
   g.clip();
   // 흰자
   g.fillStyle="#fbfcfe"; g.fillRect(cx-hw-2,cy-hh-4,hw*2+4,hh*2+6);
-  // 홍채 (세로 타원, 3톤) — 시선은 양눈 동일 방향(카메라 응시, 사시 방지)
-  const px=cx+F.px*0.7, py=cy+F.py+0.1;
+  // 홍채 (세로 타원, 3톤) — 개구 중심 보정 +hw*0.15: 양눈 카메라 응시(사시 방지)
+  const px=cx+hw*0.15+F.px*0.7, py=cy+F.py+0.1;
   const irx=hw*0.46, iry=H*1.08;
   const gr=g.createLinearGradient(px,py-iry,px,py+iry);
   gr.addColorStop(0,PAL.eyeTop); gr.addColorStop(0.5,PAL.eyeMid);
@@ -996,7 +998,7 @@ function drawChar(g,P){
   drawTorso(g,P);
   drawHead(g,P);
   hairFront(g,P);
-  drawBrows(g,P,0.5); // 앞머리 위 반투명 눈썹 (가림 방지)
+  drawBrows(g,P,0.35); // 앞머리 위 반투명 눈썹 (가림 방지)
   drawSword(g,P);
   drawArm(g,P,"N");
 }
@@ -1322,7 +1324,7 @@ function drawMontage(){
   // Row B: 발도 6키
   const yB=rowAH+8;
   head(yB+12,"Row B — 발도 시퀀스 (납도→예비→섬광→극점→잔심→납도)");
-  const btT=[0.5,1.02,1.24,1.365,1.9,3.9];
+  const btT=[0.5,1.14,1.25,1.365,1.9,3.9];
   const btL=["납도","예비","섬광 스텝","극점 일섬","잔심","납도(찰칵)"];
   for(let i=0;i<6;i++){
     cell(i*cw,yB+20,cw,rowBH-45,btL[i]+" (t="+btT[i]+"s)",(w,h)=>{
