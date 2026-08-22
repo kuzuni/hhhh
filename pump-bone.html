@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이빨호박 펌킨조 — 절차적 스켈레톤</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#20140c;
+    font-family:"Segoe UI","Malgun Gothic",sans-serif;}
+  #cv{display:block;}
+  #err{position:fixed;top:4px;left:4px;color:#ff4444;font:bold 13px/1.4 "Segoe UI",sans-serif;
+    z-index:99;white-space:pre-wrap;max-width:90vw;pointer-events:none;text-shadow:0 1px 2px #000;}
+  #topbar{position:fixed;top:10px;left:12px;z-index:10;display:flex;align-items:center;gap:12px;}
+  #topbar a{color:#ffd9a0;text-decoration:none;font-size:13px;background:rgba(30,16,8,.55);
+    padding:4px 10px;border-radius:14px;border:1px solid rgba(255,190,110,.25);}
+  #topbar a:hover{background:rgba(60,32,14,.7);}
+  #ttl{color:#ffe9c4;font-size:14px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+  #ui{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:10;
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;
+    background:rgba(26,14,6,.72);padding:8px 12px;border-radius:18px;
+    border:1px solid rgba(255,190,110,.22);backdrop-filter:blur(4px);max-width:96vw;}
+  #ui button{font-family:inherit;font-size:13px;color:#ffe9c4;background:rgba(90,50,18,.55);
+    border:1px solid rgba(255,190,110,.3);border-radius:12px;padding:5px 12px;cursor:pointer;}
+  #ui button:hover{background:rgba(140,80,28,.7);}
+  #ui button.on{background:#c9741e;color:#fff8ec;border-color:#ffd9a0;}
+  #ui .sep{width:1px;height:20px;background:rgba(255,190,110,.25);margin:0 4px;}
+  #ui label{color:#f0d8b0;font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;}
+  #ui input[type=range]{width:90px;accent-color:#e8903a;}
+  #spdV{color:#f0d8b0;font-size:12px;min-width:34px;}
+  #avBtn.demon{background:#4a2454;border-color:#b06cff;color:#e8ccff;}
+</style>
+</head>
+<body>
+<div id="err"></div>
+<div id="topbar">
+  <a href="heroes.html">← 용사 전시관</a>
+  <span id="ttl">몬스터 도감 — 이빨호박 「펌킨조」 <small style="opacity:.7">(procedural bone rig)</small></span>
+</div>
+<canvas id="cv"></canvas>
+<div id="ui">
+  <button data-a="idle" class="on">대기</button>
+  <button data-a="walk">걷기</button>
+  <button data-a="bite">앙! 물기</button>
+  <button data-a="hit">피격</button>
+  <button data-a="death">죽음</button>
+  <button data-a="revive">부활</button>
+  <span class="sep"></span>
+  <button id="avBtn">아바타: 기본</button>
+  <label><input type="checkbox" id="boneChk"> 뼈대 보기</label>
+  <span class="sep"></span>
+  <label>속도 <input type="range" id="spd" min="0.2" max="2" step="0.1" value="1"></label>
+  <span id="spdV">1.0×</span>
+</div>
+<script>
+// ============================================================================
+// ==== 섹션 맵 ====
+//  1. 에러 표시 / 유틸 / 팔레트
+//  2. 리그(본 스펙·스켈레톤 계산)  — 절차적 본: 매 프레임 커브 → 본 행렬, 전 본 스쿼시 채널
+//  3. 애니(포즈 순수함수 computePose) — 대기/걷기/물기/피격/죽음(조각물리)/부활(역재생)
+//  4. 렌더(필드 배경·아바타 2벌 드로잉·조각·이펙트·뼈대 오버레이)
+//  5. UI / 실시간 루프
+//  6. 몽타주 모드 (?montage) — 동기 1680×1500
+// ============================================================================
+
+// ==== 1. 에러 표시 / 유틸 / 팔레트 ====
+(function(){
+  var box=document.getElementById('err');
+  function show(m){ box.textContent += m + "\n"; }
+  window.onerror=function(msg,src,l,c){ show("ERR: "+msg+" @"+(src||"").split("/").pop()+":"+l+":"+c); };
+  window.addEventListener('unhandledrejection',function(e){ show("REJ: "+(e.reason&&e.reason.message||e.reason)); });
+})();
+
+var TAU=Math.PI*2, RAD=Math.PI/180;
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function fract(x){ return x-Math.floor(x); }
+function easeOut(t){ t=clamp(t,0,1); return 1-(1-t)*(1-t); }
+function easeIn(t){ t=clamp(t,0,1); return t*t; }
+function easeInOut(t){ t=clamp(t,0,1); return t<.5?2*t*t:1-2*(1-t)*(1-t); }
+function easeOutCubic(t){ t=clamp(t,0,1); return 1-Math.pow(1-t,3); }
+function easeInCubic(t){ t=clamp(t,0,1); return t*t*t; }
+function easeOutBack(t){ t=clamp(t,0,1); var s=1.7; return 1+(s+1)*Math.pow(t-1,3)+s*Math.pow(t-1,2); }
+function easeOutElastic(t){ t=clamp(t,0,1); if(t===0||t===1)return t;
+  return Math.pow(2,-10*t)*Math.sin((t*10-0.75)*TAU/3)+1; }
+// 결정적 의사난수 (시드 해시) — 몽타주/실시간 동일 결과
+function rnd(i,k){ var x=Math.sin(i*127.1+k*311.7+13.37)*43758.5453; return x-Math.floor(x); }
+
+var PAL={
+  outline:'#241410',
+  body:  { base:'#ff9a3c', shade:'#e07820', deep:'#c96414', hi:'#ffb964' },
+  dBody: { base:'#3a2440', shade:'#241226', deep:'#160a1a', hi:'#5a3766' },
+  teeth:'#f2ead2', teethShade:'#d9cba6', gum:'#8a4a20', mouthDark:'#33150a',
+  dGum:'#1c0e22',
+  arm:  { base:'#5a9a3c', shade:'#3c7028', hi:'#7cb956' },
+  dArm: { base:'#7e2438', shade:'#54121f', hi:'#a03c50' },
+  flesh:'#ffd9a0', fleshHi:'#ffedd0', seed:'#fff3d0', seedO:'#b98a3e',
+  dFlesh:'#e2c2ff', dFleshHi:'#f2e2ff', dSeed:'#f4e4ff', dSeedO:'#8a5ab8', dGlow:'#b06cff',
+  rind:'#f08428', dRind:'#4a2c56',
+  stem:'#4d8a34', stemDark:'#33622२'.slice(0,0)||'#336222', leaf:'#5fa03e', sap:'#e8720e', sapHi:'#ffcf7a',
+  flame1:'#b06cff', flame2:'#7cff8a',
+  sky1:'#e8c294', sky2:'#c99a62', dune:'#b57f4e', dune2:'#a06c40',
+  sand:'#cfa670', sandDark:'#ab8352', shrub:'#5f4630', stone:'#9c7648'
+};
+
+// ==== 2. 리그 — 본 스펙 ====
+// root(지면 원점) ─ body(밑변 피벗, sx/sy 스쿼시) ─ { jawTop/jawBot(입), eyeL/R,
+//   armL/armR(어깨 피벗), stem(꼭지)─leaf, hornL/R(악마) }
+// root ─ footL/footR (접지 락: 스탠스 구간 지면 속도와 일치 → 미끄러짐 0)
+var RIG={
+  bodyPivot:{x:0,y:-36},          // 몸 밑변(스쿼시 기준)
+  bodyC:{x:0,y:-96}, bodyRx:118, bodyRy:96,   // body 로컬(피벗 기준)
+  mouth:{x:0,y:-78,hw:94,hh:36},
+  eye:{y:-128,dx:16,rx:5.5,ry:6.5},
+  shoulder:{dx:104,y:-114},
+  stem:{x:0,y:-188},
+  horn:{dx:50,y:-166},
+  foot:{dx:54,w:44,h:56},
+  lobes:[ {x:0,rx:47,ry:96},{x:-50,rx:43,ry:90},{x:50,rx:43,ry:90},
+          {x:-90,rx:32,ry:78},{x:90,rx:32,ry:78} ]
+};
+
+// 본 월드 행렬(여기선 위치+각+스케일)을 포즈에서 파생 — 뼈대 오버레이와 드로잉이 공유
+function skeleton(p){
+  var s={};
+  s.root={x:p.x+p.shx, y:p.shy};
+  var bx=s.root.x+RIG.bodyPivot.x, by=s.root.y+RIG.bodyPivot.y+p.bob;
+  s.body={x:bx,y:by,rot:p.rot,sx:p.sx,sy:p.sy};
+  function b2w(lx,ly){ // body 로컬 → 월드
+    lx*=p.sx; ly*=p.sy;
+    var c=Math.cos(p.rot),sn=Math.sin(p.rot);
+    return {x:bx+lx*c-ly*sn, y:by+lx*sn+ly*c};
+  }
+  s.b2w=b2w;
+  s.head=b2w(0,-150);
+  s.jaw=b2w(0,RIG.mouth.y);
+  s.shL=b2w(-RIG.shoulder.dx,RIG.shoulder.y);
+  s.shR=b2w( RIG.shoulder.dx,RIG.shoulder.y);
+  var aL=Math.PI-p.armL, aR=p.armR; // 0=수평 바깥
+  s.armTipL={x:s.shL.x+Math.cos(aL)*92*p.sx, y:s.shL.y+Math.sin(aL)*92*p.sy};
+  s.armTipR={x:s.shR.x+Math.cos(aR)*92*p.sx, y:s.shR.y+Math.sin(aR)*92*p.sy};
+  s.stem=b2w(RIG.stem.x,RIG.stem.y);
+  s.stemTip={x:s.stem.x+Math.sin(p.stem)*34, y:s.stem.y-30};
+  s.footL={x:s.root.x-RIG.foot.dx+p.fl.dx, y:s.root.y+p.fl.dy, sq:p.fl.sq, on:p.fl.dy>-1};
+  s.footR={x:s.root.x+RIG.foot.dx+p.fr.dx, y:s.root.y+p.fr.dy, sq:p.fr.sq, on:p.fr.dy>-1};
+  return s;
+}
+</script>
+</body>
+</html>
