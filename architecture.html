@@ -44,7 +44,7 @@
   .node small{color:var(--dim)}
   .node.root{border-color:rgba(232,196,106,.5);box-shadow:0 0 24px -8px rgba(232,196,106,.35)}
   .down{width:1px;height:22px;background:var(--line)}
-  .fan{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;margin-top:0}
+  .fan{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;margin-top:0;max-width:640px;margin-left:auto;margin-right:auto}
   .fan .node{height:100%}
   .fanwrap{position:relative;width:100%;padding-top:22px}
   .fanwrap::before{content:"";position:absolute;top:0;left:16.6%;right:16.6%;height:1px;background:var(--line)}
@@ -113,7 +113,7 @@
   <header>
     <div class="eyebrow">Architecture</div>
     <h1>🏛 아키텍처</h1>
-    <p class="sub">「미소년 용사 2D 리깅 3부작」이 어떻게 만들어지고, 어떻게 움직이는가 —
+    <p class="sub">「미소년 용사 2D 리깅 시리즈」가 어떻게 만들어지고, 어떻게 움직이는가 —
       사이트 구조 · 멀티에이전트 제작 파이프라인 · 기법별 런타임 리깅 설계.</p>
   </header>
 
@@ -128,7 +128,6 @@
       <div class="fan">
         <div class="node"><b>hero-blade.html</b><small>아스렐 · 銀月의 검성</small><br><span class="tag t-blade">절차적 스켈레톤 · IK</span></div>
         <div class="node"><b>hero-puppet.html</b><small>루시엘 · 황금 사자의 왕자</small><br><span class="tag t-puppet">컷아웃 리깅 · 퍼펫</span></div>
-        <div class="node"><b>hero-live.html</b><small>카이렌 · 흑염의 마검사</small><br><span class="tag t-live">메시 디포메이션 · Live2D식</span></div>
       </div>
     </div>
     <div class="etc">
@@ -230,9 +229,9 @@
         <li>「부품 분해」 뷰 — 조각들이 이름표 달고 날아가는 컷아웃 증명샷</li>
       </ul>
     </div>
-    <div class="tcard l">
+    <div class="tcard l" style="opacity:.55">
       <h3>메시 디포메이션 (Live2D식)</h3>
-      <div class="who">hero-live.html · 카이렌</div>
+      <div class="who">미채용 — 기법 설계 기록만 남김</div>
       <svg viewBox="0 0 300 150" aria-hidden="true">
         <defs><clipPath id="mf"><ellipse cx="150" cy="75" rx="52" ry="60"/></clipPath></defs>
         <ellipse cx="150" cy="75" rx="52" ry="60" fill="#241d2e"/>
