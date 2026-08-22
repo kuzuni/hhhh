@@ -154,12 +154,9 @@ function paintFace(g){
  // 눈꼬리 쪽 아주 옅은 쿨섀도
  softEllipse(g,414,408,15,7,'rgba(190,160,200,1)',.11);
  softEllipse(g,586,408,15,7,'rgba(190,160,200,1)',.11);
- // 볼 혈색: 낮은 채도 소프트 타원 + 아주 가는 사선 2획 (긁힘처럼 안 보이게)
- softEllipse(g,450,465,13,6,'#eba9ab',.13);
- softEllipse(g,550,465,13,6,'#eba9ab',.13);
- g.strokeStyle='rgba(232,158,164,.18)'; g.lineWidth=.9; g.lineCap='round';
- [[444,469,454,462],[452,471,462,464],[538,464,548,471],[546,462,556,469]].forEach(function(q){
-  g.beginPath(); g.moveTo(q[0],q[1]); g.lineTo(q[2],q[3]); g.stroke();});
+ // 볼 혈색: 낮은 채도 소프트 그라디언트 타원만 (스트로크 없음 — 스크리블 방지)
+ softEllipse(g,450,465,14,6.5,'#e7a8aa',.11);
+ softEllipse(g,550,465,14,6.5,'#e7a8aa',.11);
  // 턱밑 셀셰이딩 1톤 (좁은 V턱 기준)
  g.fillStyle='rgba(216,196,188,.5)';
  g.beginPath(); g.moveTo(475,546); g.quadraticCurveTo(500,570,525,546);
@@ -456,22 +453,22 @@ function paintSideHair(g,s){ // 얼굴 옆 프레이밍 가닥 (뿌리를 두상
 // 목: 가늘게 + 턱밑 캐스트 섀도
 function paintNeck(g){
  g.beginPath();
- g.moveTo(473,536); g.bezierCurveTo(474,590,470,620,458,648);
- g.lineTo(542,648); g.bezierCurveTo(530,620,526,590,527,536); g.closePath();
+ g.moveTo(469,536); g.bezierCurveTo(470,590,466,620,453,648);
+ g.lineTo(547,648); g.bezierCurveTo(534,620,530,590,531,536); g.closePath();
  g.fillStyle=C.skin; g.fill();
  g.save(); g.clip();
  var gr=g.createLinearGradient(0,540,0,600);
  gr.addColorStop(0,'rgba(178,138,138,.85)'); gr.addColorStop(1,'rgba(216,196,188,.0)');
- g.fillStyle=gr; g.fillRect(450,536,100,80);
+ g.fillStyle=gr; g.fillRect(446,536,108,80);
  g.strokeStyle='rgba(196,168,164,.5)'; g.lineWidth=1.6;
- g.beginPath(); g.moveTo(508,600); g.quadraticCurveTo(512,622,508,640); g.stroke();
+ g.beginPath(); g.moveTo(510,600); g.quadraticCurveTo(514,622,510,640); g.stroke();
  g.restore();
  g.strokeStyle=C.line; g.lineWidth=2.6;
- g.beginPath(); g.moveTo(473,536); g.bezierCurveTo(474,590,470,620,458,648); g.stroke();
- g.beginPath(); g.moveTo(527,536); g.bezierCurveTo(526,590,530,620,542,648); g.stroke();
+ g.beginPath(); g.moveTo(469,536); g.bezierCurveTo(470,590,466,620,453,648); g.stroke();
+ g.beginPath(); g.moveTo(531,536); g.bezierCurveTo(530,590,534,620,547,648); g.stroke();
  // 초커 + 은 링
- g.beginPath(); g.moveTo(471,568); g.quadraticCurveTo(500,578,529,568);
- g.lineTo(529,580); g.quadraticCurveTo(500,590,471,580); g.closePath();
+ g.beginPath(); g.moveTo(467,568); g.quadraticCurveTo(500,578,533,568);
+ g.lineTo(533,580); g.quadraticCurveTo(500,590,467,580); g.closePath();
  g.fillStyle='#1a1424'; g.fill(); g.strokeStyle=C.line; g.lineWidth=1.6; g.stroke();
  g.beginPath(); g.arc(500,581,3.4,0,TAU); g.strokeStyle=C.silver; g.lineWidth=1.8; g.stroke();
 }
@@ -665,6 +662,18 @@ function buildTextures(){
    tris.push([idx(r,c2i),idx(r,c2i+1),idx(r+1,c2i)],[idx(r,c2i+1),idx(r+1,c2i+1),idx(r+1,c2i)]);
   }
   L.tris=tris;
+  // 아트 알파 샘플 → 빈 삼각형 마스크 (와이어프레임을 실제 아트 영역으로 클리핑)
+  var idata=g.getImageData(0,0,w,h).data;
+  L.triHas=tris.map(function(tr){
+   var p0=verts[tr[0]],p1=verts[tr[1]],p2=verts[tr[2]],
+       cu=(p0.u+p1.u+p2.u)/3,cvv=(p0.v+p1.v+p2.v)/3,smp=[[cu,cvv]],k,q;
+   [p0,p1,p2].forEach(function(pp){
+    smp.push([(pp.u+cu)/2,(pp.v+cvv)/2],[pp.u*.85+cu*.15,pp.v*.85+cvv*.15]);});
+   for(k=0;k<smp.length;k++){q=smp[k];
+    var ui=clamp(Math.round(q[0]),0,w-1),vi=clamp(Math.round(q[1]),0,h-1);
+    if(idata[(vi*w+ui)*4+3]>10)return true;}
+   return false;
+  });
   L.out=new Float64Array(verts.length*2);
  });
  APCLIP={};
@@ -706,19 +715,31 @@ function deformVertex(L,x0,y0,nu,nv,P){
  }
  if(hf>0){
   var yawN=P.yaw/30, pitN=P.pitch/20, d=L.depth==null?.5:L.depth;
+  // 눈 그룹: 원측 눈 가로 압축(원근·폭에만 적용해 눈매 붕괴 방지) + 피치 업 세로 압축
+  if(L.kind==='eyew'||L.kind==='iris'||L.kind==='lash'||L.kind==='brow'){
+   var fw=1-Math.max(0,(L.side==='L'?1:-1)*yawN)*.19,
+       gcx=L.bb[0]+L.bb[2]/2, gcy=L.bb[1]+L.bb[3]/2;
+   x=gcx+(x-gcx)*fw;
+   y=gcy+(y-gcy)*(1-Math.max(0,pitN)*.22);
+   if(L.kind==='brow')y+=Math.max(0,pitN)*7; // 피치 업: 눈-눈썹 간격 압축
+  }
   // 요: 깊이별 시차 증폭. 피치: 깊이별 상하 시차 (앞머리 후퇴/뒷머리 잔류)
-  x+=yawN*54*d*hf;
-  y-=pitN*44*(d*.85+.08)*hf;
+  x+=yawN*62*d*hf;
+  y-=pitN*46*(d*.85+.08)*hf;
   var un=clamp((x0-HCX)/130,-1.3,1.3);
-  // 원측 볼 압축 / 근측 볼 확장 (비대칭 변형)
-  x=HCX+(x-HCX)*(1+yawN*un*.11*hf);
-  // 피치 업: 얼굴 세로 압축 (턱 상승·하관 단축)
-  y=HCY+(y-HCY)*(1-pitN*.085*hf);
+  // 원측 볼 압축 / 근측 볼 확장 (외곽 실루엣 비대칭 변형)
+  x=HCX+(x-HCX)*(1+yawN*un*.17*hf);
+  // 피치 업: 하관 강압축·이마 약압축 (턱 상승·이마 확대 단서)
+  var pk=pitN>0?(y>HCY?.16:.045):.085;
+  y=HCY+(y-HCY)*(1-pitN*pk*hf);
  }
  var rw=(L.rollW==null?1:L.rollW), ang=P.roll*Math.PI/180*rw;
  if(ang){
   var rx=x-NKX,ry=y-NKY,cs=Math.cos(ang),sn=Math.sin(ang);
   x=NKX+rx*cs-ry*sn; y=NKY+rx*sn+ry*cs;
+ }
+ if(P.lean){ // 상체 리드 시어 (액션 키프레임): 하단 고정, 위로 갈수록 X 오프셋 — 실루엣 자체가 기움
+  x+=P.lean*(L.leanW==null?1:L.leanW)*Math.max(0,1000-y)/600;
  }
  return [x,y];
 }
@@ -784,6 +805,7 @@ function drawWire(ctx,L,P,view,col){
  var out=deformLayer(L,P), tris=L.tris, s=view.s, ox=view.ox, oy=view.oy, i;
  ctx.strokeStyle=col||'rgba(0,229,255,.38)'; ctx.lineWidth=.8;
  for(i=0;i<tris.length;i++){
+  if(L.triHas&&!L.triHas[i])continue; // 아트 없는 삼각형은 그리지 않음
   var t0=tris[i][0],t1=tris[i][1],t2=tris[i][2];
   ctx.beginPath();
   ctx.moveTo(out[t0*2]*s+ox,out[t0*2+1]*s+oy);
@@ -877,7 +899,7 @@ function stepAnim(dt,w,h,manual){
 function defaultP(o){
  var P={yaw:0,pitch:0,roll:0,eyeX:0,eyeY:0,blinkL:.03,blinkR:.03,irisS:1,breath:.45,
   sway:3,swayTip:2,earAng:.04,browLift:{L:-.05,R:-.05},browTilt:{L:.3,R:.3},
-  mouthA:0,mouthB:0,mouthFade:1},k;
+  mouthA:0,mouthB:0,mouthFade:1,lean:0},k;
  for(k in o)P[k]=o[k];
  return P;
 }
@@ -898,13 +920,18 @@ function renderScene(ctx,P,view,opts){
   drawMesh(ctx,L,P,view,alpha);
  });
  if(opts.mesh){
-  // 아트메시가 있는 머리 레이어만 (배경까지 뻗는 직사각 격자 배제)
-  var wl=LAYERS.filter(function(l){return l.n!=='body'&&l.n!=='sword'&&l.n!=='backHair'});
+  // 레이어 그룹별 색상 구분: 시안=얼굴 · 마젠타=머리카락 · 앰버=의상 (알파 클리핑으로 아트 영역만)
+  var HAIRL={backHair:1,hairTop:1,sideL:1,sideR:1,bangsL:1,bangsR:1,bangsC:1},
+      COSL={body:1,collar:1,neck:1,earring:1},
+      wl=LAYERS.filter(function(l){return l.n!=='sword'});
   if(opts.meshNeutral){ // 중립 격자 반투명 회색 (before/after 대비)
    var P0=defaultP({breath:0,sway:0,swayTip:0,earAng:0});
-   wl.forEach(function(l){drawWire(ctx,l,P0,view,'rgba(178,178,196,.22)')});
+   wl.forEach(function(l){drawWire(ctx,l,P0,view,'rgba(178,178,196,.15)')});
   }
-  wl.forEach(function(l){drawWire(ctx,l,P,view,opts.meshNeutral?'rgba(0,229,255,.55)':'rgba(0,229,255,.38)')});
+  wl.forEach(function(l){
+   var col=HAIRL[l.n]?'rgba(255,96,214,.5)':(COSL[l.n]?'rgba(255,196,90,.4)':'rgba(0,229,255,.62)');
+   drawWire(ctx,l,P,view,col);
+  });
  }
 }
 // 흑염 위스프: 티어드롭 + additive 글로우

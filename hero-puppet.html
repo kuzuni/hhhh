@@ -329,12 +329,18 @@ makePart('hairSideR',-10,-10,14,62,5,c=>{
 // 피벗을 골반 상단에 오프셋 → 보우 벤드 시 골반-몸통 갭이 벌어지지 않는다
 makePart('torso',-72,-222,72,4,4,c=>{
   c.translate(0,-16);
-  // 목 (가늘게)
-  path(c,[-7,-160,[-6,-178,-5,-192,-1,-198],[5,-198,10,-192,11,-178],[12,-168,11,-162,10,-158]]);
-  c.lineTo(-7,-158);c.closePath();
+  // 목 (가늘게, 양끝 라운딩)
+  function neckPath(){
+    path(c,[-7,-160,[-6,-178,-5,-192,-1,-198],[5,-198,10,-192,11,-178],[12,-168,11,-162,10,-156]]);
+    c.quadraticCurveTo(2,-152,-7,-156);c.closePath();
+  }
+  neckPath();
   c.fillStyle=PAL.skin;c.fill();c.lineWidth=1.4;c.strokeStyle=PAL.outline;c.stroke();
-  c.fillStyle='rgba(200,145,110,.6)';         // 턱밑 목 그림자
-  c.fillRect(-7,-198,18,22);
+  c.save();neckPath();c.clip();                // 턱밑 목 그림자: 목 형태로 클립한 그라디언트 (사각 에지 금지)
+  const ng=c.createLinearGradient(0,-200,0,-158);
+  ng.addColorStop(0,'rgba(190,130,95,.75)');ng.addColorStop(.55,'rgba(200,145,110,.35)');ng.addColorStop(1,'rgba(200,145,110,0)');
+  c.fillStyle=ng;c.fillRect(-12,-202,28,50);
+  c.restore();
   // 재킷 본체: 어깨 → 잘록한 허리
   path(c,[-66,-160, [-70,-168,-60,-172,-46,-172],[-20,-176,24,-176,48,-172],
     [60,-172,68,-166,64,-156],   // 오른어깨
@@ -406,8 +412,9 @@ makePart('pelvis',-52,-24,52,52,4,c=>{
 
 // ---- 2j. 팔 (상완/하완/장갑 손 × L/R) 피벗 = 어깨/팔꿈치/손목 ----
 function bakeArm(sfx,shade){
-  // 소매 폭 +12%, 피벗 반대쪽 끝을 관절 너머로 15% 연장 + 라운드 캡 → 어떤 회전각에도 틈 없음
-  makePart('upArm'+sfx,-17,-17,17,106,4,c=>{
+  // 소매 폭 ×1.28 (마리오네트 방지), 피벗 반대쪽 끝을 관절 너머로 연장 + 라운드 캡 → 어떤 회전각에도 틈 없음
+  makePart('upArm'+sfx,-22,-17,22,106,4,c=>{
+    c.scale(1.28,1);
     cap(c,0,2,15,shade?PAL.ivorySh:PAL.ivory);              // 어깨 캡(이음새 은폐)
     path(c,[-14,0,[-15,32,-13,64,-11,96],[-5,103,5,103,11,96],[13,64,15,32,14,0]]);
     c.closePath();c.fillStyle=shade?PAL.ivorySh:PAL.ivory;c.fill();
@@ -418,7 +425,8 @@ function bakeArm(sfx,shade){
     c.fillStyle='rgba(160,145,120,.3)';
     path(c,[7,6,[10.5,42,9.5,74,8,96],[10.5,74,13,42,13,8]]);c.closePath();c.fill();
   });
-  makePart('foreArm'+sfx,-16,-16,16,100,4,c=>{
+  makePart('foreArm'+sfx,-21,-16,21,100,4,c=>{
+    c.scale(1.3,1);
     cap(c,0,0,13,shade?PAL.ivorySh:PAL.ivory);               // 팔꿈치 캡 (확대)
     path(c,[-11,-2,[-12,24,-11,44,-10,58],[-4,64,4,64,10,58],[11,44,12,24,11,-2]]);
     c.closePath();c.fillStyle=shade?PAL.ivorySh:PAL.ivory;c.fill();
@@ -431,22 +439,31 @@ function bakeArm(sfx,shade){
     c.fillStyle='rgba(160,145,120,.3)';
     path(c,[6,4,[8.5,24,8.5,40,7,52],[9.5,38,11,20,10,0]]);c.closePath();c.fill();
   });
-  // 흰 장갑 손 (살짝 쥔 형태)
-  makePart('hand'+sfx,-20,-10,20,56,5,c=>{
-    c.scale(1.3,1.3);
+  // 흰 장갑 손 — 엄지 + 손가락 4개 분리 실루엣 (벙어리장갑 금지)
+  makePart('hand'+sfx,-24,-12,24,64,5,c=>{
+    c.scale(1.35,1.35);
+    // 손가락 4개: 외곽선 포함 캡슐 (뿌리는 손바닥이 덮는다)
+    c.lineCap='round';
+    for(const[x0,y0,x1,y1]of[[-6.2,17,-7.6,31],[-1.8,18,-2.4,34.5],[2.6,18,3.2,33],[6.6,16,7.6,28]]){
+      c.strokeStyle=PAL.outline;c.lineWidth=5.6;
+      c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
+      c.strokeStyle='#ffffff';c.lineWidth=4.0;
+      c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
+    }
     cap(c,0,2,8,'#ffffff');                                   // 손목 캡
-    path(c,[-8,4,[-10,16,-9,26,-5,32],[0,37,6,36,9,31],[11,24,10,12,8,3],[3,-1,-4,0,-8,4]]);
+    // 손바닥 (손가락 뿌리 위로)
+    path(c,[-8,3,[-10,12,-9,19,-6,23],[0,26.5,5,25.5,8,21],[10,14,9,6,8,2],[3,-2,-4,-1,-8,3]]);
     c.closePath();c.fillStyle='#ffffff';c.fill();
     c.lineWidth=1.5;c.strokeStyle=PAL.outline;c.stroke();
-    // 엄지
-    path(c,[-7,10,[-13,13,-14,20,-11,25],[-9,27,-6,25,-6,21]]);
-    c.closePath();c.fillStyle='#ffffff';c.fill();c.lineWidth=1.3;c.stroke();
-    // 손가락 골 2줄
-    c.strokeStyle='rgba(120,110,100,.55)';c.lineWidth=1;
-    c.beginPath();c.moveTo(-1,14);c.lineTo(-1,30);c.stroke();
-    c.beginPath();c.moveTo(4,13);c.lineTo(4,29);c.stroke();
-    c.fillStyle='rgba(160,150,135,.35)';
-    path(c,[4,4,[7,14,7,24,5,30],[8,22,9,12,8,4]]);c.closePath();c.fill();
+    // 엄지 (손바닥 가장자리 위로 겹침)
+    path(c,[-7,7,[-13,10,-14.5,17,-11.5,22.5],[-9,25,-5.5,23,-5.5,19],[-6,15,-6,10,-7,7]]);
+    c.closePath();c.fillStyle='#ffffff';c.fill();c.lineWidth=1.4;c.stroke();
+    // 장갑 재봉선 + 음영
+    c.strokeStyle='rgba(120,110,100,.5)';c.lineWidth=1;
+    c.beginPath();c.moveTo(-4,8);c.lineTo(-3.4,19);c.stroke();
+    c.beginPath();c.moveTo(1,8);c.lineTo(1.4,19);c.stroke();
+    c.fillStyle='rgba(160,150,135,.3)';
+    path(c,[5,4,[8,11,8,17,6,21],[9,13,10,8,9,3]]);c.closePath();c.fill();
   });
 }
 bakeArm('R',false);bakeArm('L',true);
@@ -455,7 +472,8 @@ bakeArm('R',false);bakeArm('L',true);
 function bakeLeg(sfx,shade){
   // 허벅지 = 흰 제복 바지 (피부톤보다 밝은 화이트 + 회색 음영 + 금 스트라이프)
   const pw=shade?PAL.pantsSh:PAL.pants;
-  makePart('thigh'+sfx,-23,-23,23,182,4,c=>{
+  makePart('thigh'+sfx,-29,-23,29,182,4,c=>{
+    c.scale(1.22,1);
     cap(c,0,2,20,pw);
     path(c,[-19,-2,[-19,52,-16,112,-13,172],[-6,180,7,180,13,172],[16,112,19,52,19,-2]]);
     c.closePath();c.fillStyle=pw;c.fill();
@@ -469,7 +487,8 @@ function bakeLeg(sfx,shade){
     c.beginPath();c.moveTo(-12,150);c.quadraticCurveTo(0,156,12,150);c.stroke();
   });
   // 무릎 아래 = 네이비 롱부츠 샤프트
-  makePart('shin'+sfx,-20,-20,20,178,4,c=>{
+  makePart('shin'+sfx,-25,-20,25,178,4,c=>{
+    c.scale(1.25,1);
     cap(c,0,2,16,shade?PAL.navyD:PAL.navy);
     // 무릎 가드 (금)
     path(c,[-15,-10,[0,-19,12,-16,16,-7],[17,5,12,12,0,13],[-11,12,-16,3,-15,-10]]);
@@ -542,9 +561,10 @@ function bakeCape(name,w0,w1,h,f0,f1,last){
     }
   });
 }
-bakeCape('capeA',76,108,112,0,.37,false);
-bakeCape('capeB',98,124,104,.35,.71,false);
-bakeCape('capeC',112,136,92,.69,1,true);
+// 상단은 어깨선을 따라 얇게 → 하단으로 갈수록 넓어지는 유선형
+bakeCape('capeA',56,102,112,0,.37,false);
+bakeCape('capeB',92,126,104,.33,.71,false);
+bakeCape('capeC',118,150,92,.67,1,true);
 
 // ---- 2m. 레이피어 (피벗 = 그립 중심, 칼끝은 -y 방향) ----
 makePart('rapier',-20,-232,20,26,4,c=>{
@@ -601,8 +621,8 @@ function N(name,parent,x,y,z,part,rot,label){
 N('root',null,0,0,0,null,0,'루트');
 N('torso','root',0,-14,12,'torso',0,'몸통');
 N('capeA','torso',-26,-174,3,'capeA',0.10,'케이프 1');
-N('capeB','capeA',0,106,2,'capeB',0,'케이프 2');
-N('capeC','capeB',0,98,1,'capeC',0,'케이프 3');
+N('capeB','capeA',0,96,2,'capeB',0,'케이프 2');   // 세그먼트 겹침 확대 (틈/이음새 은폐)
+N('capeC','capeB',0,86,1,'capeC',0,'케이프 3');
 N('hairBack','torso',4,-216,4,'hairBack',0,'뒷머리');
 N('upArmL','torso',-58,-180,5,'upArmL',0.10,'상완 L');
 N('foreArmL','upArmL',0,UAL,6,'foreArmL',0.22,'하완 L');
@@ -814,10 +834,11 @@ greet:{dur:2.8,loop:false,tracks:{
   foreArmR:{r:[[0,0],[.4,-.35],[1,-1.5],[1.75,-1.45],[2.6,0]]},
   handR:{r:[[0,0],[.4,-.2],[1,-.3],[2.6,0]]},
   rapier:{r:[[0,0],[.4,.35],[1,.1],[2.6,0]]},
-  upArmL:{r:[[0,0],[.5,.7],[1,.9],[1.8,.9],[2.6,0]]},
-  foreArmL:{r:[[0,0],[.5,-.4],[1,-.7],[1.8,-.7],[2.6,0]]},
+  upArmL:{r:[[0,0],[.5,.5],[1,.62],[1.8,.6],[2.6,0]]},   // 뒤 팔 어깨 회전 한계 (탈구 방지)
+  foreArmL:{r:[[0,0],[.5,-.35],[1,-.55],[1.8,-.55],[2.6,0]]},
   thighR:{r:[[0,0],[.9,-.28],[1.8,-.28],[2.6,0]]},
-  bootR:{r:[[0,0],[.9,.55],[1.8,.55],[2.6,0]]},
+  shinR:{r:[[0,0],[.9,.09],[1.8,.09],[2.6,0]]},           // 무릎 전방 굴곡 → 하이퍼익스텐션 금지
+  bootR:{r:[[0,0],[.9,.48],[1.8,.48],[2.6,0]]},
   thighL:{r:[[0,0],[.9,.22],[1.8,.22],[2.6,0]]},
   shinL:{r:[[0,0],[.9,.35],[1.8,.35],[2.6,0]]},
   bootL:{r:[[0,0],[.9,.5],[1.8,.5],[2.6,0]]},
@@ -850,9 +871,9 @@ lunge:{dur:2.4,loop:false,tracks:{
   thighL:{r:[[0,.3],[.25,.38],[.55,-.05],[.66,.75],[1.25,.72],[2.4,0]]},
   shinL:{r:[[0,.1],[.25,.2],[.55,.3],[.66,.1],[1.25,.1],[2.4,0]]},
   bootL:{r:[[0,-.4],[.25,-.55],[.66,.5],[1.25,.5],[2.4,0]]},
-  capeA:{r:[[0,-.08],[.35,.1],[.55,-.25],[.7,.72],[.95,.5],[1.4,.28],[2.4,0]]},
-  capeB:{r:[[.15,0],[.7,-.3],[.85,.75],[1.1,.45],[1.6,.2],[2.4,0]]},
-  capeC:{r:[[.3,0],[.85,-.3],[1,.65],[1.3,.35],[1.9,.12],[2.4,0]]},
+  capeA:{r:[[0,-.08],[.35,.1],[.55,-.22],[.7,.6],[.95,.46],[1.4,.26],[2.4,0]]},   // 팔로스루: 세그먼트당 ~0.15s 지연
+  capeB:{r:[[.15,0],[.7,-.12],[.85,.58],[1.1,.42],[1.6,.18],[2.4,0]]},
+  capeC:{r:[[.3,0],[.85,-.1],[1,.5],[1.3,.32],[1.9,.1],[2.4,0]]},
   hairFront:{r:[[0,0],[.6,.08],[.72,-.14],[1,-.06],[2.4,0]]},
   hairSideL:{r:[[0,0],[.6,.12],[.75,-.22],[1.1,-.1],[2.4,0]]},
   hairSideR:{r:[[0,0],[.6,-.1],[.75,.18],[1.1,.08],[2.4,0]]}
@@ -1318,11 +1339,11 @@ function montage(){
   const cy0=m*3+ah*2,chh=MH-cy0-m,cwidth=(MW-m*5)/4;
   charCell(m,cy0,cwidth,chh,'① 뷰티샷 (승리)','victory',1.05,{ps:.545,dx:-18,rich:true});
   cell(m*2+cwidth,cy0,cwidth,chh,'② 얼굴 클로즈업 (두상 452px)',(cx,cy,cw,ch)=>{
-    // 턱선까지로 크롭 — 목/칼라 스텁이 프레임에 들어오지 않게 턱 끝을 하단에 정렬 (2-pass 프레이밍)
+    // 턱선까지로 크롭 — 턱 끝을 라벨 밴드 뒤에 정렬해 목 파트가 프레임에 못 들어오게 (2-pass 프레이밍)
     const po=pose('idle',2.2),ps=4.08;
     computeWorld(po.over,0,0,ps);
-    const[chx,chy]=nodeWorldPoint(RIGM.head,4,6);   // 턱 끝 (head-local)
-    const px=cx+cw/2-chx, py=cy+ch-22-chy;
+    const[chx,chy]=nodeWorldPoint(RIGM.head,2,-3);   // 턱 끝 (head-local)
+    const px=cx+cw/2-chx, py=cy+ch-20-chy;
     renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:{},time:2.2});
   });
   charCell(m*3+cwidth*2,cy0,cwidth,chh,'③ 리깅 오버레이 (본 계층/피벗)','idle',0,{bones:true,ps:.70});
