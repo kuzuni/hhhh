@@ -529,6 +529,13 @@ function mechaPose(o){
   const lowest=Math.min(footBottom(legL.hip,legL.knee,legL.ankWorld),
                         footBottom(legR.hip,legR.knee,legR.ankWorld));
   let rootY=0.08-lowest;
+  /* pelvic vertical surge: reinforce the mid-stance apex (phase .375/.875, when
+     one leg is planted & vertical) so the pelvis visibly rises OVER the planted
+     leg — two peaks per stride. Purely additive (>=0) so the planted foot never
+     sinks; a hair of lift at the apex reads as a spring-loaded push-off. Fades
+     out as the gait blends to run so the (already large) run bob isn't boosted. */
+  const surge=Math.max(0, -Math.cos(4*PI*(phase-0.125)));
+  rootY+=0.05*gait*(1-runBlend)*surge;
   if(saber) rootY-=saber.coil*0.12;
 
   /* ---- torso / arms ---- */
