@@ -68,6 +68,7 @@ const PAL={
   line:"#191624", lineSoft:"#2a2740",
   skin:"#f7eae2", skinSh:"#e6cbc0", blush:"#f0a8a2",
   hair:"#eef1f6", hairSh:"#b9c3d4", hairDeep:"#8b97ad", hairRim:"#ffffff",
+  hairCap:"#d7dee9",
   coat:"#2c3e63", coatSh:"#1e2b47", trim:"#cfd6e4", lining:"#1b2a55",
   pants:"#232a3e", boots:"#1b2133", glove:"#1d2436",
   steel0:"#e6ecf4", steel1:"#98a4b8", steelDark:"#5d6878", guard:"#39415a",
@@ -446,7 +447,7 @@ function limb(g,A,M,B2,w0,w1,w2,fill,lw){
   if(lw){g.strokeStyle=PAL.line;g.lineWidth=lw;g.lineJoin="round";g.stroke();}
 }
 // 테이퍼 머리카락 가닥: 스파인 폴리라인 + 뿌리→끝 폭 감소, 닫힌 도형
-function strand(g,pts,w0,w1,fill,outline){
+function strand(g,pts,w0,w1,fill,outline,olw){
   if(pts.length<3)return;
   const L=[],R=[];
   for(let i=0;i<pts.length;i++){
@@ -501,11 +502,14 @@ function drawHead(g,P){
   g.beginPath();
   bez(g,[[-2,20.1],[2.5,22.6],[7,21.6],[3,20.6],[0,19.8],[-2,20.1]]);
   g.fillStyle=PAL.skinSh; g.globalAlpha=0.30; g.fill(); g.globalAlpha=1;
-  // 뺨 혈색 (아주 옅게)
-  g.globalAlpha=0.10; g.fillStyle=PAL.blush;
-  g.beginPath(); g.ellipse(8.2,9.6,3.0,1.5,0.08,0,TAU); g.fill();
-  g.beginPath(); g.ellipse(17.2,8.8,1.9,1.1,0.08,0,TAU); g.fill();
-  g.globalAlpha=1;
+  // 뺨 혈색 (라디얼 그라데이션, 아주 옅게)
+  for(const bp of[[8.2,9.6,3.2],[17.2,8.8,2.0]]){
+    const bg2=g.createRadialGradient(bp[0],bp[1],0,bp[0],bp[1],bp[2]);
+    bg2.addColorStop(0,"rgba(240,168,162,0.16)");
+    bg2.addColorStop(1,"rgba(240,168,162,0)");
+    g.beginPath(); g.ellipse(bp[0],bp[1],bp[2],bp[2]*0.55,0.08,0,TAU);
+    g.fillStyle=bg2; g.fill();
+  }
   // -- 눈 --
   eye(g, 3.0,3.8, 5.3,2.50, false, F);
   eye(g,14.8,3.4, 4.2,2.35, true,  F);
@@ -520,9 +524,9 @@ function drawHead(g,P){
   g.strokeStyle=PAL.skinSh; g.lineWidth=0.7; g.lineCap="round";
   g.beginPath(); g.moveTo(19.0,8.0); g.quadraticCurveTo(19.9,8.9,19.3,9.8); g.stroke();
   // 입: 작고 절제된 입매
-  g.strokeStyle="#b06a63"; g.lineWidth=0.6;
-  g.beginPath(); g.moveTo(10.9,15.1+F.mouth*0.5);
-  g.quadraticCurveTo(12.8,15.9+F.mouth*1.5, 14.8,14.9+F.mouth*0.2); g.stroke();
+  g.strokeStyle="#b06a63"; g.lineWidth=0.55; g.lineCap="round";
+  g.beginPath(); g.moveTo(11.2,15.1+F.mouth*0.5);
+  g.quadraticCurveTo(12.9,15.6+F.mouth*1.5, 14.6,14.9+F.mouth*0.2); g.stroke();
   if(F.mouth>0.05){
     g.beginPath(); g.moveTo(11.5,15.5);
     g.quadraticCurveTo(12.9,15.9+F.mouth*2.0,14.3,15.2); g.closePath();
@@ -1220,12 +1224,12 @@ function drawMontage(){
     renderScene(ctx,"idle",0.8,w,h,(h*0.86)/380,{gy:h*0.92,full:true});
   });
   cell(cw4,yC+20,cw4,ch4,"② 얼굴 클로즈업 (머리 세로 460px+)",(w,h)=>{
-    // 헤드 클로즈업: 머리높이 46 → scale 10
+    // 헤드 클로즈업: 머리높이 46 → scale 10, 얼굴(로컬 +5,-1) 중심 프레이밍
     const t=0.8, P=pose("idle",t);
     drawBG(ctx,w,h,t,h*0.97,false);
     const sc=10;
     ctx.save();
-    ctx.translate(w*0.5-P.j.head.x*sc, h*0.53-P.j.head.y*sc);
+    ctx.translate(w*0.5-(P.j.head.x+5)*sc, h*0.50-(P.j.head.y-1)*sc);
     ctx.scale(sc,sc);
     drawChar(ctx,P);
     ctx.restore();
