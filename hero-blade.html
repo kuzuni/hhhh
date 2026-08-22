@@ -137,3 +137,291 @@ function ik2(ax,ay,tx,ty,l1,l2,bend){
   return {mx:ax+Math.cos(a-bend*c)*l1,my:ay+Math.sin(a-bend*c)*l1,
           ex:ax+dx,ey:ay+dy};
 }
+
+// ==== 3. 리그 — 본 계층 조립 ======================================
+// pose 채널 → buildSkeleton → 관절 월드좌표 j.* (드로잉은 전부 여기서 파생)
+function basePose(){
+  return {
+    t:0, px:0, py:B.hipY, pelvisA:0,
+    spineA:[0,0,0], neckA:0, headA:0, shoulderDX:0,
+    footN:{x:14,y:0,pitch:0}, footF:{x:-16,y:0,pitch:0},
+    groundedN:true, groundedF:true,
+    armN:{mode:"fk",a1:0.30,a2:0.28}, armF:{mode:"fk",a1:-0.10,a2:0.22},
+    sword:{hold:"none",angle:100*RAD,gripX:0,gripY:0,drawn:1,showSaya:false,sayaA:200*RAD},
+    hairSway:1, hairFlow:0, coatSway:1, coatFlap:0,
+    face:{blink:0,brow:0,narrow:0,mouth:0,px:0.4,py:0},
+    fx:{trail:0,ghosts:[],arc:0,flash:0,spark:0,shakeX:0,shakeY:0,speed:0},
+    j:{}
+  };
+}
+function buildSkeleton(P){
+  const j=P.j;
+  j.pelvis={x:P.px,y:P.py};
+  // 척추 FK — 위쪽(-y)으로 누적 회전
+  let a=P.pelvisA, x=P.px, y=P.py;
+  const segs=[[B.s1,P.spineA[0]],[B.s2,P.spineA[1]],[B.s3,P.spineA[2]]];
+  const names=["spine1","spine2","chest"];
+  for(let i=0;i<3;i++){
+    a+=segs[i][1];
+    x+=Math.sin(a)*segs[i][0]; y-=Math.cos(a)*segs[i][0];
+    j[names[i]]={x,y};
+  }
+  j.chestA=a;
+  a+=P.neckA; const nx=x+Math.sin(a)*B.neck, ny=y-Math.cos(a)*B.neck;
+  j.neckTop={x:nx,y:ny};
+  const ha=a+P.headA;
+  j.head={x:nx+Math.sin(ha)*B.headOff, y:ny-Math.cos(ha)*B.headOff};
+  j.headA=ha;
+  // 골반 좌우 힙
+  j.hipN={x:P.px+7+P.shoulderDX*-0.25, y:P.py+3};
+  j.hipF={x:P.px-9+P.shoulderDX*0.25,  y:P.py+4};
+  // 다리 IK — 발 목표에 발목 스냅(미끄러짐 0)
+  for(const s of ["N","F"]){
+    const hip=j["hip"+s], f=P["foot"+s];
+    const tx=f.x, ty=f.y-B.ankleH;
+    const r=ik2(hip.x,hip.y,tx,ty,B.thigh,B.shin,1);
+    j["knee"+s]={x:r.mx,y:r.my};
+    j["ankle"+s]={x:r.ex,y:r.ey};
+    j["toe"+s]={x:r.ex+Math.cos(f.pitch)*B.footL,
+                y:r.ey+B.ankleH-2+Math.sin(f.pitch)*B.footL*0.55};
+    j["heel"+s]={x:r.ex-Math.cos(f.pitch)*5,
+                 y:r.ey+B.ankleH-1-Math.sin(f.pitch)*4};
+  }
+  // 어깨 (역회전 오프셋 shoulderDX)
+  const ca=j.chestA, cx=j.chest.x, cy=j.chest.y;
+  function rotC(ox,oy){const c=Math.cos(ca),s=Math.sin(ca);
+    return {x:cx+ox*c-oy*s, y:cy+ox*s+oy*c};}
+  j.shN=rotC(B.shNX+P.shoulderDX, B.shNY-2);
+  j.shF=rotC(B.shFX-P.shoulderDX, B.shFY-1);
+  // 검 그립 월드 (채널은 가슴 기준 상대)
+  if(P.sword.hold!=="none"){
+    j.grip={x:cx+P.sword.gripX, y:cy+P.sword.gripY};
+  }
+  // 팔 — FK 또는 IK(그립/타깃)
+  for(const s of ["N","F"]){
+    const sh=j["sh"+s], arm=P["arm"+s];
+    let tx,ty;
+    if(arm.mode==="ik"){
+      tx=arm.tx; ty=arm.ty;
+      if(arm.grip!==undefined && j.grip){ // 검 그립점(칼자루 위 오프셋)
+        tx=j.grip.x+Math.cos(P.sword.angle)*arm.grip;
+        ty=j.grip.y+Math.sin(P.sword.angle)*arm.grip;
+      }
+      const r=ik2(sh.x,sh.y,tx,ty,B.upArm,B.foArm,arm.bend||-1);
+      j["el"+s]={x:r.mx,y:r.my}; j["wr"+s]={x:r.ex,y:r.ey};
+    }else{
+      const a1=arm.a1, a2=arm.a1+arm.a2; // 수직 아래 기준
+      j["el"+s]={x:sh.x+Math.sin(a1)*B.upArm, y:sh.y+Math.cos(a1)*B.upArm};
+      j["wr"+s]={x:j["el"+s].x+Math.sin(a2)*B.foArm,
+                 y:j["el"+s].y+Math.cos(a2)*B.foArm};
+    }
+  }
+  // 검 실좌표 — near 손이 잡으면 그 손목에 스냅
+  const S=P.sword;
+  if(S.hold==="near"||S.hold==="both"){
+    const g=j.grip||j.wrN;
+    j.swordGrip={x:g.x,y:g.y};
+  }else if(S.hold==="fkNear"){ // FK 손끝에 부착 (대기 등)
+    j.swordGrip={x:j.wrN.x+Math.cos(S.angle)*2, y:j.wrN.y+Math.sin(S.angle)*2};
+  }
+  if(j.swordGrip){
+    const c=Math.cos(S.angle), s=Math.sin(S.angle);
+    j.swordTip={x:j.swordGrip.x+c*B.swordBlade*S.drawn,
+                y:j.swordGrip.y+s*B.swordBlade*S.drawn};
+    j.swordButt={x:j.swordGrip.x-c*B.swordHilt, y:j.swordGrip.y-s*B.swordHilt};
+  }
+  return P;
+}
+
+// ==== 4. 포즈 — pose(anim,t) 순수함수 =============================
+// 보행 발 사이클: 접지(등속 후진·y=0) → 스윙(전진·리프트)
+function gaitFoot(ph,S1,S2,lift,stance){
+  ph=fract(ph);
+  if(ph<stance){ const u=ph/stance;
+    return {x:lerp(S1,-S2,u), y:0, pitch:lerp(-0.20,0.42,E.in2(u)), st:true};
+  }
+  const u=(ph-stance)/(1-stance);
+  return {x:lerp(-S2,S1,E.io3(u)), y:-lift*Math.sin(Math.PI*u),
+          pitch:lerp(0.42,-0.20,E.io2(u)), st:false};
+}
+function poseIdle(P,t){
+  const br=Math.sin(t*TAU/3.4), sway=Math.sin(t*0.52);
+  P.px=sway*2.0; P.py=B.hipY+br*1.1;
+  P.pelvisA=0.02+sway*0.012;
+  P.spineA=[0.010+br*0.006, 0.008+br*0.010, -0.012+br*0.012];
+  P.neckA=-0.02-br*0.008; P.headA=-0.012+sway*0.010;
+  P.footN={x:15,y:0,pitch:0}; P.footF={x:-17,y:0,pitch:0};
+  // 검을 쥔 오른손(near)은 아래로 늘어뜨림 + 검끝 미세 흔들림
+  P.armN={mode:"fk",a1:0.34+br*0.015,a2:0.30+br*0.02};
+  P.armF={mode:"fk",a1:-0.13+br*0.012,a2:0.20+br*0.015};
+  P.sword={hold:"fkNear",angle:(96+br*1.3+Math.sin(t*1.7)*1.1)*RAD,
+           gripX:0,gripY:0,drawn:1,showSaya:true,sayaA:196*RAD};
+  P.hairSway=1; P.coatSway=1;
+  P.face={blink:blinkAmt(t),brow:0,narrow:0,mouth:0,px:0.45,py:0.05};
+  return P;
+}
+function poseWalk(P,t){
+  const p=fract(t/1.05);
+  const fN=gaitFoot(p,     30,26,13,0.60);
+  const fF=gaitFoot(p+0.5, 30,26,13,0.60);
+  P.footN={x:fN.x,y:fN.y,pitch:fN.pitch};
+  P.footF={x:fF.x,y:fF.y,pitch:fF.pitch};
+  P.groundedN=fN.st; P.groundedF=fF.st;
+  P.py=B.hipY-2.6*Math.cos(2*TAU*(p-0.27));      // 골반 상하 (중간지지 최고점)
+  P.px=1.5*Math.sin(TAU*p);
+  P.pelvisA=0.05+0.02*Math.sin(TAU*p);
+  P.spineA=[0.02,0.025,0.005];
+  P.neckA=-0.05; P.headA=-0.015+0.012*Math.cos(2*TAU*p);
+  P.shoulderDX=-5.5*Math.sin(TAU*p);             // 어깨 역회전
+  const sw=Math.sin(TAU*p);
+  P.armN={mode:"fk",a1:-0.52*sw,a2:0.28+0.15*Math.max(0,-sw)};
+  P.armF={mode:"fk",a1: 0.52*sw,a2:0.28+0.15*Math.max(0, sw)};
+  P.sword={hold:"none",angle:0,gripX:0,gripY:0,drawn:0,showSaya:true,sayaA:200*RAD};
+  P.hairSway=1.2; P.coatSway=1.4;
+  P.face={blink:blinkAmt(t),brow:0,narrow:0,mouth:0,px:0.5,py:0};
+  return P;
+}
+function poseRun(P,t){
+  const p=fract(t/0.70);
+  const fN=gaitFoot(p,     50,42,26,0.34);
+  const fF=gaitFoot(p+0.5, 50,42,26,0.34);
+  P.footN={x:fN.x+8,y:fN.y,pitch:fN.pitch*1.2};
+  P.footF={x:fF.x+8,y:fF.y,pitch:fF.pitch*1.2};
+  P.groundedN=fN.st; P.groundedF=fF.st;
+  const air=(!fN.st&&!fF.st)?1:0;
+  P.py=B.hipY-5.5*Math.cos(2*TAU*(p-0.30))-air*3;
+  P.px=2.5*Math.sin(TAU*p);
+  P.pelvisA=0.16; P.spineA=[0.06,0.07,0.05];     // 상체 전경
+  P.neckA=-0.16; P.headA=-0.04;
+  P.shoulderDX=-8*Math.sin(TAU*p);
+  const sw=Math.sin(TAU*p);
+  P.armN={mode:"fk",a1:0.35-0.75*sw,a2:1.15+0.25*sw};
+  P.armF={mode:"fk",a1:0.35+0.75*sw,a2:1.15-0.25*sw};
+  P.sword={hold:"none",angle:0,gripX:0,gripY:0,drawn:0,showSaya:true,sayaA:206*RAD};
+  P.hairSway=0.6; P.hairFlow=1; P.coatSway=1; P.coatFlap=1;
+  P.fx.speed=0.6;
+  P.face={blink:0,brow:-0.3,narrow:0.35,mouth:0.15,px:0.7,py:0};
+  return P;
+}
+
+// --- 베기: 3연격 콤보 (횡베기→반전 올려베기→내려찍기), 루프 3.6s ----
+const SL={T:3.6};
+SL.ang=ch([ // 검 각도(도) — 예비 느리게 → 타격 급가속(out5/out4) → 홀드(중복키) → 회수
+  [0.00,  75,"io2"],[0.34, 196,"io3"],[0.42, 205,"out2"],   // S1 예비: 등뒤로
+  [0.55,   8,"out5"],[0.70,   8,"lin"],                     // S1 타격→홀드
+  [0.98,  62,"io3"],[1.20, 118,"io2"],                      // 회수→S2 예비(하단)
+  [1.34, -112,"out5"],[1.50,-112,"lin"],                    // S2 올려베기→홀드
+  [1.86, -95,"io3"],[2.10, -78,"io2"],                      // S3 예비: 머리 위
+  [2.24,  86,"out4"],[2.52,  86,"lin"],                     // S3 내려찍기→홀드
+  [3.55,  75,"io3"]]);
+SL.gx=ch([[0,20],[0.42,-12,"io3"],[0.55,30,"out5"],[0.70,30,"lin"],
+  [1.20,6,"io3"],[1.34,20,"out5"],[1.50,20,"lin"],
+  [2.10,4,"io3"],[2.24,26,"out4"],[2.52,26,"lin"],[3.55,20,"io3"]]);
+SL.gy=ch([[0,12],[0.42,-20,"io3"],[0.55,8,"out5"],[0.70,8,"lin"],
+  [1.20,26,"io3"],[1.34,-16,"out5"],[1.50,-16,"lin"],
+  [2.10,-34,"io3"],[2.24,30,"out4"],[2.52,30,"lin"],[3.55,12,"io3"]]);
+SL.px=ch([[0,0],[0.42,-9,"io3"],[0.55,14,"out5"],[0.70,14,"lin"],
+  [1.20,2,"io3"],[1.34,10,"out5"],[1.50,10,"lin"],
+  [2.10,-6,"io3"],[2.24,16,"out4"],[2.52,16,"lin"],[3.55,0,"io3"]]);
+SL.py=ch([[0,0],[0.42,3,"io3"],[0.55,2,"out5"],[1.20,4,"io3"],[1.34,-3,"out5"],
+  [2.10,-5,"io3"],[2.24,9,"out4"],[2.52,9,"lin"],[3.55,0,"io3"]]);
+SL.lean=ch([[0,0.04],[0.42,-0.10,"io3"],[0.55,0.16,"out5"],[0.70,0.16,"lin"],
+  [1.20,0.02,"io3"],[1.34,-0.08,"out5"],[1.50,-0.08,"lin"],
+  [2.10,-0.14,"io3"],[2.24,0.22,"out4"],[2.52,0.22,"lin"],[3.55,0.04,"io3"]]);
+SL.tw=ch([[0,0],[0.42,-10,"io3"],[0.55,9,"out5"],[1.20,-4,"io3"],[1.34,6,"out5"],
+  [2.10,-3,"io3"],[2.24,8,"out4"],[3.55,0,"io3"]]);
+SL.trail=ch([[0.40,0],[0.44,1,"out2"],[0.80,1,"lin"],[1.00,0,"io2"],
+  [1.30,0],[1.33,1,"out2"],[1.62,1,"lin"],[1.82,0,"io2"],
+  [2.18,0],[2.22,1,"out2"],[2.66,1,"lin"],[2.92,0,"io2"]]);
+// 발 위치(월드) — 타격마다 런지 스텝, 그 외 접지 고정
+SL.fnx=ch([[0,20],[0.36,20],[0.46,40,"out3"],[1.10,40],[1.24,26,"io3"],
+  [2.02,26],[2.18,44,"out3"],[3.20,44],[3.50,20,"io3"]]);
+SL.ffx=ch([[0,-26],[1.60,-26],[1.78,-34,"io3"],[2.90,-34],[3.30,-26,"io3"]]);
+function stepLift(t,windows){ // 스텝 창에서만 발 리프트
+  for(const w of windows){ if(t>=w[0]&&t<=w[1]){
+    return -9*Math.sin(Math.PI*(t-w[0])/(w[1]-w[0])); } }
+  return 0;
+}
+function poseSlash(P,t){
+  t=fract(t/SL.T)*SL.T;
+  P.px=SL.px(t); P.py=B.hipY+SL.py(t);
+  P.pelvisA=SL.lean(t)*0.55;
+  P.spineA=[SL.lean(t)*0.3,SL.lean(t)*0.35,SL.lean(t)*0.25];
+  P.neckA=-SL.lean(t)*0.8; P.headA=-0.02;
+  P.shoulderDX=SL.tw(t);
+  P.footN={x:SL.fnx(t),y:stepLift(t,[[0.36,0.46],[1.10,1.24],[2.02,2.18],[3.20,3.50]]),pitch:0};
+  P.footF={x:SL.ffx(t),y:stepLift(t,[[1.60,1.78],[2.90,3.30]]),pitch:0};
+  P.groundedN=P.footN.y===0; P.groundedF=P.footF.y===0;
+  P.sword={hold:"both",angle:SL.ang(t)*RAD,gripX:SL.gx(t),gripY:SL.gy(t),
+           drawn:1,showSaya:true,sayaA:198*RAD};
+  P.armN={mode:"ik",grip:7,bend:-1};   // 양손 그립 IK
+  P.armF={mode:"ik",grip:-7,bend:-1};
+  P.fx.trail=SL.trail(t);
+  const strike=(t>0.42&&t<0.60)||(t>1.20&&t<1.40)||(t>2.10&&t<2.30);
+  if(strike)P.fx.ghosts=[0.022,0.048,0.078];
+  if(t>2.24&&t<2.42){P.fx.spark=1-(t-2.24)/0.18;
+    P.fx.shakeX=Math.sin(t*230)*2.4*P.fx.spark;P.fx.shakeY=Math.cos(t*190)*1.8*P.fx.spark;}
+  P.hairSway=1.6; P.coatSway=1.8; P.coatFlap=0.5;
+  P.face={blink:0,brow:-0.5,narrow:0.4,mouth:0.1,px:0.7,py:0};
+  return P;
+}
+// --- 발도(시그니처): 납도→예비→섬광 스텝→극점 일섬→잔심→납도, 4.6s ---
+const BT={T:4.6};
+BT.px=ch([[0,0],[1.10,0],[1.16,8,"in3"],[1.30,118,"out3"],[3.30,118],
+  [3.70,64,"io2"],[4.10,10,"io2"],[4.45,0,"io2"]]);
+BT.py=ch([[0,3],[0.85,3],[1.10,8,"io2"],[1.22,2,"out2"],[1.30,9,"out2"],
+  [2.60,9],[3.60,3,"io2"]]);
+BT.lean=ch([[0,0.05],[0.85,0.05],[1.10,-0.05,"io2"],[1.30,0.30,"out4"],
+  [2.60,0.30],[3.60,0.05,"io2"]]);
+BT.drawn=ch([[0,0],[1.285,0],[1.345,1,"out4"],[3.55,1],[3.98,0.12,"io2"],[4.06,0,"in2"]]);
+BT.ang=ch([[0,155],[1.285,155],[1.345,-6,"out5"],[2.60,-6],[3.20,-30,"io2"],
+  [3.60,60,"io2"],[3.98,140,"io2"],[4.06,155,"in2"]]);
+BT.gx=ch([[0,-14],[1.10,-14],[1.345,34,"out5"],[2.60,34],[3.60,6,"io2"],[3.98,-12,"io2"]]);
+BT.gy=ch([[0,26],[1.10,26],[1.345,10,"out5"],[2.60,10],[3.60,22,"io2"],[3.98,26,"io2"]]);
+BT.arc=ch([[1.30,0],[1.35,1,"out2"],[1.60,0.85,"lin"],[2.30,0,"out2"]]);
+BT.flash=ch([[1.30,0],[1.345,0.85,"out2"],[1.55,0,"out2"]]);
+BT.fnx=ch([[0,16],[1.12,16],[1.30,152,"out3"],[3.30,152],[3.55,120,"io2"],
+  [3.90,60,"io2"],[4.30,16,"io2"]]);
+BT.ffx=ch([[0,-18],[1.12,-18],[1.30,86,"out3"],[3.42,86],[3.70,40,"io2"],
+  [4.10,-18,"io2"]]);
+function poseBattou(P,t){
+  t=fract(t/BT.T)*BT.T;
+  const sheathed=BT.drawn(t)<0.05;
+  P.px=BT.px(t); P.py=B.hipY+BT.py(t);
+  const L=BT.lean(t);
+  P.pelvisA=L*0.5; P.spineA=[L*0.3,L*0.35,L*0.3];
+  P.neckA=-L*0.9; P.headA=-0.02;
+  P.footN={x:BT.fnx(t),y:stepLift(t,[[1.12,1.30],[3.55,3.90],[3.90,4.30]]),pitch:0};
+  P.footF={x:BT.ffx(t),y:stepLift(t,[[1.12,1.30],[3.42,3.70],[3.70,4.10]]),pitch:0};
+  P.groundedN=P.footN.y===0; P.groundedF=P.footF.y===0;
+  P.sword={hold:sheathed?"none":"near",angle:BT.ang(t)*RAD,
+           gripX:BT.gx(t),gripY:BT.gy(t),drawn:Math.max(0.12,BT.drawn(t)),
+           showSaya:true,sayaA:(200+L*40)*RAD};
+  if(sheathed){ // 납도 자세: 오른손은 칼자루(허리), 왼손은 코등이
+    P.sword.drawn=0;
+    P.armN={mode:"ik",tx:P.px-8,ty:P.py-12,bend:-1};
+    P.armF={mode:"ik",tx:P.px-16,ty:P.py-8,bend:-1};
+  }else{
+    P.armN={mode:"ik",grip:7,bend:-1};
+    const ext=BT.arc(t); // 일섬 중 왼팔은 뒤로 뻗어 밸런스
+    if(t>1.28&&t<3.3)P.armF={mode:"ik",tx:P.px-46,ty:P.py-58+10*ext,bend:1};
+    else P.armF={mode:"ik",grip:-7,bend:-1};
+  }
+  P.fx.arc=BT.arc(t); P.fx.flash=BT.flash(t);
+  P.fx.trail=BT.arc(t)>0.05?BT.arc(t):0;
+  if(t>1.14&&t<1.42)P.fx.ghosts=[0.035,0.07,0.105,0.14];
+  if(t>4.02&&t<4.14){P.fx.spark=0.5;P.fx.shakeX=Math.sin(t*260)*1.2;}  // 찰칵
+  P.hairSway=t<1.1?0.5:1.4; P.hairFlow=(t>1.28&&t<2.2)?1:0;
+  P.coatSway=1.3; P.coatFlap=(t>1.28&&t<2.4)?0.9:0.2;
+  const zan=(t>1.34&&t<2.6);
+  P.face={blink:t<1.0?blinkAmt(t)*0.5:0,brow:-0.6,narrow:zan?0.55:0.35,
+          mouth:0,px:0.75,py:0.05};
+  return P;
+}
+const ANIMS={idle:poseIdle,walk:poseWalk,run:poseRun,slash:poseSlash,battou:poseBattou};
+function pose(anim,t){
+  const P=basePose(); P.t=t;
+  (ANIMS[anim]||poseIdle)(P,t);
+  buildSkeleton(P);
+  return P;
+}
