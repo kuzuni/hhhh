@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>루시엘 — 황금 사자의 왕자 · 컷아웃 리깅</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#1c1410;
+    font-family:"Segoe UI","Malgun Gothic",sans-serif;}
+  #cv{display:block;width:100vw;height:100vh;cursor:grab;}
+  #cv.grabbing{cursor:grabbing;}
+  #err{position:fixed;top:4px;left:4px;color:#ff5252;font:bold 13px "Segoe UI","Malgun Gothic",sans-serif;
+    z-index:99;white-space:pre-wrap;max-width:90vw;pointer-events:none;text-shadow:0 1px 2px #000;}
+  #back{position:fixed;top:10px;left:12px;z-index:10;color:#d4af5a;text-decoration:none;
+    font-size:13px;opacity:.85;}
+  #back:hover{opacity:1;text-decoration:underline;}
+  #badge{position:fixed;top:10px;right:14px;z-index:10;color:#f7f3e9;background:rgba(212,175,90,.16);
+    border:1px solid rgba(212,175,90,.45);border-radius:20px;padding:4px 14px;font-size:12px;letter-spacing:.5px;}
+  #title{position:fixed;top:34px;left:0;right:0;text-align:center;pointer-events:none;z-index:5;}
+  #title h1{margin:0;color:#f4de9c;font-size:26px;font-weight:600;letter-spacing:2px;
+    text-shadow:0 2px 12px rgba(212,175,90,.35);}
+  #title p{margin:2px 0 0;color:#c9b28a;font-size:12px;letter-spacing:1px;}
+  #ui{position:fixed;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:8px;
+    flex-wrap:wrap;z-index:10;align-items:center;}
+  #ui button{background:rgba(43,58,92,.55);color:#f7f3e9;border:1px solid rgba(212,175,90,.5);
+    border-radius:8px;padding:8px 16px;font-family:inherit;font-size:14px;cursor:pointer;
+    transition:background .15s,transform .1s;}
+  #ui button:hover{background:rgba(212,175,90,.35);}
+  #ui button.on{background:#d4af5a;color:#241a10;font-weight:600;}
+  #ui .sep{width:1px;height:24px;background:rgba(212,175,90,.4);margin:0 4px;}
+  #ui label{color:#c9b28a;font-size:12px;display:flex;align-items:center;gap:6px;}
+  #ui input[type=range]{width:110px;accent-color:#d4af5a;}
+  #hint{position:fixed;bottom:64px;left:0;right:0;text-align:center;color:rgba(201,178,138,.75);
+    font-size:12px;pointer-events:none;z-index:5;letter-spacing:.5px;}
+</style>
+</head>
+<body>
+<div id="err"></div>
+<a id="back" href="heroes.html">← 용사 전시관</a>
+<div id="badge">컷아웃 리깅 · Spine식 퍼펫</div>
+<div id="title"><h1>루시엘</h1><p>황금 사자의 왕자 · 왕실 검사</p></div>
+<canvas id="cv"></canvas>
+<div id="hint">손 · 검끝 · 발 · 머리를 드래그해 보세요 — 놓으면 스프링으로 복귀합니다</div>
+<div id="ui">
+  <button data-anim="idle" class="on">대기</button>
+  <button data-anim="greet">인사</button>
+  <button data-anim="lunge">찌르기</button>
+  <button data-anim="jump">점프</button>
+  <button data-anim="victory">승리</button>
+  <div class="sep"></div>
+  <button id="btnBones">뼈대 보기</button>
+  <button id="btnExplode">부품 분해</button>
+  <div class="sep"></div>
+  <label>속도 <input id="spd" type="range" min="0.2" max="2" step="0.1" value="1"></label>
+</div>
+<script>
+"use strict";
+// ============================================================================
+// ==== 섹션 맵 ==============================================================
+// ==== 1. 팔레트/유틸  2. 파트 베이크(오프스크린)  3. 리그(씬그래프)      ====
+// ==== 4. 애니메이션(키프레임 트랙 + pose 순수함수)  5. 렌더/이펙트       ====
+// ==== 6. IK/드래그 인터랙션  7. UI  8. 몽타주(?montage)                  ====
+// ============================================================================
+const errBox=document.getElementById('err');
+window.onerror=function(m,s,l,c){errBox.textContent+='ERR: '+m+' @'+(s||'').split('/').pop()+':'+l+'\n';};
+window.addEventListener('unhandledrejection',e=>{errBox.textContent+='REJ: '+e.reason+'\n';});
+
+// ==== 1. 팔레트 / 유틸 ======================================================
+const PAL={
+  outline:'#241a20', outThin:'#3a2b30',
+  skin:'#ffe9da', skinSh:'#f0c9ad', blush:'rgba(255,140,120,.28)',
+  hair:'#f4de9c', hairSh:'#d9b45e', hairDp:'#a9823a', hairRim:'#fff3c9', hairLine:'#6b5426',
+  ivory:'#f7f3e9', ivorySh:'#ddd2be', gold:'#d4af5a', goldD:'#a9823a', goldL:'#f2dfa8',
+  navy:'#2b3a5c', navyD:'#1d2940', navyL:'#3d5480',
+  cape:'#b03042', capeD:'#7e2231', capeL:'#cf4c5e',
+  steel:'#cfd6e2', steelL:'#f5f8ff', steelD:'#8a93a6',
+  bg:'#1c1410'
+};
+const TAU=Math.PI*2, D=Math.PI/180;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const sstep=t=>t*t*(3-2*t);
+function path(c,d){c.beginPath();c.moveTo(d[0],d[1]);
+  for(let i=2;i<d.length;i++){const s=d[i];
+    if(s.length===6)c.bezierCurveTo(s[0],s[1],s[2],s[3],s[4],s[5]);
+    else if(s.length===4)c.quadraticCurveTo(s[0],s[1],s[2],s[3]);
+    else c.lineTo(s[0],s[1]);}}
+// 테이퍼 머리카락 가닥: 뿌리(x0,y0,폭w) → 제어(cx,cy) → 뾰족한 끝(x1,y1)
+function lockShape(c,x0,y0,cx,cy,x1,y1,w){
+  const dx=cx-x0,dy=cy-y0,L=Math.hypot(dx,dy)||1,nx=-dy/L*w*.5,ny=dx/L*w*.5;
+  c.beginPath();c.moveTo(x0+nx,y0+ny);
+  c.quadraticCurveTo(cx+nx*.55,cy+ny*.55,x1,y1);
+  c.quadraticCurveTo(cx-nx*.55,cy-ny*.55,x0-nx,y0-ny);
+  c.closePath();}
+function ell(c,x,y,rx,ry,rot){c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,TAU);}
+function cap(c,x,y,r,fill){ell(c,x,y,r,r,0);c.fillStyle=fill;c.fill();} // 관절 은폐 캡
+
+// ==== 2. 파트 베이크 ========================================================
+// 각 파트는 초기화 때 딱 한 번 오프스크린 캔버스에 그려진다.
+// makePart(이름, x0,y0,x1,y1 [디자인 좌표 bbox], bs 베이크배율, drawFn(ctx))
+// 피벗은 디자인 좌표 (0,0). 매 프레임은 리지드 트랜스폼만 적용.
+const PARTS={};
+function makePart(name,x0,y0,x1,y1,bs,fn){
+  const w=Math.ceil((x1-x0)*bs)+4,h=Math.ceil((y1-y0)*bs)+4;
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const c=cv.getContext('2d');
+  c.translate(-x0*bs+2,-y0*bs+2);c.scale(bs,bs);
+  c.lineJoin='round';c.lineCap='round';
+  fn(c);
+  PARTS[name]={cv,bs,ox:x0*bs-2,oy:y0*bs-2,w,h,x0,y0,x1,y1};
+  return PARTS[name];
+}
+</script>
+</body>
+</html>
