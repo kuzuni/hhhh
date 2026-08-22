@@ -103,18 +103,18 @@ function softEllipse(g,x,y,rx,ry,col,a){
  g.save(); g.globalAlpha=a; g.translate(x,y); g.scale(1,ry/rx); g.translate(-x,-y);
  g.fillStyle=gr; g.beginPath(); g.arc(x,y,rx,0,TAU); g.fill(); g.restore();
 }
-// 두상: 계란형 + V라인 턱
+// 두상: 계란형 + 좁은 라운드 V턱 (하관 8~12% 수렴, 볼 최대폭은 눈높이 살짝 아래)
 function headPath(g){
  g.beginPath();
- g.moveTo(500,557);
- g.bezierCurveTo(481,554,450,537,433,506);   // 좌 턱→볼 (V라인)
- g.bezierCurveTo(415,477,404,452,400,424);   // 좌 볼→관자
- g.bezierCurveTo(395,390,396,356,406,326);   // 좌 관자→이마
+ g.moveTo(500,564);
+ g.bezierCurveTo(485,562,461,546,442,515);   // 좌 턱끝→턱선 (직선적 수렴)
+ g.bezierCurveTo(425,486,409,456,403,429);   // 좌 턱선→볼 (최대폭 y≈430)
+ g.bezierCurveTo(396,392,397,356,406,326);   // 좌 관자→이마
  g.bezierCurveTo(421,286,454,264,500,263);   // 좌상 두정
  g.bezierCurveTo(546,264,579,286,594,326);   // 우상
- g.bezierCurveTo(604,356,605,390,600,424);
- g.bezierCurveTo(596,452,585,477,567,506);
- g.bezierCurveTo(550,537,519,554,500,557);
+ g.bezierCurveTo(603,356,604,392,597,429);
+ g.bezierCurveTo(591,456,575,486,558,515);
+ g.bezierCurveTo(539,546,515,562,500,564);
  g.closePath();
 }
 // 눈 기하: side s=-1(뷰어 좌), +1(뷰어 우). 아몬드 2.2:1, 눈꼬리 살짝 올림

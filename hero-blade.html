@@ -263,22 +263,24 @@ function poseIdle(P,t){
   P.face={blink:blinkAmt(t),brow:0,narrow:0,mouth:0,px:0.25,py:0.05};
   return P;
 }
+const WALK={T:1.05,S1:58,S2:48,st:0.58,lift:32}; // 몽타주 접지 마커와 공유
 function poseWalk(P,t){
-  const p=fract(t/1.05);
-  const fN=gaitFoot(p,     34,28,15,0.60);
-  const fF=gaitFoot(p+0.5, 34,28,15,0.60);
+  const p=fract(t/WALK.T);
+  const fN=gaitFoot(p,     WALK.S1,WALK.S2,WALK.lift,WALK.st);
+  const fF=gaitFoot(p+0.5, WALK.S1,WALK.S2,WALK.lift,WALK.st);
   P.footN={x:fN.x,y:fN.y,pitch:fN.pitch};
   P.footF={x:fF.x,y:fF.y,pitch:fF.pitch};
   P.groundedN=fN.st; P.groundedF=fF.st;
-  P.py=B.hipY-2.6*Math.cos(2*TAU*(p-0.27));      // 골반 상하 (중간지지 최고점)
+  // 골반 상하 서지 — 접지(양발 벌림)에서 낮고, 중간지지에서 높다
+  P.py=B.hipY+3.5+5.5*Math.cos(2*TAU*p);
   P.px=1.5*Math.sin(TAU*p);
-  P.pelvisA=0.05+0.02*Math.sin(TAU*p);
-  P.spineA=[0.02,0.025,0.005];
+  P.pelvisA=0.05+0.03*Math.sin(TAU*p);
+  P.spineA=[0.02+0.015*Math.cos(TAU*p),0.025,0.012-0.022*Math.cos(TAU*p)];
   P.neckA=-0.05; P.headA=-0.015+0.012*Math.cos(2*TAU*p);
-  P.shoulderDX=-5.5*Math.sin(TAU*p);             // 어깨 역회전
-  const sw=Math.sin(TAU*p);
-  P.armN={mode:"fk",a1:-0.52*sw,a2:0.28+0.15*Math.max(0,-sw)};
-  P.armF={mode:"fk",a1: 0.52*sw,a2:0.28+0.15*Math.max(0, sw)};
+  P.shoulderDX=-9*Math.cos(TAU*p);               // 어깨 역회전 (접지에서 극값)
+  const sw=Math.cos(TAU*p);                       // 팔 스윙 — 접지 프레임에서 최대 진폭
+  P.armN={mode:"fk",a1:-0.62*sw,a2:0.25+0.38*Math.max(0,-sw)};
+  P.armF={mode:"fk",a1: 0.62*sw,a2:0.25+0.38*Math.max(0, sw)};
   P.sword={hold:"none",angle:0,gripX:0,gripY:0,drawn:0,showSaya:true,sayaA:200*RAD};
   P.hairSway=1.2; P.coatSway=1.4;
   P.face={blink:blinkAmt(t),brow:0,narrow:0,mouth:0,px:0.5,py:0};
@@ -370,12 +372,14 @@ function poseSlash(P,t){
 }
 // --- 발도(시그니처): 납도→예비→섬광 스텝→극점 일섬→잔심→납도, 4.6s ---
 const BT={T:4.6};
-BT.px=ch([[0,0],[1.10,0],[1.16,8,"in3"],[1.30,118,"out3"],[3.30,118],
+// 예비(~t=1.0-1.2): 무게중심 후방 + 크라우칭(신장 압축) + 어깨 와인드업 → 대비 후 발도
+BT.px=ch([[0,0],[0.86,0],[1.06,-12,"io2"],[1.18,-14,"io2"],[1.30,118,"out3"],[3.30,118],
   [3.70,64,"io2"],[4.10,10,"io2"],[4.45,0,"io2"]]);
-BT.py=ch([[0,3],[0.85,3],[1.10,8,"io2"],[1.22,2,"out2"],[1.30,9,"out2"],
+BT.py=ch([[0,3],[0.85,3],[1.04,14,"io2"],[1.24,12,"lin"],[1.30,9,"out2"],
   [2.60,9],[3.60,3,"io2"]]);
-BT.lean=ch([[0,0.05],[0.85,0.05],[1.10,-0.05,"io2"],[1.30,0.30,"out4"],
+BT.lean=ch([[0,0.05],[0.85,0.05],[1.04,-0.16,"io2"],[1.30,0.30,"out4"],
   [2.60,0.30],[3.60,0.05,"io2"]]);
+BT.wind=ch([[0,0],[0.90,0],[1.06,9,"io2"],[1.36,-7,"out4"],[2.60,-7],[3.60,0,"io2"]]);
 BT.drawn=ch([[0,0],[1.285,0],[1.345,1,"out4"],[3.55,1],[3.98,0.12,"io2"],[4.06,0,"in2"]]);
 BT.ang=ch([[0,155],[1.285,155],[1.345,-6,"out5"],[2.60,-6],[3.20,-30,"io2"],
   [3.60,60,"io2"],[3.98,140,"io2"],[4.06,155,"in2"]]);
@@ -383,9 +387,9 @@ BT.gx=ch([[0,-14],[1.10,-14],[1.345,34,"out5"],[2.60,34],[3.60,6,"io2"],[3.98,-1
 BT.gy=ch([[0,26],[1.10,26],[1.345,10,"out5"],[2.60,10],[3.60,22,"io2"],[3.98,26,"io2"]]);
 BT.arc=ch([[1.30,0],[1.35,1,"out2"],[1.60,0.85,"lin"],[2.30,0,"out2"]]);
 BT.flash=ch([[1.30,0],[1.345,0.85,"out2"],[1.55,0,"out2"]]);
-BT.fnx=ch([[0,16],[1.12,16],[1.30,152,"out3"],[3.30,152],[3.55,120,"io2"],
+BT.fnx=ch([[0,16],[0.90,16],[1.08,24,"io2"],[1.30,152,"out3"],[3.30,152],[3.55,120,"io2"],
   [3.90,60,"io2"],[4.30,16,"io2"]]);
-BT.ffx=ch([[0,-18],[1.12,-18],[1.30,86,"out3"],[3.42,86],[3.70,40,"io2"],
+BT.ffx=ch([[0,-18],[0.90,-18],[1.08,-26,"io2"],[1.30,86,"out3"],[3.42,86],[3.70,40,"io2"],
   [4.10,-18,"io2"]]);
 function poseBattou(P,t){
   t=fract(t/BT.T)*BT.T;
@@ -394,8 +398,9 @@ function poseBattou(P,t){
   const L=BT.lean(t);
   P.pelvisA=L*0.5; P.spineA=[L*0.3,L*0.35,L*0.3];
   P.neckA=-L*0.9; P.headA=-0.02;
-  P.footN={x:BT.fnx(t),y:stepLift(t,[[1.12,1.30],[3.55,3.90],[3.90,4.30]]),pitch:0};
-  P.footF={x:BT.ffx(t),y:stepLift(t,[[1.12,1.30],[3.42,3.70],[3.70,4.10]]),pitch:0};
+  P.shoulderDX=BT.wind(t); // 예비 와인드업 → 일섬 반전
+  P.footN={x:BT.fnx(t),y:stepLift(t,[[1.08,1.30],[3.55,3.90],[3.90,4.30]]),pitch:0};
+  P.footF={x:BT.ffx(t),y:stepLift(t,[[1.08,1.30],[3.42,3.70],[3.70,4.10]]),pitch:0};
   P.groundedN=P.footN.y===0; P.groundedF=P.footF.y===0;
   P.sword={hold:sheathed?"none":"near",angle:BT.ang(t)*RAD,
            gripX:BT.gx(t),gripY:BT.gy(t),drawn:Math.max(0.12,BT.drawn(t)),
@@ -412,7 +417,7 @@ function poseBattou(P,t){
   }
   P.fx.arc=BT.arc(t); P.fx.flash=BT.flash(t);
   P.fx.trail=BT.arc(t)>0.05?BT.arc(t):0;
-  if(t>1.14&&t<1.42)P.fx.ghosts=[0.035,0.07,0.105,0.14];
+  if(t>1.14&&t<1.42)P.fx.ghosts=[0.04,0.08,0.125];
   if(t>4.02&&t<4.14){P.fx.spark=0.5;P.fx.shakeX=Math.sin(t*260)*1.2;}  // 찰칵
   P.hairSway=t<1.1?0.5:1.4; P.hairFlow=(t>1.28&&t<2.2)?1:0;
   P.coatSway=1.3; P.coatFlap=(t>1.28&&t<2.4)?0.9:0.2;
@@ -468,7 +473,7 @@ function strand(g,pts,w0,w1,fill,outline,olw){
     g.quadraticCurveTo(R[i].x,R[i].y,(R[i].x+R[i-1].x)/2,(R[i].y+R[i-1].y)/2);
   g.closePath();
   g.fillStyle=fill;g.fill();
-  if(outline){g.strokeStyle=outline;g.lineWidth=olw||0.45;g.lineJoin="round";g.stroke();}
+  if(outline){g.strokeStyle=outline;g.lineWidth=(olw||0.45)*LW;g.lineJoin="round";g.stroke();}
 }
 function bez(g,pts){ // moveTo + 이어지는 스무드 콰드 폴리라인
   g.moveTo(pts[0][0],pts[0][1]);
@@ -491,52 +496,53 @@ function drawHead(g,P){
     [19.5,-0.5],[19.7,2.0],[19.2,4.6],   // 눈가 살짝 오목
     [19.1,6.4],[20.3,7.6],[21.2,8.5],[20.4,9.7],  // 콧대→코끝
     [19.3,10.3],[18.9,11.6],[18.4,13.8],[17.2,15.8], // 코밑→입가
-    [15.0,19.5],[7.2,22.4],       // 뺨 → 턱끝 V
-    [2.5,23.2],[-2.2,20.2],
-    [-7.5,15.5],[-10.8,10.2],
+    [15.2,20.2],[7.4,23.4],       // 뺨 → 턱끝 V (소년-청년 중간, 턱 길이 +4%)
+    [2.4,24.3],[-2.4,20.8],
+    [-7.5,15.8],[-10.8,10.2],
     [-12.2,7],[-12.4,4.5],[-14.2,-4],[-14.5,-16]]);
   g.closePath();
   g.fillStyle=PAL.skin; g.fill();
-  g.strokeStyle=PAL.line; g.lineWidth=0.75; g.lineJoin="round"; g.stroke();
+  g.strokeStyle=PAL.line; g.lineWidth=0.75*LW; g.lineJoin="round"; g.stroke();
   // (귀는 사이드락+뒷머리에 가려지는 헤어스타일 — 생략)
   // 턱밑 셀셰이딩 (엷은 크레센트)
   g.beginPath();
-  bez(g,[[-2,20.1],[2.5,22.6],[7,21.6],[3,20.6],[0,19.8],[-2,20.1]]);
+  bez(g,[[-2,21.0],[2.5,23.6],[7,22.6],[3,21.5],[0,20.6],[-2,21.0]]);
   g.fillStyle=PAL.skinSh; g.globalAlpha=0.30; g.fill(); g.globalAlpha=1;
-  // 뺨 혈색 (라디얼 그라데이션, 아주 옅게)
-  for(const bp of[[8.2,10.0,2.6],[17.4,9.2,1.7]]){
+  // 뺨 혈색 — 광대 위 1점만, 낮은 불투명도 (코 옆 금지)
+  {
+    const bp=[7.4,8.8,3.2];
     const bg2=g.createRadialGradient(bp[0],bp[1],0,bp[0],bp[1],bp[2]);
-    bg2.addColorStop(0,"rgba(240,168,162,0.11)");
+    bg2.addColorStop(0,"rgba(240,168,162,0.15)");
     bg2.addColorStop(1,"rgba(240,168,162,0)");
-    g.beginPath(); g.ellipse(bp[0],bp[1],bp[2],bp[2]*0.55,0.08,0,TAU);
+    g.beginPath(); g.ellipse(bp[0],bp[1],bp[2],bp[2]*0.5,0.08,0,TAU);
     g.fillStyle=bg2; g.fill();
   }
   // -- 눈 --
   eye(g, 2.6,3.8, 5.3,2.55, false, F);
   eye(g,15.2,3.4, 4.0,2.40, true,  F);
-  // 눈썹: 얇고 길게, 낮고 직선적인 서늘한 각
-  g.strokeStyle=PAL.brow; g.lineWidth=0.55; g.lineCap="round";
+  // 눈썹: 가늘게, 눈에서 띄운 완만한 아치 — 서늘한 인상
+  g.strokeStyle=PAL.brow; g.lineWidth=0.30; g.lineCap="round";
   const bl=F.brow*1.1;
-  g.beginPath(); g.moveTo(-3.2,-1.2+bl);
-  g.quadraticCurveTo(2.6,-3.2+bl*0.4, 9.2,-2.2+bl*1.2); g.stroke();
-  g.beginPath(); g.moveTo(11.6,-2.0+bl);
-  g.quadraticCurveTo(15.6,-3.4+bl*0.4, 19.8,-2.4+bl*1.2); g.stroke();
-  // 코: 콧대 생략, 코끝 안쪽 짧은 획 + 미세 그림자점
-  g.strokeStyle="#d8b4a8"; g.lineWidth=0.7; g.lineCap="round";
-  g.beginPath(); g.moveTo(19.4,8.2); g.quadraticCurveTo(20.1,8.9,19.5,9.8); g.stroke();
-  g.fillStyle="rgba(216,180,168,0.45)";
-  g.beginPath(); g.ellipse(18.8,10.3,0.75,0.38,0.3,0,TAU); g.fill();
-  // 입: 작고 절제된 입매
+  g.beginPath(); g.moveTo(-2.8,-3.2+bl);
+  g.quadraticCurveTo(3.0,-5.1+bl*0.4, 9.0,-3.9+bl*1.2); g.stroke();
+  g.beginPath(); g.moveTo(12.0,-3.8+bl);
+  g.quadraticCurveTo(15.8,-5.3+bl*0.4, 19.6,-4.1+bl*1.2); g.stroke();
+  // 코: 콧대 그림자 한 획(짧은 단선) + 밝은 하이라이트 점 (콧구멍 점·블러 없음)
+  g.strokeStyle="rgba(199,150,140,0.6)"; g.lineWidth=0.5; g.lineCap="round";
+  g.beginPath(); g.moveTo(19.0,6.3); g.quadraticCurveTo(20.2,8.2,19.7,9.6); g.stroke();
+  g.fillStyle="rgba(255,255,255,0.55)";
+  g.beginPath(); g.ellipse(20.3,7.3,0.5,0.5,0,0,TAU); g.fill();
+  // 입: 눈 폭의 ~62% — 절제된 직선적 입매
   g.strokeStyle="#b06a63"; g.lineWidth=0.55; g.lineCap="round";
-  g.beginPath(); g.moveTo(11.2,15.1+F.mouth*0.5);
-  g.quadraticCurveTo(12.9,15.6+F.mouth*1.5, 14.6,14.9+F.mouth*0.2); g.stroke();
+  g.beginPath(); g.moveTo(10.2,15.3+F.mouth*0.5);
+  g.quadraticCurveTo(13.4,16.0+F.mouth*1.5, 16.6,14.9+F.mouth*0.2); g.stroke();
   if(F.mouth>0.05){
-    g.beginPath(); g.moveTo(11.5,15.5);
-    g.quadraticCurveTo(12.9,15.9+F.mouth*2.0,14.3,15.2); g.closePath();
+    g.beginPath(); g.moveTo(10.6,15.7);
+    g.quadraticCurveTo(13.4,16.2+F.mouth*2.0,16.2,15.2); g.closePath();
     g.fillStyle="#8e5450"; g.fill();
   }
   g.strokeStyle=PAL.skinSh; g.lineWidth=0.45; g.globalAlpha=0.35;
-  g.beginPath(); g.moveTo(11.9,17.1); g.quadraticCurveTo(12.9,17.5,13.9,17.0);
+  g.beginPath(); g.moveTo(11.6,17.6); g.quadraticCurveTo(13.4,18.1,15.2,17.4);
   g.stroke(); g.globalAlpha=1;
   g.restore();
 }
@@ -553,7 +559,7 @@ function eye(g,cx,cy,hw,hh,far,F){
     g.quadraticCurveTo(cx,cy+1.9,ox,cy-0.2); g.stroke();
     return;
   }
-  const topY=cy-H, outY=cy-H*0.38;
+  const topY=cy-H, outY=cy-H*0.50;                          // 눈꼬리 살짝 상승
   g.save();
   g.beginPath();
   g.moveTo(ix,cy+0.4);
@@ -563,8 +569,8 @@ function eye(g,cx,cy,hw,hh,far,F){
   g.clip();
   // 흰자
   g.fillStyle="#fbfcfe"; g.fillRect(cx-hw-2,cy-hh-4,hw*2+4,hh*2+6);
-  // 홍채 (세로 타원, 3톤)
-  const px=cx+F.px*inn*0.5, py=cy+F.py+0.35;
+  // 홍채 (세로 타원, 3톤) — 시선은 양눈 동일 방향(카메라 응시, 사시 방지)
+  const px=cx+F.px*0.7, py=cy+F.py+0.35;
   const irx=hw*0.46, iry=H*1.08;
   const gr=g.createLinearGradient(px,py-iry,px,py+iry);
   gr.addColorStop(0,PAL.eyeTop); gr.addColorStop(0.5,PAL.eyeMid);
@@ -575,7 +581,7 @@ function eye(g,cx,cy,hw,hh,far,F){
   g.beginPath(); g.ellipse(px,py+0.2,irx*0.40,iry*0.42,0,0,TAU);
   g.fillStyle=PAL.pupil; g.fill();
   // 상단 큰 하이라이트 + 하단 반사광
-  g.beginPath(); g.ellipse(px+irx*0.36,py-iry*0.38,irx*0.42,irx*0.42,0,0,TAU);
+  g.beginPath(); g.ellipse(px+irx*0.36,py-iry*0.38,irx*0.48,irx*0.48,0,0,TAU);
   g.fillStyle="rgba(255,255,255,0.96)"; g.fill();
   g.beginPath(); g.ellipse(px-irx*0.38,py+iry*0.46,irx*0.20,irx*0.20,0,0,TAU);
   g.fillStyle="rgba(205,238,255,0.85)"; g.fill();
@@ -583,11 +589,11 @@ function eye(g,cx,cy,hw,hh,far,F){
   g.fillStyle="rgba(45,58,90,0.13)";
   g.fillRect(cx-hw-2,topY-1.6,hw*2+4,H*0.20+1.2);
   g.restore();
-  // 윗눈꺼풀 라인 — 아치형, 눈꼬리 살짝 올림
+  // 윗눈꺼풀 라인 — 아치형, 눈꼬리 살짝 올림 (양눈 동일 곡률)
   g.strokeStyle=PAL.line; g.lineCap="round"; g.lineWidth=0.95;
   g.beginPath();
   g.moveTo(ix,cy+0.4);
-  g.quadraticCurveTo(cx+hw*inn*0.05, topY-1.9, ox, outY);
+  g.quadraticCurveTo(cx+hw*inn*0.05, topY-1.8, ox, outY);
   g.stroke();
   // 속눈썹 뭉침 (눈꼬리 플릭)
   g.beginPath();
@@ -626,10 +632,10 @@ function hairBack(g,P){
     x+=Math.cos(a)*len; y+=Math.sin(a)*len;
     pts.push({x,y});
   }
-  strand(g,pts,7.4,1.8,PAL.hairSh,PAL.line);
+  strand(g,pts,7.4,1.8,PAL.hairSh,"#3a4158",0.55);
   strand(g,pts.map(p=>({x:p.x+1.4,y:p.y+1.6})),5.0,1.0,PAL.hairDeep,null);
   strand(g,pts.map(p=>({x:p.x-1.0,y:p.y-1.4})),2.6,0.7,PAL.hair,null);
-  // 뒷머리 실루엣 (헤드 로컬) — 매끈한 크라운, 목덜미 2가닥 팁
+  // 뒷머리 실루엣 (헤드 로컬) — 채도 낮은 회청색 레이어, 외곽선은 앞머리와 통일
   g.save(); g.translate(j.head.x,j.head.y); g.rotate(j.headA);
   g.beginPath();
   bez(g,[[17,-14],[4,-26],[-9,-23.5],[-16,-15],[-18.8,-6],[-19.5,2],
@@ -638,7 +644,7 @@ function hairBack(g,P){
     [-6.5,11],[-7,5],[-9.5,1],[-11,-4],[-12.5,-8],[-6,-16],[17,-14]]);
   g.closePath();
   g.fillStyle=PAL.hairSh; g.fill();
-  g.strokeStyle=PAL.line; g.lineWidth=0.8; g.stroke();
+  g.strokeStyle="#3a4158"; g.lineWidth=0.7*LW; g.stroke();
   // 목덜미 딥 셰이드
   g.beginPath();
   bez(g,[[-13,6],[-14,13],[-9,17],[-7.5,12],[-10.5,9],[-13,6]]);
