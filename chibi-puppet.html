@@ -980,7 +980,7 @@ const SKINS={
     tailN1:'tailN1',tailN2:'tailN2',tailF1:'tailF1',tailF2:'tailF2',
     back1:'none',back2:'none',cape:'m_cape1',
     armU:'m_armU',armL:'m_armL',hand:'handN',armU2:'m_armU_f',armL2:'m_armL_f',hand2:'handF',
-    legU:'m_legU',legL:'m_legL',legU2:'m_legU_f',legL2:'m_legL_f',weapon:'m_staff',wRot:0.86}
+    legU:'m_legU',legL:'m_legL',legU2:'m_legU_f',legL2:'m_legL_f',weapon:'m_staff',wRot:0.52}
 };
 NMAP.legL_N.mirror=false;
 function computeRig(rx,ry,rr,rsx,rsy){
@@ -1241,7 +1241,7 @@ ANIMS.slashUp={dur:1.2,fn(t,r){        // ③ 올려 베기 — 아래에서 퍼
   if(t<.28){FACE.eye='_h';FACE.mouth='m_cat';}
   else if(t<.60){FACE.mouth='m_grit';FACE.browY=-1;}
   else{FACE.eye='_j';FACE.mouth='m_open';}
-  slashFx(r,kf(t,[[.28,0],[.35,1]]),kf(t,[[.28,0],[.29,.95],[.44,1],[.66,0]]),2.42,-.62,178,26,-16,imp);
+  slashFx(r,kf(t,[[.28,0],[.35,1]]),kf(t,[[.28,0],[.29,.88],[.44,.90],[.64,0]]),2.42,-.62,176,40,40,imp);
 }};
 ANIMS.slashSpin={dur:1.6,fn(t,r){      // ④ 회전 베기 — 제자리 스핀 슬래시
   setArmLayer(true);
@@ -1285,8 +1285,8 @@ ANIMS.victory={dur:1.7,fn(t,r){        // 승리 — 검 번쩍 들고 방방
   N.torso.rot=-.06+Math.sin(t*TAU*1.5)*.05;
   N.head.rot=.06+Math.sin(t*TAU*1.5+.8)*.07;
   N.armU_F.rot=lerp(-.35,-2.15,raise)+air*.1;    // 검을 하늘로 (프레임 안)
-  N.armL_F.rot=lerp(-2.45,-.55,raise);
-  aimBlade(lerp(-1.07,.30,raise));
+  N.armL_F.rot=lerp(-2.45,-.92,raise);
+  aimBlade(lerp(-1.07,.16,raise));
   N.armU_N.rot=lerp(.16,2.35,raise)-air*.28;    // 반대 팔도 만세
   N.armL_N.rot=lerp(.30,.42,raise);
   N.legU_N.rot=-air*.52;N.legL_N.rot=air*.92;
@@ -1474,11 +1474,11 @@ function drawFxBack(c,fx,t){   // 캐릭터 뒤에 깔리는 이펙트 (오라·
     c.fillStyle=bg;c.beginPath();c.arc(4,-60,200,0,TAU);c.fill();
   }
   if(fx.aura>0){
-    c.globalAlpha=fx.aura*.38;
+    c.globalAlpha=fx.aura*.28;
     const ag=c.createRadialGradient(4,-10,20,4,-10,190);
     ag.addColorStop(0,'rgba(255,196,80,.48)');ag.addColorStop(1,'rgba(255,150,40,0)');
     c.fillStyle=ag;c.beginPath();c.arc(4,-10,190,0,TAU);c.fill();
-    c.globalAlpha=fx.aura*.85;
+    c.globalAlpha=fx.aura*.7;
     for(let k=0;k<7;k++){
       const u=((t*.9+k*.143)%1);
       c.fillStyle=k%2?'rgba(255,214,90,.95)':'rgba(255,150,60,.9)';
@@ -1934,8 +1934,8 @@ if(IS_MONTAGE){
   const yB=pad+hA+pad,hB=436;
   const rowB=[
     {lb:'① 가로 베기 · 임팩트',o:{anim:'slashH',t:.385,skin:'pirate',zoom:.44}},
-    {lb:'② 내려 베기 · 지면 임팩트',o:{anim:'slashDown',t:.405,skin:'pirate',zoom:.44}},
-    {lb:'③ 올려 베기 · 부양',o:{anim:'slashUp',t:.40,skin:'pirate',zoom:.42}},
+    {lb:'② 내려 베기 · 지면 임팩트',o:{anim:'slashDown',t:.44,skin:'pirate',zoom:.40}},
+    {lb:'③ 올려 베기 · 부양',o:{anim:'slashUp',t:.38,skin:'pirate',zoom:.40}},
     {lb:'④ 회전 베기 · 스핀 슬래시',o:{anim:'slashSpin',t:.32,skin:'pirate',zoom:.42}},
     {lb:'승리 — 대검 번쩍 + 방방',o:{anim:'victory',t:.32,skin:'pirate',zoom:.40}},
     {lb:'버프 — 기 모으기 폭발 오라',o:{anim:'buff',t:.62,skin:'mage',zoom:.42}},
@@ -1948,10 +1948,10 @@ if(IS_MONTAGE){
     mcell(w,h,{anim:'idle',t:.30,skin:'pirate',zoom:h/860,gy:h*.90,cx:.60,time:.8}));
   cell(pad*2+cwC,yC,cwC,hC,'② 죽기(위) / 패배(아래)',(w,h)=>{
     g.save();g.beginPath();g.rect(0,0,w,h/2);g.clip();
-    mcell(w,h/2,{anim:'death',t:.88,skin:'pirate',zoom:(h/2)/700,gy:h*.40,cx:.44,time:2.2});
+    mcell(w,h/2,{anim:'death',t:.88,skin:'pirate',zoom:(h/2)/760,gy:h*.40,cx:.44,time:2.2});
     g.restore();
     g.save();g.beginPath();g.rect(0,h/2,w,h/2);g.clip();g.translate(0,h/2);
-    mcell(w,h/2,{anim:'defeat',t:.92,skin:'pirate',zoom:(h/2)/700,gy:(h/2)*.86,cx:.52,time:2.6});
+    mcell(w,h/2,{anim:'defeat',t:.92,skin:'pirate',zoom:(h/2)/820,gy:(h/2)*.84,cx:.52,time:2.6});
     g.restore();
     g.strokeStyle='rgba(255,220,170,.2)';g.lineWidth=1;
     g.beginPath();g.moveTo(0,h/2+.5);g.lineTo(w,h/2+.5);g.stroke();
