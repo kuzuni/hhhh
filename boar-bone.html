@@ -1204,11 +1204,14 @@ if(isMontage){
      g.restore();
    });
    g.strokeStyle='rgba(255,255,255,0.28)';g.lineWidth=1;
-   g.beginPath();g.moveTo(w/2+0.5,8);g.lineTo(w/2+0.5,h-30);g.stroke();
+   g.beginPath();g.moveTo(w/2+0.5,54);g.lineTo(w/2+0.5,h-30);g.stroke();
+   // 밝은 하늘 위에 글씨가 묻히지 않도록 어두운 헤더 판을 깐다
+   g.fillStyle='rgba(10,14,8,0.80)';g.fillRect(0,0,w,54);
    g.fillStyle='#ffd54a';g.font='bold 15px '+FONT;g.textAlign='center';
-   g.fillText('1 rig = 2 avatars — 같은 walk t=0.30, 같은 본·관절',w/2,22);
-   g.fillStyle='#cfe4bc';g.font='12px '+FONT;
-   g.fillText('기본',w*0.25,42);g.fillText('불속성',w*0.75,42);});
+   g.textBaseline='middle';
+   g.fillText('1 rig = 2 avatars — 같은 walk t=0.30, 같은 본·관절',w/2,17);
+   g.fillStyle='#cfe4bc';g.font='bold 13px '+FONT;
+   g.fillText('기본',w*0.25,40);g.fillText('불속성',w*0.75,40);});
  // 푸터 캡션 (하단 여백 확보 — 잘리지 않게)
  g.fillStyle='rgba(255,255,255,0.55)';g.font='12px '+FONT;g.textAlign='left';
  g.fillText('boar-bone.html — 뚱멧돼지 「투기」 절차적 스켈레톤 몽타주',14,MH-11);
