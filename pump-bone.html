@@ -1,149 +1,1055 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>이빨호박 펌킨조 — 절차적 스켈레톤</title>
+<title>몬스터 도감 — 이빨호박 「펌킨조」 · 본 리깅</title>
 <style>
-  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#20140c;
-    font-family:"Segoe UI","Malgun Gothic",sans-serif;}
-  #cv{display:block;}
-  #err{position:fixed;top:4px;left:4px;color:#ff4444;font:bold 13px/1.4 "Segoe UI",sans-serif;
-    z-index:99;white-space:pre-wrap;max-width:90vw;pointer-events:none;text-shadow:0 1px 2px #000;}
-  #topbar{position:fixed;top:10px;left:12px;z-index:10;display:flex;align-items:center;gap:12px;}
-  #topbar a{color:#ffd9a0;text-decoration:none;font-size:13px;background:rgba(30,16,8,.55);
-    padding:4px 10px;border-radius:14px;border:1px solid rgba(255,190,110,.25);}
-  #topbar a:hover{background:rgba(60,32,14,.7);}
-  #ttl{color:#ffe9c4;font-size:14px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6);}
-  #ui{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:10;
-    display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;
-    background:rgba(26,14,6,.72);padding:8px 12px;border-radius:18px;
-    border:1px solid rgba(255,190,110,.22);backdrop-filter:blur(4px);max-width:96vw;}
-  #ui button{font-family:inherit;font-size:13px;color:#ffe9c4;background:rgba(90,50,18,.55);
-    border:1px solid rgba(255,190,110,.3);border-radius:12px;padding:5px 12px;cursor:pointer;}
-  #ui button:hover{background:rgba(140,80,28,.7);}
-  #ui button.on{background:#c9741e;color:#fff8ec;border-color:#ffd9a0;}
-  #ui .sep{width:1px;height:20px;background:rgba(255,190,110,.25);margin:0 4px;}
-  #ui label{color:#f0d8b0;font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;}
-  #ui input[type=range]{width:90px;accent-color:#e8903a;}
-  #spdV{color:#f0d8b0;font-size:12px;min-width:34px;}
-  #avBtn.demon{background:#4a2454;border-color:#b06cff;color:#e8ccff;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#241812;
+    font-family:"Segoe UI","Malgun Gothic",sans-serif}
+  #cv{display:block;position:absolute;inset:0}
+  #err{position:absolute;top:4px;left:4px;z-index:99;color:#ff4040;font:bold 13px "Segoe UI","Malgun Gothic",sans-serif;
+    white-space:pre-wrap;max-width:90vw;pointer-events:none;text-shadow:0 1px 2px #000}
+  #back{position:absolute;top:10px;left:12px;z-index:20;color:#ffe9c4;text-decoration:none;
+    font-size:13px;background:rgba(30,16,8,.55);padding:5px 10px;border-radius:14px}
+  #back:hover{background:rgba(30,16,8,.85)}
+  #ui{position:absolute;left:12px;bottom:12px;z-index:20;background:rgba(24,14,8,.80);
+    border:1px solid rgba(255,200,130,.18);border-radius:14px;padding:10px 12px;color:#ffe9c4;
+    display:flex;flex-direction:column;gap:8px;max-width:92vw}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .row b{font-size:11px;opacity:.6;width:52px}
+  button{font-family:inherit;font-size:12px;color:#ffe9c4;background:#3c2818;border:1px solid #6a4a2c;
+    border-radius:8px;padding:5px 10px;cursor:pointer}
+  button:hover{background:#54371f}
+  button.on{background:#e8903a;border-color:#ffcf8a;color:#2a1404;font-weight:600}
+  button.demon.on{background:#7a3cc8;border-color:#cfa0ff;color:#f2e8ff}
+  button:disabled{opacity:.35;cursor:default}
+  input[type=range]{width:110px;accent-color:#e8903a}
+  label{font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer}
+  #hint{position:absolute;right:14px;bottom:12px;z-index:20;color:rgba(255,233,196,.5);font-size:11px;text-align:right}
+  body.montage #ui,body.montage #back,body.montage #hint{display:none}
 </style>
-</head>
-<body>
 <div id="err"></div>
-<div id="topbar">
-  <a href="heroes.html">← 용사 전시관</a>
-  <span id="ttl">몬스터 도감 — 이빨호박 「펌킨조」 <small style="opacity:.7">(procedural bone rig)</small></span>
-</div>
+<a id="back" href="heroes.html">← 용사 전시관</a>
 <canvas id="cv"></canvas>
 <div id="ui">
-  <button data-a="idle" class="on">대기</button>
-  <button data-a="walk">걷기</button>
-  <button data-a="bite">앙! 물기</button>
-  <button data-a="hit">피격</button>
-  <button data-a="death">죽음</button>
-  <button data-a="revive">부활</button>
-  <span class="sep"></span>
-  <button id="avBtn">아바타: 기본</button>
-  <label><input type="checkbox" id="boneChk"> 뼈대 보기</label>
-  <span class="sep"></span>
-  <label>속도 <input type="range" id="spd" min="0.2" max="2" step="0.1" value="1"></label>
-  <span id="spdV">1.0×</span>
+  <div class="row"><b>애니</b>
+    <button data-anim="idle" class="on">대기</button>
+    <button data-anim="walk">걷기</button>
+    <button data-anim="bite">앙! 물기</button>
+    <button data-anim="hit">피격</button>
+    <button data-anim="death">죽음</button>
+    <button data-anim="revive" id="btnRevive" disabled>부활</button>
+  </div>
+  <div class="row"><b>아바타</b>
+    <button id="avBase" class="on">기본</button>
+    <button id="avDemon" class="demon">악마 호박</button>
+    <label><input type="checkbox" id="ckBones"> 뼈대 보기</label>
+  </div>
+  <div class="row"><b>속도</b>
+    <input type="range" id="spd" min="25" max="200" value="100">
+    <span id="spdV" style="font-size:11px;opacity:.7">1.00×</span>
+  </div>
 </div>
+<div id="hint">죽음 = 뿅! 맛있는 호박 조각으로 · 부활 = 역재생 흡수</div>
 <script>
+"use strict";
 // ============================================================================
-// ==== 섹션 맵 ====
-//  1. 에러 표시 / 유틸 / 팔레트
-//  2. 리그(본 스펙·스켈레톤 계산)  — 절차적 본: 매 프레임 커브 → 본 행렬, 전 본 스쿼시 채널
-//  3. 애니(포즈 순수함수 computePose) — 대기/걷기/물기/피격/죽음(조각물리)/부활(역재생)
-//  4. 렌더(필드 배경·아바타 2벌 드로잉·조각·이펙트·뼈대 오버레이)
-//  5. UI / 실시간 루프
-//  6. 몽타주 모드 (?montage) — 동기 1680×1500
+// ==== 섹션 맵 ===============================================================
+//  1. 에러 표시 / 유틸(이징·행렬·RNG)
+//  2. 팔레트 (기본 「펌킨조」 / 악마 호박)
+//  3. 본 리그 정의 + buildRig — 매 프레임 커브 → 본 행렬, 전 본 스쿼시 채널,
+//     2발 접지 락(뒤뚱 걷기 미끄러짐 0)
+//  4. pose(anim,t,s) — 순수 포즈 함수 (대기·부득부득 / 걷기 / 앙!물기 / 피격+씨앗)
+//  5. deathSim(T,av) — 죽음/부활 순수 시뮬 (뿅 + 호박 조각 절차 물리)
+//  6. 드로잉 — 아바타별 함수 세트(몸·이빨 그리드·선인장팔·덩굴·조각), 뼈대 오버레이
+//  7. 배경(황무지 필드) / 이펙트(연기·별·모래먼지·도깨비불·반짝)
+//  8. drawScene — 실시간/몽타주 공용 씬 렌더
+//  9. 실시간 루프 + UI
+// 10. 몽타주 모드 (?montage, 1680×1500 동기 렌더)
 // ============================================================================
 
-// ==== 1. 에러 표시 / 유틸 / 팔레트 ====
-(function(){
-  var box=document.getElementById('err');
-  function show(m){ box.textContent += m + "\n"; }
-  window.onerror=function(msg,src,l,c){ show("ERR: "+msg+" @"+(src||"").split("/").pop()+":"+l+":"+c); };
-  window.addEventListener('unhandledrejection',function(e){ show("REJ: "+(e.reason&&e.reason.message||e.reason)); });
-})();
+// ==== 1. 에러 표시 / 유틸 ====
+const errBox=document.getElementById('err');
+window.onerror=function(m,src,l,c){errBox.textContent+='ERR: '+m+' @'+l+':'+c+'\n';};
+window.addEventListener('unhandledrejection',e=>{errBox.textContent+='REJ: '+e.reason+'\n';});
 
-var TAU=Math.PI*2, RAD=Math.PI/180;
-function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
-function lerp(a,b,t){ return a+(b-a)*t; }
-function fract(x){ return x-Math.floor(x); }
-function easeOut(t){ t=clamp(t,0,1); return 1-(1-t)*(1-t); }
-function easeIn(t){ t=clamp(t,0,1); return t*t; }
-function easeInOut(t){ t=clamp(t,0,1); return t<.5?2*t*t:1-2*(1-t)*(1-t); }
-function easeOutCubic(t){ t=clamp(t,0,1); return 1-Math.pow(1-t,3); }
-function easeInCubic(t){ t=clamp(t,0,1); return t*t*t; }
-function easeOutBack(t){ t=clamp(t,0,1); var s=1.7; return 1+(s+1)*Math.pow(t-1,3)+s*Math.pow(t-1,2); }
-function easeOutElastic(t){ t=clamp(t,0,1); if(t===0||t===1)return t;
-  return Math.pow(2,-10*t)*Math.sin((t*10-0.75)*TAU/3)+1; }
-// 결정적 의사난수 (시드 해시) — 몽타주/실시간 동일 결과
-function rnd(i,k){ var x=Math.sin(i*127.1+k*311.7+13.37)*43758.5453; return x-Math.floor(x); }
+const PI=Math.PI, TAU=PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,u)=>a+(b-a)*u;
+const sstep=u=>{u=clamp(u,0,1);return u*u*(3-2*u);};
+const easeOut=u=>1-Math.pow(1-clamp(u,0,1),3);
+const easeIn=u=>Math.pow(clamp(u,0,1),3);
+const easeInOut=u=>{u=clamp(u,0,1);return u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;};
+const easeOutBack=u=>{u=clamp(u,0,1);const s=1.70158;return 1+(s+1)*Math.pow(u-1,3)+s*Math.pow(u-1,2);};
+const pulse=(t,a,w)=>{const u=(t-a)/w;return u<0||u>1?0:Math.sin(u*PI);};
+function mulberry(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function rnd(i,k){const x=Math.sin(i*127.1+k*311.7+13.37)*43758.5453;return x-Math.floor(x);}
+// 2D 행렬 [a,b,c,d,e,f]
+function trs(x,y,r,sx,sy){const c=Math.cos(r),s=Math.sin(r);
+  return[c*(sx||1),s*(sx||1),-s*(sy||1),c*(sy||1),x,y];}
+function mmul(m,n){return[m[0]*n[0]+m[2]*n[1],m[1]*n[0]+m[3]*n[1],
+  m[0]*n[2]+m[2]*n[3],m[1]*n[2]+m[3]*n[3],
+  m[0]*n[4]+m[2]*n[5]+m[4],m[1]*n[4]+m[3]*n[5]+m[5]];}
+function mapp(m,x,y){return{x:m[0]*x+m[2]*y+m[4],y:m[1]*x+m[3]*y+m[5]};}
+function xfm(g,m){g.transform(m[0],m[1],m[2],m[3],m[4],m[5]);}
+function rr(g,x,y,w,h,r){r=Math.min(r,Math.abs(w)/2,Math.abs(h)/2);
+  g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
 
-var PAL={
-  outline:'#241410',
-  body:  { base:'#ff9a3c', shade:'#e07820', deep:'#c96414', hi:'#ffb964' },
-  dBody: { base:'#3a2440', shade:'#241226', deep:'#160a1a', hi:'#5a3766' },
-  teeth:'#f2ead2', teethShade:'#d9cba6', gum:'#8a4a20', mouthDark:'#33150a',
-  dGum:'#1c0e22',
-  arm:  { base:'#5a9a3c', shade:'#3c7028', hi:'#7cb956' },
-  dArm: { base:'#7e2438', shade:'#54121f', hi:'#a03c50' },
-  flesh:'#ffd9a0', fleshHi:'#ffedd0', seed:'#fff3d0', seedO:'#b98a3e',
-  dFlesh:'#e2c2ff', dFleshHi:'#f2e2ff', dSeed:'#f4e4ff', dSeedO:'#8a5ab8', dGlow:'#b06cff',
-  rind:'#f08428', dRind:'#4a2c56',
-  stem:'#4d8a34', stemDark:'#33622२'.slice(0,0)||'#336222', leaf:'#5fa03e', sap:'#e8720e', sapHi:'#ffcf7a',
-  flame1:'#b06cff', flame2:'#7cff8a',
-  sky1:'#e8c294', sky2:'#c99a62', dune:'#b57f4e', dune2:'#a06c40',
-  sand:'#cfa670', sandDark:'#ab8352', shrub:'#5f4630', stone:'#9c7648'
+// ==== 2. 팔레트 ====
+const LINE='#241410';
+const PAL={
+  base:{ body:'#ff9a3c', groove:'#e07820', deep:'#c96414', hi:'#ffb964',
+    teeth:'#f2ead2', teethB:'#e6d9b6', teethShade:'#c9b98e', gum:'#7c3f18', mouthDark:'#33150a',
+    arm:'#5a9a3c', armSh:'#3c7028', armHi:'#7cb956',
+    foot:'#f08428', footSh:'#c96414',
+    stem:'#4d8a34', stemD:'#336222', leaf:'#5fa03e', sap:'#e8720e', sapHi:'#ffcf7a', line:LINE },
+  demon:{ body:'#3a2440', groove:'#241226', deep:'#160a1a', hi:'#5a3766',
+    teeth:'#1a0f20', teethB:'#140a1a', teethShade:'#0c0512', gum:'#1c0e22', mouthDark:'#160a1a',
+    arm:'#7e2438', armSh:'#54121f', armHi:'#a03c50',
+    foot:'#4a2c56', footSh:'#32173c',
+    stem:'#3c6a2a', stemD:'#28481c', leaf:'#4a7c34', sap:'#9a4ecc', sapHi:'#d9a8ff',
+    horn:'#2a1a30', hornHi:'#54365e',
+    flame1:'#b06cff', flame2:'#7cff8a', flameCore:'#f2e8ff', line:'#150a1a' }
+};
+const FRUIT={
+  base:{ rind:'#f08428', rindHi:'#ffb964', rim:'#ffe9c8', flesh:'#ffd9a0', fleshHi:'#ffedd0',
+    core:'#ffc27a', fiber:'#f0b070', seed:'#fff3d0', seedO:'#b98a3e', ol:'#5a3416' },
+  demon:{ rind:'#4a2c56', rindHi:'#7a4c8e', rim:'#e8d2ff', flesh:'#e2c2ff', fleshHi:'#f2e2ff',
+    core:'#c9a0f0', fiber:'#b088dd', seed:'#f4e4ff', seedO:'#8a5ab8', ol:'#2c1636', glow:'#b06cff' }
 };
 
-// ==== 2. 리그 — 본 스펙 ====
-// root(지면 원점) ─ body(밑변 피벗, sx/sy 스쿼시) ─ { jawTop/jawBot(입), eyeL/R,
-//   armL/armR(어깨 피벗), stem(꼭지)─leaf, hornL/R(악마) }
-// root ─ footL/footR (접지 락: 스탠스 구간 지면 속도와 일치 → 미끄러짐 0)
-var RIG={
-  bodyPivot:{x:0,y:-36},          // 몸 밑변(스쿼시 기준)
-  bodyC:{x:0,y:-96}, bodyRx:118, bodyRy:96,   // body 로컬(피벗 기준)
-  mouth:{x:0,y:-78,hw:94,hh:36},
-  eye:{y:-128,dx:16,rx:5.5,ry:6.5},
-  shoulder:{dx:104,y:-114},
-  stem:{x:0,y:-188},
-  horn:{dx:50,y:-166},
-  foot:{dx:54,w:44,h:56},
-  lobes:[ {x:0,rx:47,ry:96},{x:-50,rx:43,ry:90},{x:50,rx:43,ry:90},
-          {x:-90,rx:32,ry:78},{x:90,rx:32,ry:78} ]
-};
-
-// 본 월드 행렬(여기선 위치+각+스케일)을 포즈에서 파생 — 뼈대 오버레이와 드로잉이 공유
-function skeleton(p){
-  var s={};
-  s.root={x:p.x+p.shx, y:p.shy};
-  var bx=s.root.x+RIG.bodyPivot.x, by=s.root.y+RIG.bodyPivot.y+p.bob;
-  s.body={x:bx,y:by,rot:p.rot,sx:p.sx,sy:p.sy};
-  function b2w(lx,ly){ // body 로컬 → 월드
-    lx*=p.sx; ly*=p.sy;
-    var c=Math.cos(p.rot),sn=Math.sin(p.rot);
-    return {x:bx+lx*c-ly*sn, y:by+lx*sn+ly*c};
+// ==== 3. 본 리그 ====
+// root(지면) ─ body(밑변 피벗, sx/sy 스쿼시) ─ { mouthT/mouthB(이빨 그리드),
+//   eyeL/R, shL/R─armL/R(스쿼시 채널), stem1─stem2(오버랩 체인, 길이 채널),
+//   hornL/R(악마) } / root ─ footL/footR (접지 락)
+const STRIDE=62, ARM_LEN=86;
+const FEET=[{fx:-52,off:0},{fx:52,off:0.5}];
+function walkFoot(s,F){
+  const D=STRIDE, swing=0.40, lift=13;
+  const c=s/D+F.off, k=Math.floor(c), f=c-k;
+  if(f<swing){ const u=f/swing, uu=sstep(u);
+    const x0=(k-F.off)*D+F.fx-s, x1=(k+1-F.off)*D+F.fx-s;
+    return {x:lerp(x0,x1,uu), y:-Math.sin(u*PI)*lift, plant:false, sq:0};
   }
-  s.b2w=b2w;
-  s.head=b2w(0,-150);
-  s.jaw=b2w(0,RIG.mouth.y);
-  s.shL=b2w(-RIG.shoulder.dx,RIG.shoulder.y);
-  s.shR=b2w( RIG.shoulder.dx,RIG.shoulder.y);
-  var aL=Math.PI-p.armL, aR=p.armR; // 0=수평 바깥
-  s.armTipL={x:s.shL.x+Math.cos(aL)*92*p.sx, y:s.shL.y+Math.sin(aL)*92*p.sy};
-  s.armTipR={x:s.shR.x+Math.cos(aR)*92*p.sx, y:s.shR.y+Math.sin(aR)*92*p.sy};
-  s.stem=b2w(RIG.stem.x,RIG.stem.y);
-  s.stemTip={x:s.stem.x+Math.sin(p.stem)*34, y:s.stem.y-30};
-  s.footL={x:s.root.x-RIG.foot.dx+p.fl.dx, y:s.root.y+p.fl.dy, sq:p.fl.sq, on:p.fl.dy>-1};
-  s.footR={x:s.root.x+RIG.foot.dx+p.fr.dx, y:s.root.y+p.fr.dy, sq:p.fr.sq, on:p.fr.dy>-1};
-  return s;
+  const land=(f-swing)/(1-swing);
+  return {x:(k+1-F.off)*D+F.fx-s, y:0, plant:true, sq:0.28*Math.exp(-land*8)};
+}
+function buildRig(P){
+  const body=trs(P.bx,P.by,P.rot,P.sx,P.sy);
+  const rig={body};
+  rig.armL=mmul(body,trs(-106,-96, 0.55+P.armL, 1+P.armSq,1-P.armSq));
+  rig.armR=mmul(body,trs( 106,-96,-0.55-P.armR, 1+P.armSq,1-P.armSq));
+  rig.stem1=mmul(body,trs(0,-168,P.stem1,1,P.stemLen));
+  rig.stem2=mmul(rig.stem1,trs(0,-24,P.stem2,1,1));
+  rig.hornL=mmul(body,trs(-50,-152,-0.16,1,1));
+  rig.hornR=mmul(body,trs( 50,-152, 0.16,1,1));
+  rig.feet=P.feet;
+  return rig;
+}
+
+// ==== 4. pose(anim,t,s) — 순수 포즈 함수 ====
+function basePose(){
+  return {bx:0,by:-26,rot:0,sx:1,sy:1, mouth:0,grind:0,blink:0,browY:0,
+    armL:0,armR:0,armSq:0, stem1:0,stem2:0,stemLen:1, sap:0,
+    feet:[{x:FEET[0].fx,y:0,sq:0,plant:true},{x:FEET[1].fx,y:0,sq:0,plant:true}],
+    vel:0, dust:[],stars:[],seeds:[], chompFx:0};
+}
+function pose(anim,t,s){
+  const P=basePose(); P.sap=t;
+  if(anim==='idle'){
+    const br=Math.sin(t*2.15);
+    P.by=-26+br*2.6; P.sx=1+br*0.020; P.sy=1-br*0.026;   // 로브 숨쉬기
+    P.rot=Math.sin(t*0.7)*0.015;
+    const gate=0.45+0.55*Math.max(0,Math.sin(t*0.85+1.2));  // 부득부득 강약
+    P.grind=(Math.sin(t*15)*1.7+Math.sin(t*23.7)*0.8)*gate;
+    P.rot+=P.grind*0.0016;
+    P.stem1=Math.sin(t*1.6)*0.13; P.stem2=Math.sin(t*1.6-0.9)*0.22;  // 덩굴 지연
+    P.stemLen=1+Math.sin(t*2.15-0.5)*0.05;
+    P.armL=Math.sin(t*2.15+0.4)*0.05; P.armR=Math.sin(t*2.15-0.2)*0.05;
+    const b=t%3.4; P.blink=(b<0.10||(b>0.18&&b<0.26&&(t%9)<3.4))?1:0;
+  }
+  else if(anim==='walk'){
+    const c=s/STRIDE;
+    P.rot=Math.sin(c*PI)*0.11;                            // 무거운 좌우 롤
+    P.by=-26-(0.5+0.5*Math.sin(c*TAU+1.1))*4.5;
+    const land=Math.pow(Math.max(0,Math.sin(c*TAU+2.5)),4);
+    P.sy=1-land*0.055; P.sx=1+land*0.042;                 // 착지 스쿼시
+    P.feet=FEET.map(F=>walkFoot(s,F));
+    for(const F of FEET){ const f=(s/STRIDE+F.off)%1;
+      if(f>0.40&&f<0.50)P.dust.push({x:F.fx,y:-3,age:(f-0.40)/0.10*0.55,r:7}); }
+    P.armL=Math.sin(c*PI)*0.34+0.04; P.armR=-Math.sin(c*PI)*0.34+0.04;
+    P.stem1=Math.sin(c*PI-1.1)*0.22; P.stem2=Math.sin(c*PI-2.0)*0.3;
+    P.grind=Math.sin(t*12)*0.8;
+    P.blink=(t%3.1)<0.09?1:0;
+    P.vel=95;
+  }
+  else if(anim==='bite'){
+    if(t<0.30){ const u=sstep(t/0.30);                    // 예비: 움츠림+이 앙다물기
+      P.rot=-0.05*u; P.bx=-8*u; P.sy=1-0.05*u; P.sx=1+0.045*u;
+      P.mouth=-0.07*u; P.grind=Math.sin(t*32)*1.4*u; P.browY=u;
+      P.armL=P.armR=-0.35*u; P.stem1=0.12*u;
+    }else if(t<0.50){ const u=easeOutBack((t-0.30)/0.20); // 쫙 벌림
+      P.mouth=u; P.sy=1+0.075*u; P.sx=1-0.055*u;
+      P.rot=0.03*u; P.bx=-8+10*u; P.browY=1;
+      P.armL=P.armR=lerp(-0.35,0.55,u); P.stem1=-0.22*u; P.stem2=-0.15*u;
+    }else if(t<0.60){                                     // 벌린 채 부르르
+      P.mouth=1+Math.sin((t-0.50)*70)*0.025;
+      P.sy=1.075; P.sx=0.945; P.rot=0.03; P.bx=2; P.browY=1;
+      P.armL=P.armR=0.55; P.stem1=-0.22; P.stem2=-0.15;
+    }else if(t<0.68){ const u=easeIn((t-0.60)/0.08);      // 앙! 급가속
+      P.mouth=1-1.07*u; P.bx=2+20*u; P.rot=0.05*(1-u*0.4);
+      P.sy=1.075-0.17*u; P.sx=0.945+0.14*u;
+      P.armL=P.armR=lerp(0.55,-0.25,u); P.armSq=0.12*u;
+      P.stem1=lerp(-0.22,0.3,u);
+    }else if(t<1.05){ const u=(t-0.68)/0.37,
+        e=Math.exp(-u*5)*Math.cos(u*20);                  // 임팩트 홀드+탄성 복귀
+      P.mouth=-0.07; P.bx=22*Math.exp(-u*3.2);
+      P.sy=1+e*0.09; P.sx=1-e*0.075; P.armSq=0.12*Math.exp(-u*4);
+      P.chompFx=Math.max(0,1-u*1.6);
+      P.stem1=0.3*Math.exp(-u*3)*Math.cos(u*10);
+      const su=(t-0.66)/0.5;
+      if(su<1)for(let i=0;i<6;i++){ const a=i/6*TAU+0.3;
+        P.stars.push({x:Math.cos(a)*(72+su*95),y:-64+Math.sin(a)*(42+su*66),age:su,r:9-(i%3)*2}); }
+      P.blink=u<0.35?1:0;
+    }else{ const u=(t-1.05)/1.25, dec=1-u*0.65;           // 부득부득 되씹기
+      P.grind=Math.sin(t*17)*3.4*dec;
+      P.sy=1+Math.sin(t*17)*0.013*dec; P.rot=Math.sin(t*8.5)*0.02*dec;
+      P.mouth=-0.03; P.blink=(t%1.15)<0.08?1:0;
+      P.stem1=Math.sin(t*3)*0.1;
+    }
+  }
+  else if(anim==='hit'){
+    const e=Math.exp(-t*6), sq=e*Math.cos(t*24)*0.20;
+    P.sy=1-sq; P.sx=1+sq;
+    P.bx=-24*Math.exp(-t*4.5)*sstep(t/0.05); P.rot=-0.05*e;
+    P.blink=t<0.35?1:0; P.mouth=-0.07*e; P.grind=Math.sin(t*40)*2*e;
+    P.stem1=-0.42*e*Math.cos(t*10); P.stem2=-0.3*e*Math.cos(t*10-1);
+    for(let i=0;i<4;i++){                                 // 씨앗 톡톡 (귀엽게)
+      const vx=(rnd(i,1)-0.5)*230, vy=-(190+rnd(i,2)*170);
+      const x=(i-1.5)*14+vx*t, y=-150+vy*t+480*t*t;
+      if(t<1.0&&y<0)P.seeds.push({x,y,rot:t*(4+i*1.3),age:t});
+    }
+  }
+  return P;
+}
+
+// ==== 5. deathSim(T,av) — 죽음/부활 순수 시뮬 ====
+const POP=0.30, SIM_END=3.6;
+const PIECE_TYPES=['wedge','slice','wedge','stem','wedge','slice'];
+function deathSim(T,av){
+  const out={T,bodyVisible:T<POP,pieces:[],puffAge:-1,stars:[]};
+  if(T<POP){ out.flinch=T/POP; return out; }
+  const pt=T-POP, ptc=Math.min(pt,4);
+  out.puffAge=pt;
+  if(pt<0.55)for(let i=0;i<6;i++){
+    const a=i/6*TAU+0.4;
+    out.stars.push({x:Math.cos(a)*(36+pt*250),y:-100+Math.sin(a)*(30+pt*200),
+      age:pt/0.55,r:8+(i%3)*2});
+  }
+  const R=mulberry(av==='demon'?818:515);
+  const demon=av==='demon';
+  for(let i=0;i<PIECE_TYPES.length;i++){
+    const r1=R(),r2=R(),r3=R(),r4=R();
+    const p={type:PIECE_TYPES[i],demon,seed:i,
+      x:(i/(PIECE_TYPES.length-1)-0.5)*44, y:-104-r4*26,
+      vx:(i/(PIECE_TYPES.length-1)-0.5)*290+(r1-0.5)*70,
+      vy:-(245+r2*180)-(PIECE_TYPES[i]==='stem'?60:0),
+      w:(r3-0.5)*11, rot:(r3-0.5)*1.6,
+      imp:-9, impPow:0, settled:-1};
+    const dt=1/120, steps=Math.floor(ptc/dt);
+    let tt=0;
+    for(let k=0;k<steps&&p.settled<0;k++){
+      p.vy+=960*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.rot+=p.w*dt; tt+=dt;
+      if(p.y>-14&&p.vy>0){
+        p.y=-14;
+        if(Math.abs(p.vy)<95){ p.settled=tt; p.vy=0;p.vx=0;p.w=0; }
+        else{ p.imp=tt; p.impPow=clamp(Math.abs(p.vy)/430+0.3,0,1);
+              p.vy*=-0.46; p.vx*=0.72; p.w*=0.55; }
+      }
+    }
+    p.sq=0;
+    if(p.settled>=0){ p.y=-14; p.sq=0.30*Math.exp(-(ptc-p.settled)*9); }
+    else if(p.imp>=0) p.sq=p.impPow*0.30*Math.exp(-(ptc-p.imp)*9);
+    p.sparkle=p.settled>=0?Math.max(0,pt-(p.settled+0.35)):0;
+    out.pieces.push(p);
+  }
+  out.done=out.pieces.every(p=>p.settled>=0);
+  return out;
+}
+
+// ==== 6. 드로잉 — 아바타 함수 세트 ====
+// 몸 실루엣 (body 로컬: 밑변 피벗, 위가 -y) — 위 가운데 꼭지 홈이 있는 호박
+function bodyPath(g){
+  g.beginPath();
+  g.moveTo(-9,-168);
+  g.bezierCurveTo(-42,-190,-88,-182,-105,-150);
+  g.bezierCurveTo(-122,-120,-125,-58,-114,-32);
+  g.bezierCurveTo(-105,-8,-70,4,-34,5);
+  g.bezierCurveTo(-12,6,12,6,34,5);
+  g.bezierCurveTo(70,4,105,-8,114,-32);
+  g.bezierCurveTo(125,-58,122,-120,105,-150);
+  g.bezierCurveTo(88,-182,42,-190,9,-168);
+  g.bezierCurveTo(4,-163,-4,-163,-9,-168);
+  g.closePath();
+}
+// -- 입 지오메트리 (body 로컬) ------------------------------------------------
+const MW=94;                        // 입 반폭
+function mouthGeom(open){
+  const yc=-68, topA=-88-open*26, botA=-46+open*34;
+  return {hw:MW,yc,topA,botA,topK:2*topA-yc,botK:2*botA-yc};
+}
+function mouthPathBase(g,M){
+  g.beginPath();
+  g.moveTo(-M.hw,M.yc);
+  g.quadraticCurveTo(0,M.topK,M.hw,M.yc);
+  g.quadraticCurveTo(0,M.botK,-M.hw,M.yc);
+  g.closePath();
+}
+function mouthPathDemon(g,M){       // 위 가장자리 들쭉 (잭오랜턴 조각 칼자국)
+  g.beginPath(); g.moveTo(-M.hw,M.yc);
+  const NN=8;
+  for(let i=1;i<=NN;i++){ const u=i/NN, x=M.hw*(2*u-1);
+    let y=M.yc+(M.topK-M.yc)*2*u*(1-u);
+    if(i<NN)y+=(i%2?-6.5:6.5)*Math.sin(u*PI);
+    g.lineTo(x,y);
+  }
+  g.quadraticCurveTo(0,M.botK,-M.hw,M.yc);
+  g.closePath();
+}
+function lipY(M,x,top){ const u=(x/M.hw+1)/2, k=top?M.topK:M.botK;
+  return M.yc+(k-M.yc)*2*u*(1-u); }
+const TEETH_N=7;
+// 앙다문 이빨 그리드 (부득부득: 윗니 +grind / 아랫니 -grind 로 갈림)
+function teethClenched(g,M,C,grind,silhouette,gapGlow){
+  const mid=-66, cw=M.hw*2/TEETH_N;
+  const row=(top)=>{
+    g.save(); g.beginPath();
+    if(top)g.rect(-M.hw-10,-130,M.hw*2+20,mid+130);
+    else   g.rect(-M.hw-10,mid,M.hw*2+20,120);
+    g.clip(); g.translate(top?grind:-grind,0);
+    for(let i=0;i<TEETH_N;i++){
+      const x0=-M.hw+i*cw+1.3, d=(i%2?5:-4);
+      const y0=top?-126:mid+d+(silhouette?2:0);
+      const y1=top?mid+d-(silhouette?2:0):-18;
+      rr(g,x0,y0,cw-2.6,y1-y0,4);
+      g.fillStyle=silhouette?C.teeth:(top?C.teeth:C.teethB); g.fill();
+      if(!silhouette){ g.strokeStyle='rgba(60,30,12,.85)'; g.lineWidth=2.6; g.stroke();
+        if(top){ g.fillStyle=C.teethShade; g.globalAlpha=.5;
+          rr(g,x0+2,mid+d-8,cw-6.6,6,2); g.fill(); g.globalAlpha=1; } }
+    }
+    g.restore();
+  };
+  row(false); row(true);
+}
+// 벌린 입의 매달린/솟은 이빨
+function teethOpen(g,M,C,silhouette){
+  const cw=M.hw*2/TEETH_N;
+  for(let i=0;i<TEETH_N;i++){
+    const xc=-M.hw+(i+0.5)*cw;
+    const lt=18+(i%2?-3:3), lb=13+(i%2?2:-2);
+    rr(g,xc-cw/2+2.2,lipY(M,xc,true)-3,cw-4.4,lt,3.5);
+    g.fillStyle=C.teeth; g.fill();
+    if(!silhouette){ g.strokeStyle='rgba(60,30,12,.85)'; g.lineWidth=2.4; g.stroke(); }
+    rr(g,xc-cw/2+3,lipY(M,xc,false)+3-lb,cw-6,lb,3);
+    g.fillStyle=silhouette?C.teeth:C.teethB; g.fill();
+    if(!silhouette){ g.stroke(); }
+  }
+}
+function flameGrad(g,y0,y1,t){
+  const gr=g.createLinearGradient(0,y0,0,y1);
+  gr.addColorStop(0,'#8a4ce0');
+  gr.addColorStop(clamp(0.45+0.16*Math.sin(t*5.3),0.22,0.78),'#b06cff');
+  gr.addColorStop(1,'#7cff8a');
+  return gr;
+}
+// -- 기본 아바타 얼굴: 아이보리 이빨 그리드 + 점눈 --------------------------
+function faceBase(g,C,P,t){
+  const open=P.mouth;
+  if(open>0.10){
+    const M=mouthGeom(open);
+    mouthPathBase(g,M);
+    const gr=g.createLinearGradient(0,M.topA,0,M.botA);
+    gr.addColorStop(0,'#3a1a0c'); gr.addColorStop(1,'#1c0a04');
+    g.fillStyle=gr; g.fill();
+    g.save(); mouthPathBase(g,M); g.clip();
+    g.fillStyle='rgba(0,0,0,.45)';
+    g.beginPath(); g.ellipse(0,M.botA-6,M.hw*0.5,14,0,0,TAU); g.fill();
+    teethOpen(g,M,C,false);
+    mouthPathBase(g,M); g.strokeStyle=C.gum; g.lineWidth=9; g.stroke();
+    g.restore();
+    mouthPathBase(g,M); g.strokeStyle=C.line; g.lineWidth=5; g.stroke();
+  }else{
+    const M=mouthGeom(Math.min(open,0));
+    g.save(); mouthPathBase(g,M); g.clip();
+    g.fillStyle=C.gum; g.fillRect(-M.hw-6,-126,M.hw*2+12,112);
+    teethClenched(g,M,C,P.grind,false);
+    mouthPathBase(g,M); g.strokeStyle=C.gum; g.lineWidth=9; g.stroke();
+    g.restore();
+    mouthPathBase(g,M); g.strokeStyle=C.line; g.lineWidth=5; g.stroke();
+  }
+  // 점눈 2개 (간격 좁게) + 심술 눈썹
+  for(const sgn of [-1,1]){
+    const ex=sgn*17, ey=-126;
+    if(P.blink){ g.strokeStyle=C.line; g.lineWidth=3.4;
+      g.beginPath(); g.moveTo(ex-6,ey+1); g.quadraticCurveTo(ex,ey+4,ex+6,ey+1); g.stroke();
+    }else{
+      g.fillStyle=C.line;
+      g.beginPath(); g.ellipse(ex,ey,5.4,6.6,0,0,TAU); g.fill();
+      g.fillStyle='rgba(255,255,255,.85)';
+      g.beginPath(); g.arc(ex-1.6,ey-2.2,1.7,0,TAU); g.fill();
+    }
+    g.strokeStyle=C.line; g.lineWidth=4; g.lineCap='round';
+    const by=-140-P.browY*3;
+    g.beginPath(); g.moveTo(ex+sgn*9,by-2*0-(sgn>0?2:2));
+    g.lineTo(ex-sgn*4,by+5+P.browY*2); g.stroke();
+  }
+}
+// -- 악마 아바타 얼굴: 조각된 화염 눈·입, 이빨은 실루엣 ----------------------
+function faceDemon(g,C,P,t){
+  const open=Math.max(P.mouth,0);
+  const M=mouthGeom(open*0.92);
+  const flick=0.75+0.25*Math.sin(t*9.1)+0.12*Math.sin(t*15.7);
+  // 입 주위 글로우
+  let gr=g.createRadialGradient(0,-66,10,0,-66,130+open*40);
+  gr.addColorStop(0,'rgba(176,108,255,'+(0.30*flick)+')');
+  gr.addColorStop(1,'rgba(176,108,255,0)');
+  g.fillStyle=gr; g.beginPath(); g.arc(0,-66,130+open*40,0,TAU); g.fill();
+  mouthPathDemon(g,M);
+  g.fillStyle=flameGrad(g,M.topA,M.botA,t); g.fill();
+  g.save(); mouthPathDemon(g,M); g.clip();
+  for(let k=0;k<3;k++){                                  // 내부 화염 혀
+    const xk=[-42,2,44][k], hh=26+11*Math.sin(t*11+k*2.3);
+    g.fillStyle=k%2?'rgba(124,255,138,.55)':'rgba(242,232,255,.5)';
+    g.beginPath(); g.moveTo(xk-13,M.botA+6);
+    g.quadraticCurveTo(xk-9,M.botA-hh*0.5,xk+ (k%2?3:-3),M.botA-hh);
+    g.quadraticCurveTo(xk+9,M.botA-hh*0.5,xk+13,M.botA+6);
+    g.closePath(); g.fill();
+  }
+  if(open>0.10)teethOpen(g,M,{teeth:C.teeth,teethB:C.teethB},true);
+  else teethClenched(g,M,C,P.grind,true,true);
+  g.restore();
+  mouthPathDemon(g,M); g.strokeStyle=C.line; g.lineWidth=5.5; g.stroke();
+  // 화염 눈 (성난 조각 삼각)
+  for(const sgn of [-1,1]){
+    const cx=sgn*25, cy=-124;
+    gr=g.createRadialGradient(cx,cy,2,cx,cy,26);
+    gr.addColorStop(0,'rgba(176,108,255,'+(0.4*flick)+')');
+    gr.addColorStop(1,'rgba(176,108,255,0)');
+    g.fillStyle=gr; g.beginPath(); g.arc(cx,cy,26,0,TAU); g.fill();
+    g.beginPath();
+    g.moveTo(cx+sgn*13,cy-11); g.lineTo(cx-sgn*10,cy+3);
+    g.lineTo(cx+sgn*11,cy+7); g.closePath();
+    g.fillStyle=flameGrad(g,cy-11,cy+8,t); g.fill();
+    g.strokeStyle=C.line; g.lineWidth=3.4; g.lineJoin='round'; g.stroke();
+    g.fillStyle=C.flameCore;
+    g.beginPath(); g.arc(cx+sgn*4,cy+1,2.4,0,TAU); g.fill();
+  }
+}
+// -- 선인장 팔 (기본) / 가시 팔 (악마) — arm 로컬: +y가 팔 끝 -----------------
+function drawArm(g,C,demon){
+  g.lineJoin='round'; g.lineCap='round';
+  g.beginPath();
+  g.moveTo(-15,-4);
+  g.bezierCurveTo(-20,24,-13,34,-17,52);
+  g.bezierCurveTo(-19,74,-9,88,0,88);
+  g.bezierCurveTo(9,88,19,76,16,54);
+  g.bezierCurveTo(13,36,20,26,14,-4);
+  g.closePath();
+  g.fillStyle=C.arm; g.fill();
+  g.save(); g.clip();
+  g.fillStyle=C.armSh;                                    // 안쪽 그림자
+  g.beginPath(); g.ellipse(9,44,10,46,0.06,0,TAU); g.fill();
+  g.fillStyle=C.armHi; g.globalAlpha=.7;                  // 바깥 하이라이트
+  g.beginPath(); g.ellipse(-10,36,5.5,34,-0.04,0,TAU); g.fill();
+  g.globalAlpha=1;
+  g.strokeStyle=C.armSh; g.lineWidth=2;                   // 세로 골
+  g.beginPath(); g.moveTo(0,2); g.quadraticCurveTo(-3,44,0,84); g.stroke();
+  g.restore();
+  g.strokeStyle=LINE; g.lineWidth=4.6; g.stroke();
+  if(!demon){                                             // 오돌토돌 가시 점
+    g.strokeStyle=C.armSh; g.lineWidth=2; g.lineCap='round';
+    for(let k=0;k<4;k++){ const y=16+k*19, w=15-k*1.2;
+      for(const sx of [-1,1]){
+        g.beginPath(); g.moveTo(sx*w-2,y-2); g.lineTo(sx*w+2,y+2);
+        g.moveTo(sx*w+2,y-2); g.lineTo(sx*w-2,y+2); g.stroke(); }
+    }
+  }else{                                                  // 길고 험한 가시
+    g.fillStyle=C.armSh;
+    for(let k=0;k<4;k++){ const y=12+k*20;
+      for(const sx of [-1,1]){ const bx=sx*(16-k*1.1);
+        g.beginPath(); g.moveTo(bx,y-4); g.lineTo(bx+sx*9,y+1); g.lineTo(bx,y+5);
+        g.closePath(); g.fill();
+        g.strokeStyle=LINE; g.lineWidth=1.8; g.stroke(); }
+    }
+  }
+}
+// -- 머리 위 덩굴 줄기 + 잎 (stem1/stem2 체인) --------------------------------
+function drawStem(g,rig,C,demon){
+  g.save(); xfm(g,rig.stem1);
+  g.lineJoin='round'; g.lineCap='round';
+  g.beginPath();                                          // 굵은 꼭지 대
+  g.moveTo(-9,4); g.bezierCurveTo(-8,-12,-6,-20,-4,-26);
+  g.lineTo(5,-26); g.bezierCurveTo(7,-18,8,-10,10,4);
+  g.closePath();
+  g.fillStyle=C.stem; g.fill(); g.strokeStyle=LINE; g.lineWidth=4; g.stroke();
+  g.strokeStyle=C.stemD; g.lineWidth=2;
+  g.beginPath(); g.moveTo(3,0); g.lineTo(2,-22); g.stroke();
+  g.restore();
+  g.save(); xfm(g,rig.stem2);
+  g.strokeStyle=C.stem; g.lineWidth=5;                     // 꼬불 덩굴
+  g.beginPath(); g.moveTo(0,-2);
+  g.bezierCurveTo(4,-14,16,-20,22,-12);
+  g.bezierCurveTo(27,-5,20,3,14,-1);
+  g.bezierCurveTo(10,-4,12,-10,17,-10);
+  g.stroke();
+  g.strokeStyle=LINE; g.lineWidth=1.6; g.globalAlpha=.5; g.stroke(); g.globalAlpha=1;
+  g.save(); g.translate(-8,-12); g.rotate(-0.7);           // 잎
+  g.beginPath(); g.moveTo(0,0);
+  g.quadraticCurveTo(-14,-6,-18,-18); g.quadraticCurveTo(-6,-16,0,0);
+  g.closePath();
+  g.fillStyle=C.leaf; g.fill(); g.strokeStyle=LINE; g.lineWidth=2.6; g.stroke();
+  g.strokeStyle=C.stemD; g.lineWidth=1.4;
+  g.beginPath(); g.moveTo(-2,-3); g.lineTo(-13,-13); g.stroke();
+  g.restore();
+  g.restore();
+}
+function drawHorn(g,C,sgn){
+  g.beginPath();
+  g.moveTo(-11*sgn,4);
+  g.bezierCurveTo(-14*sgn,-16,-6*sgn,-34,10*sgn,-44);
+  g.bezierCurveTo(2*sgn,-30,4*sgn,-14,9*sgn,2);
+  g.closePath();
+  g.fillStyle=C.horn; g.fill();
+  g.strokeStyle=C.line; g.lineWidth=3.6; g.lineJoin='round'; g.stroke();
+  g.strokeStyle=C.hornHi; g.lineWidth=2;
+  g.beginPath(); g.moveTo(-6*sgn,-6); g.quadraticCurveTo(-4*sgn,-20,4*sgn,-32); g.stroke();
+}
+// -- 사각 발 ------------------------------------------------------------------
+function drawFoot(g,f,C){
+  g.save(); g.translate(f.x,f.y); g.scale(1+f.sq,1-f.sq);
+  rr(g,-21,-27,42,27,6);
+  g.fillStyle=C.foot; g.fill(); g.strokeStyle=LINE; g.lineWidth=4.4; g.stroke();
+  g.strokeStyle=C.footSh; g.lineWidth=2.4;
+  g.beginPath(); g.moveTo(-14,-21); g.lineTo(14,-21); g.stroke();  // 윗면 톤
+  g.beginPath(); g.moveTo(-2,-8); g.lineTo(-2,-1); g.stroke();     // 발가락 홈
+  g.restore();
+}
+// -- 몸통(로브·진액·셰이딩) + 전체 조립 ---------------------------------------
+function drawPump(g,rig,C,demon,P,t,alpha){
+  g.save();
+  if(alpha!==undefined)g.globalAlpha=alpha;
+  g.lineJoin='round'; g.lineCap='round';
+  // 발 (몸 뒤에 깔림)
+  drawFoot(g,rig.feet[0],C); drawFoot(g,rig.feet[1],C);
+  // 덩굴 + (악마)뿔 — 몸 위 실루엣, 몸보다 먼저
+  drawStem(g,rig,C,demon);
+  if(demon){
+    g.save(); xfm(g,rig.hornL); drawHorn(g,C,-1); g.restore();
+    g.save(); xfm(g,rig.hornR); drawHorn(g,C, 1); g.restore();
+  }
+  // 팔
+  g.save(); xfm(g,rig.armL); drawArm(g,C,demon); g.restore();
+  g.save(); xfm(g,rig.armR); drawArm(g,C,demon); g.restore();
+  // 몸통
+  g.save(); xfm(g,rig.body);
+  bodyPath(g); g.fillStyle=C.body; g.fill();
+  g.save(); bodyPath(g); g.clip();
+  // 세로 로브 골 5줄
+  for(const gx of [-76,-38,0,38,76]){
+    if(gx===0){ g.strokeStyle=C.groove; g.lineWidth=3; g.globalAlpha=.5;
+      g.beginPath(); g.moveTo(0,-160); g.lineTo(0,-146); g.stroke(); g.globalAlpha=1; continue; }
+    g.strokeStyle=C.groove; g.lineWidth=5.5; g.globalAlpha=.85;
+    g.beginPath(); g.moveTo(gx*0.78,-162);
+    g.quadraticCurveTo(gx*1.14,-96,gx*0.72,-2); g.stroke();
+    g.globalAlpha=.55; g.strokeStyle=C.hi; g.lineWidth=2.6;
+    g.beginPath(); g.moveTo(gx*0.78-7,-158);
+    g.quadraticCurveTo(gx*1.14-8,-96,gx*0.72-6,-6); g.stroke();
+    g.globalAlpha=1;
+  }
+  g.fillStyle=C.hi; g.globalAlpha=.65;                     // 톱라이트
+  g.beginPath(); g.ellipse(0,-150,74,26,0,0,TAU); g.fill();
+  g.fillStyle=C.deep; g.globalAlpha=.4;                    // 하단 셀셰이드
+  g.beginPath(); g.ellipse(0,-16,104,30,0,0,TAU); g.fill();
+  g.globalAlpha=1;
+  // 꼭지 주변 진액 (꿀렁 — 길이가 숨쉼)
+  const drips=[{x:-33,l:26},{x:9,l:42},{x:35,l:20}];
+  for(let i=0;i<drips.length;i++){
+    const d=drips[i], L=d.l+Math.sin(P.sap*2.6+i*2.1)*3.5, w=5-i*0.7;
+    g.fillStyle=C.sap;
+    g.beginPath();
+    g.moveTo(d.x-w,-162);
+    g.lineTo(d.x-w,-162+L-5);
+    g.arc(d.x,-162+L-5,w,PI,0,true);
+    g.lineTo(d.x+w,-162);
+    g.closePath(); g.fill();
+    g.strokeStyle=C.sapHi; g.lineWidth=1.8; g.globalAlpha=.9;
+    g.beginPath(); g.moveTo(d.x-w+1.6,-158); g.lineTo(d.x-w+1.6,-162+L-6); g.stroke();
+    g.globalAlpha=1;
+  }
+  g.restore();
+  bodyPath(g); g.strokeStyle=C.line; g.lineWidth=5.5; g.stroke();
+  // 얼굴 (아바타 함수 세트 교체 지점)
+  if(demon)faceDemon(g,C,P,t); else faceBase(g,C,P,t);
+  g.restore();
+  g.restore();
+}
+// -- 죽음 조각: 호박 웨지 / 슬라이스 / 꼭지 (단면 정성) -----------------------
+function drawPiece(g,p,t){
+  const F=p.demon?FRUIT.demon:FRUIT.base;
+  if(p.demon){                                            // 은은한 보라 글로우
+    const pu=0.6+0.4*Math.sin(t*3+p.seed*1.7);
+    const gr=g.createRadialGradient(p.x,p.y,4,p.x,p.y,44);
+    gr.addColorStop(0,'rgba(176,108,255,'+(0.30*pu)+')');
+    gr.addColorStop(1,'rgba(176,108,255,0)');
+    g.fillStyle=gr; g.beginPath(); g.arc(p.x,p.y,44,0,TAU); g.fill();
+  }
+  g.save();
+  g.translate(p.x,p.y); g.rotate(p.rot);
+  g.scale(1+p.sq,1-p.sq);
+  g.lineJoin='round'; g.lineCap='round';
+  const seed=(x,y,r,rot)=>{ g.save(); g.translate(x,y); g.rotate(rot||0);
+    g.beginPath(); g.moveTo(0,-4.6);
+    g.quadraticCurveTo(4,-1.4,3.2,2.6); g.quadraticCurveTo(1.8,5.6,0,5.6);
+    g.quadraticCurveTo(-1.8,5.6,-3.2,2.6); g.quadraticCurveTo(-4,-1.4,0,-4.6);
+    g.closePath();
+    g.fillStyle=F.seed; g.fill(); g.strokeStyle=F.seedO; g.lineWidth=1.6; g.stroke();
+    g.restore(); };
+  if(p.type==='wedge'){
+    const path=()=>{ g.beginPath();
+      g.moveTo(0,21);
+      g.quadraticCurveTo(-25,15,-28,-8);
+      g.quadraticCurveTo(-17,-27,0,-28);
+      g.quadraticCurveTo(17,-27,28,-8);
+      g.quadraticCurveTo(25,15,0,21);
+      g.closePath(); };
+    path(); g.fillStyle=F.flesh; g.fill();
+    g.save(); path(); g.clip();
+    g.fillStyle=F.fleshHi;                                 // 과육 하이라이트
+    g.beginPath(); g.ellipse(-4,2,15,12,0.3,0,TAU); g.fill();
+    // 겉껍질 밴드 (바깥 호)
+    g.beginPath(); g.moveTo(-28,-8);
+    g.quadraticCurveTo(-17,-27,0,-28); g.quadraticCurveTo(17,-27,28,-8);
+    g.strokeStyle=F.rind; g.lineWidth=10; g.stroke();
+    g.strokeStyle=F.rim; g.lineWidth=3;                    // 껍질 안쪽 흰 켜
+    g.beginPath(); g.moveTo(-23,-7);
+    g.quadraticCurveTo(-14,-21,0,-22); g.quadraticCurveTo(14,-21,23,-7);
+    g.stroke();
+    g.restore();
+    path(); g.strokeStyle=F.ol; g.lineWidth=3.6; g.stroke();
+    seed(-7,2,0,-0.5); seed(6,-1,0,0.45); seed(0,10,0,0.05);
+    g.fillStyle='rgba(255,255,255,.55)';                   // 촉촉한 윤기
+    g.beginPath(); g.ellipse(-11,-11,4.5,2,-.5,0,TAU); g.fill();
+  }else if(p.type==='slice'){
+    const R=25;
+    const flower=(rr0,amp)=>{ g.beginPath();
+      for(let i=0;i<=48;i++){ const a=i/48*TAU, r=rr0+amp*Math.cos(a*6);
+        const x=Math.cos(a)*r, y=Math.sin(a)*r;
+        if(i)g.lineTo(x,y); else g.moveTo(x,y); }
+      g.closePath(); };
+    flower(R,2.4); g.fillStyle=F.rind; g.fill();
+    g.strokeStyle=F.ol; g.lineWidth=3.4; g.stroke();
+    g.beginPath(); g.arc(0,0,R-6,0,TAU);
+    g.fillStyle=F.flesh; g.fill();
+    g.strokeStyle=F.rim; g.lineWidth=2.4; g.stroke();
+    g.strokeStyle=F.fiber; g.lineWidth=1.4;                // 심에서 뻗는 섬유질
+    for(let i=0;i<6;i++){ const a=i/6*TAU+0.3;
+      g.beginPath(); g.moveTo(Math.cos(a)*6,Math.sin(a)*6);
+      g.lineTo(Math.cos(a)*15,Math.sin(a)*15); g.stroke(); }
+    g.beginPath();                                         // 물결 심지
+    for(let i=0;i<=30;i++){ const a=i/30*TAU, r=7.5+1.2*Math.cos(a*5);
+      const x=Math.cos(a)*r, y=Math.sin(a)*r;
+      if(i)g.lineTo(x,y); else g.moveTo(x,y); }
+    g.closePath(); g.fillStyle=F.core; g.fill();
+    for(let i=0;i<5;i++){ const a=i/5*TAU-PI/2;            // 씨 별모양 배치
+      seed(Math.cos(a)*14.5,Math.sin(a)*14.5,0,a+PI/2); }
+    g.fillStyle='rgba(255,255,255,.5)';
+    g.beginPath(); g.ellipse(-9,-10,5,2.2,-.6,0,TAU); g.fill();
+  }else{ // stem — 꼭지 줄기 조각 (음식 꼭다리, 신체 요소 없음)
+    g.beginPath(); g.ellipse(0,10,15,8.5,0,0,TAU);         // 주황 꼭지 받침
+    g.fillStyle=F.rind; g.fill(); g.strokeStyle=F.ol; g.lineWidth=3; g.stroke();
+    g.strokeStyle=F.rindHi; g.lineWidth=2;
+    g.beginPath(); g.ellipse(0,8.6,10,4.6,0,PI*1.1,PI*1.9); g.stroke();
+    const SC=p.demon?PAL.demon:PAL.base;
+    g.beginPath();                                         // 줄기
+    g.moveTo(-5,7); g.bezierCurveTo(-6,-4,-2,-12,4,-17);
+    g.bezierCurveTo(8,-20,13,-19,14,-15);
+    g.bezierCurveTo(10,-14,6,-12,4,-8);
+    g.bezierCurveTo(2,-4,3,2,5,7);
+    g.closePath();
+    g.fillStyle=SC.stem; g.fill(); g.strokeStyle=F.ol; g.lineWidth=2.8; g.stroke();
+    g.strokeStyle=SC.stem; g.lineWidth=3;                  // 꼬불 덩굴수염
+    g.beginPath(); g.moveTo(13,-16);
+    g.bezierCurveTo(20,-20,26,-16,24,-10);
+    g.bezierCurveTo(22,-6,17,-8,19,-12); g.stroke();
+    if(p.demon){ const pu=0.6+0.4*Math.sin(t*6+2);         // 도깨비불 한 점
+      g.fillStyle='rgba(124,255,138,'+(0.8*pu)+')';
+      g.beginPath(); g.arc(24,-22,3+pu,0,TAU); g.fill(); }
+  }
+  g.restore();
+  if(p.sparkle>0){                                         // 안착 후 반짝✨
+    const tw=Math.sin(t*5+p.seed*2.4);
+    if(tw>0.2){
+      g.save(); g.translate(p.x+(p.seed%3-1)*18,p.y-16-(p.seed%2)*10);
+      g.fillStyle=p.demon?'rgba(216,180,255,'+(tw*0.95)+')':'rgba(255,250,210,'+(tw*0.95)+')';
+      star4(g,0,0,5+tw*2.5,t*0.6+p.seed); g.restore();
+    }
+    if(!p.demon){                                          // 달콤한 향 김
+      g.save(); g.translate(p.x,p.y-14);
+      g.strokeStyle='rgba(255,236,200,.5)'; g.lineWidth=2.6; g.lineCap='round';
+      const ph=(t*0.5+p.seed*0.37)%1, a=Math.sin(ph*PI);
+      g.globalAlpha=a*0.65;
+      g.beginPath(); g.moveTo(0,-ph*22);
+      g.bezierCurveTo(-5,-ph*22-7,5,-ph*22-13,0,-ph*22-20); g.stroke();
+      g.restore();
+    }
+  }
+}
+function star4(g,x,y,r,rot){
+  g.save(); g.translate(x,y); g.rotate(rot||0);
+  g.beginPath();
+  for(let i=0;i<8;i++){ const rr2=i%2?r*0.32:r, a=i/8*TAU-PI/2;
+    g[i?'lineTo':'moveTo'](Math.cos(a)*rr2,Math.sin(a)*rr2); }
+  g.closePath(); g.fill(); g.restore();
+}
+// -- 뼈대 오버레이 ------------------------------------------------------------
+function drawBones(g,rig,P,demon){
+  g.save(); g.lineCap='round';
+  const seg=(a,b,col)=>{g.strokeStyle=col||'#58ff9d';g.lineWidth=2.4;
+    g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();};
+  const jnt=(p,r,col)=>{g.fillStyle='#0e2a18';g.strokeStyle=col||'#7dffb8';g.lineWidth=2;
+    g.beginPath();g.arc(p.x,p.y,r||4.5,0,TAU);g.fill();g.stroke();};
+  const root={x:0,y:0}, bp=mapp(rig.body,0,0), bc=mapp(rig.body,0,-92);
+  seg(root,bp,'#3ddc84'); seg(bp,bc,'#3ddc84');
+  const pts={
+    '입T':mapp(rig.body,0,-88),'입B':mapp(rig.body,0,-46),
+    '눈L':mapp(rig.body,-17,-126),'눈R':mapp(rig.body,17,-126)};
+  for(const k in pts)seg(bc,pts[k],'rgba(88,255,157,.45)');
+  const shL=mapp(rig.body,-106,-96), shR=mapp(rig.body,106,-96);
+  const tipL=mapp(rig.armL,0,ARM_LEN), tipR=mapp(rig.armR,0,ARM_LEN);
+  seg(bc,shL,'rgba(88,255,157,.45)'); seg(bc,shR,'rgba(88,255,157,.45)');
+  seg(shL,tipL,'#5ac8ff'); seg(shR,tipR,'#5ac8ff');
+  jnt(shL,4,'#5ac8ff'); jnt(shR,4,'#5ac8ff'); jnt(tipL,3.5,'#5ac8ff'); jnt(tipR,3.5,'#5ac8ff');
+  const st0=mapp(rig.stem1,0,0), st1=mapp(rig.stem1,0,-24), st2=mapp(rig.stem2,20,-14);
+  seg(bc,st0,'rgba(88,255,157,.45)'); seg(st0,st1,'#ffd54a'); seg(st1,st2,'#ffd54a');
+  jnt(st0,3.5,'#ffd54a'); jnt(st1,3.5,'#ffd54a'); jnt(st2,3,'#ffd54a');
+  if(demon){ const hL=mapp(rig.hornL,10*-1,-44), hR=mapp(rig.hornR,10,-44);
+    seg(mapp(rig.body,-50,-152),hL,'#cf8aff'); seg(mapp(rig.body,50,-152),hR,'#cf8aff');
+    jnt(hL,3,'#cf8aff'); jnt(hR,3,'#cf8aff'); }
+  for(const f of rig.feet){
+    const fp={x:f.x,y:f.y-14};
+    seg(bp,fp,'rgba(88,255,157,.4)'); jnt(fp,4,'#ff9636');
+    if(f.plant){ g.fillStyle='#ff9636'; g.fillRect(f.x-6,f.y+2,12,4); } // 접지 락
+  }
+  for(const k in pts)jnt(pts[k]);
+  jnt(bc,6,'#ffffff'); jnt(bp,4.5,'#7dffb8'); jnt(root,5,'#ff6f6f');
+  g.fillStyle='rgba(255,255,255,.85)';g.font='10px "Segoe UI","Malgun Gothic",sans-serif';
+  g.fillText('root',6,-4); g.fillText('body',bc.x+10,bc.y-4);
+  g.restore();
+}
+
+// ==== 7. 배경 / 이펙트 ====
+function drawField(g,w,h,s,groundY){
+  const sky=g.createLinearGradient(0,0,0,groundY);
+  sky.addColorStop(0,'#f2d5a2'); sky.addColorStop(1,'#dba969');
+  g.fillStyle=sky; g.fillRect(0,0,w,groundY);
+  g.fillStyle='rgba(255,246,214,.85)';                     // 뿌연 해
+  g.beginPath(); g.arc(w*0.82,groundY*0.26,24,0,TAU); g.fill();
+  g.fillStyle='rgba(255,246,214,.25)';
+  g.beginPath(); g.arc(w*0.82,groundY*0.26,42,0,TAU); g.fill();
+  // 원경 메사(황무지 언덕) 2겹 패럴랙스
+  const mesa=(par,col,yo,hh)=>{
+    g.fillStyle=col; g.beginPath(); g.moveTo(0,groundY+2);
+    const per=260;
+    for(let x=-per;x<=w+per;x+=per){
+      const wx=x+((-s*par)%per+per)%per;
+      g.lineTo(wx-per*0.38,groundY+yo);
+      g.lineTo(wx-per*0.30,groundY+yo-hh);
+      g.lineTo(wx-per*0.06,groundY+yo-hh);
+      g.lineTo(wx+per*0.04,groundY+yo);
+    }
+    g.lineTo(w,groundY+2); g.closePath(); g.fill();
+  };
+  mesa(0.10,'#c08a54',0,26); mesa(0.22,'#a87446',2,16);
+  // 모래 지면
+  const gnd=g.createLinearGradient(0,groundY,0,h);
+  gnd.addColorStop(0,'#d4a873'); gnd.addColorStop(1,'#b08a58');
+  g.fillStyle=gnd; g.fillRect(0,groundY,w,h-groundY);
+  g.strokeStyle='rgba(120,84,48,.55)'; g.lineWidth=2;
+  g.beginPath(); g.moveTo(0,groundY); g.lineTo(w,groundY); g.stroke();
+  // 마른 덤불·돌 (스크롤 = 접지 검증용)
+  for(let row=0;row<3;row++){
+    const par=[0.55,0.8,1.0][row], per=150+row*40, y=groundY+16+row*(h-groundY-22)/3.1;
+    for(let x=-per;x<=w+per;x+=per){
+      const wx=x+(((-s*par)%per)+per)%per, id=Math.abs(Math.round(x/per));
+      if((id+row)%3===0){ g.fillStyle='#a87e50';           // 돌
+        g.beginPath(); g.ellipse(wx,y-2,7+row*1.5,4.5+row,0,0,TAU); g.fill();
+        g.fillStyle='rgba(255,240,210,.35)';
+        g.beginPath(); g.ellipse(wx-2,y-4,3,1.6,0,0,TAU); g.fill();
+      }else{ g.strokeStyle=row===2?'#5f4630':'#6b4e34'; g.lineWidth=1.8;  // 덤불
+        g.beginPath();
+        for(let br=0;br<4;br++){ const a=-PI/2+(br-1.5)*0.5;
+          g.moveTo(wx,y);
+          g.quadraticCurveTo(wx+Math.cos(a)*6,y+Math.sin(a)*9-2,
+                             wx+Math.cos(a)*13,y+Math.sin(a)*15);
+        }
+        g.stroke();
+      }
+    }
+  }
+  // 갈라진 땅 힌트
+  g.strokeStyle='rgba(110,76,44,.4)'; g.lineWidth=1.6;
+  for(let k=0;k<3;k++){ const per=420, x0=((k*173-s*0.9)%per+per)%per*(w/per)+k*60;
+    const y0=groundY+30+k*26;
+    g.beginPath(); g.moveTo(x0,y0); g.lineTo(x0+26,y0+7); g.lineTo(x0+44,y0+3); g.stroke(); }
+}
+function drawPuffCloud(g,x,y,age,big){ // 뿅! 흰 연기
+  if(age<0||age>0.62)return;
+  const u=age/0.62, n=8, R=(20+u*95)*(big||1);
+  g.save(); g.globalAlpha=(1-u)*0.92;
+  for(let i=0;i<n;i++){
+    const a=i/n*TAU+0.35, r=(26-u*17)*(big||1)*(0.8+0.3*((i*2654435761>>>8&15)/15));
+    g.fillStyle=i%2?'#ffffff':'#f7f0e2';
+    g.beginPath(); g.arc(x+Math.cos(a)*R,y+Math.sin(a)*R*0.8,r,0,TAU); g.fill();
+  }
+  if(u<0.4){ g.globalAlpha=(1-u/0.4);
+    g.fillStyle='#fffce8'; g.beginPath(); g.arc(x,y,34*(big||1)*(1-u),0,TAU); g.fill(); }
+  g.restore();
+}
+function drawDust(g,d){
+  const u=clamp(d.age,0,1);
+  g.save(); g.globalAlpha=(1-u)*0.5;
+  g.fillStyle='#dcc194';
+  const r=d.r*(0.6+u*1.5);
+  g.beginPath(); g.arc(d.x-u*16,d.y-u*8,r,0,TAU);
+  g.arc(d.x+u*10,d.y-u*4,r*0.7,0,TAU); g.fill();
+  g.restore();
+}
+function drawSeedFx(g,sd){
+  g.save(); g.translate(sd.x,sd.y); g.rotate(sd.rot);
+  g.globalAlpha=clamp(1-(sd.age-0.6)/0.4,0,1);
+  g.beginPath(); g.moveTo(0,-5);
+  g.quadraticCurveTo(4.4,-1.5,3.5,2.8); g.quadraticCurveTo(2,6,0,6);
+  g.quadraticCurveTo(-2,6,-3.5,2.8); g.quadraticCurveTo(-4.4,-1.5,0,-5);
+  g.closePath();
+  g.fillStyle='#fff3d0'; g.fill(); g.strokeStyle='#b98a3e'; g.lineWidth=1.6; g.stroke();
+  g.restore();
+}
+function drawWisp(g,x,y,sc,t,k){ // 악마 도깨비불
+  g.save(); g.translate(x,y); g.scale(sc,sc);
+  const fl=1+0.2*Math.sin(t*13+k*3);
+  let gr=g.createRadialGradient(0,0,1,0,0,16*fl);
+  gr.addColorStop(0,'rgba(216,180,255,.9)');
+  gr.addColorStop(0.5,'rgba(176,108,255,.45)');
+  gr.addColorStop(1,'rgba(176,108,255,0)');
+  g.fillStyle=gr; g.beginPath(); g.arc(0,0,16*fl,0,TAU); g.fill();
+  g.fillStyle=k%2?'#b06cff':'#7cff8a';
+  g.beginPath(); g.moveTo(0,-9*fl);
+  g.quadraticCurveTo(5.5,-3,4.5,2); g.quadraticCurveTo(3,6,0,6);
+  g.quadraticCurveTo(-3,6,-4.5,2); g.quadraticCurveTo(-5.5,-3,0,-9*fl);
+  g.closePath(); g.fill();
+  g.fillStyle='#f2e8ff';
+  g.beginPath(); g.arc(0,1,2.6,0,TAU); g.fill();
+  g.restore();
+}
+
+// ==== 8. drawScene — 공용 씬 렌더 ====
+// o={g,w,h, anim,t,s, av, bones, deathT, reviveT, zoom, oy, alpha}
+function drawScene(o){
+  const g=o.g, demon=o.av==='demon', C=PAL[demon?'demon':'base'];
+  const groundY=o.h*0.62;
+  g.save();
+  g.beginPath(); g.rect(0,0,o.w,o.h); g.clip();
+  drawField(g,o.w,o.h,(o.s||0)*(o.zoom||1),groundY);
+  g.translate(o.w/2,o.h*0.80+(o.oy||0)); g.scale(o.zoom||1,o.zoom||1);
+  let ds=null, T=null;
+  if(o.deathT!=null)T=o.deathT;
+  if(o.reviveT!=null)T=(1-easeInOut(clamp(o.reviveT/1.75,0,1)))*SIM_END;
+  if(T!=null)ds=deathSim(T,o.av);
+  const showBody=!ds||ds.bodyVisible;
+  if(showBody){
+    const P=ds?pose('hit',ds.flinch*0.45,0):pose(o.anim,o.t,o.s||0);
+    const rig=buildRig(P);
+    // 바닥 그림자
+    g.fillStyle='rgba(90,52,20,.28)';
+    g.beginPath(); g.ellipse(P.bx*0.6,4,126*(1+(P.by+26)/280),18,0,0,TAU); g.fill();
+    // 악마 도깨비불 (뒤쪽 절반)
+    let wisps=[];
+    if(demon){ for(let k=0;k<3;k++){ const a=(o.t||0)*1.25+k*TAU/3;
+        wisps.push({x:Math.cos(a)*152,y:-110+Math.sin(a)*34-k*6,
+          sc:0.8+0.3*(0.5+0.5*Math.sin(a)),front:Math.sin(a)>0,k}); }
+      for(const wp of wisps)if(!wp.front)drawWisp(g,wp.x,wp.y,wp.sc,o.t||0,wp.k);
+    }
+    for(const d of P.dust)drawDust(g,d);
+    drawPump(g,rig,C,demon,P,o.t||0,o.alpha);
+    // 앙! 임팩트 플래시
+    if(P.chompFx>0){
+      g.save(); g.globalAlpha=P.chompFx*0.85;
+      g.strokeStyle='#fff8dc'; g.lineWidth=5;
+      const rr0=94+(1-P.chompFx)*70;
+      g.beginPath(); g.arc(0,-66,rr0,0,TAU); g.stroke();
+      g.lineWidth=2.5; g.beginPath(); g.arc(0,-66,rr0*0.8,0,TAU); g.stroke();
+      g.restore();
+    }
+    g.fillStyle='#ffe14a';
+    for(const st of P.stars){ g.globalAlpha=1-st.age; star4(g,st.x,st.y,st.r,st.age*3); }
+    g.globalAlpha=1;
+    for(const sd of P.seeds)drawSeedFx(g,sd);
+    if(demon)for(const wp of wisps)if(wp.front)drawWisp(g,wp.x,wp.y,wp.sc,o.t||0,wp.k);
+    if(o.bones)drawBones(g,rig,P,demon);
+  }
+  if(ds){
+    for(const p of ds.pieces){                             // 조각 그림자
+      const hgt=clamp((-p.y-14)/160,0,1);
+      g.fillStyle='rgba(90,52,20,'+(0.24*(1-hgt*0.7))+')';
+      g.beginPath(); g.ellipse(p.x,2,25*(1-hgt*0.35),6.5*(1-hgt*0.35),0,0,TAU); g.fill();
+    }
+    for(const p of ds.pieces)drawPiece(g,p,o.t||ds.T);
+    g.fillStyle='#ffe14a';
+    for(const st of ds.stars){ g.globalAlpha=1-st.age; star4(g,st.x,st.y,st.r,st.age*4); }
+    g.globalAlpha=1;
+    drawPuffCloud(g,0,-100,ds.puffAge,1.15);
+    if(o.reviveT!=null&&!ds.bodyVisible){                  // 부활 흡수 빛줄기
+      g.save(); g.globalAlpha=0.5; g.strokeStyle='#ffedc8'; g.lineWidth=2;
+      for(const p of ds.pieces){ g.beginPath(); g.moveTo(p.x,p.y); g.lineTo(0,-100); g.stroke(); }
+      g.restore();
+    }
+  }
+  g.restore();
+}
+
+// ==== 9. 실시간 루프 + UI ====
+const IS_MONTAGE=/[?&]montage/.test(location.search);
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const state={anim:'idle',animT:0,s:0,av:'base',bones:false,speed:1,
+  mode:'anim',deathT:0,reviveT:0,swapFx:0};
+
+if(!IS_MONTAGE){
+  let W=0,H=0,DPR=1;
+  function resize(){ DPR=Math.min(window.devicePixelRatio||1,2);
+    W=innerWidth;H=innerHeight; cv.width=W*DPR;cv.height=H*DPR;
+    cv.style.width=W+'px';cv.style.height=H+'px'; }
+  addEventListener('resize',resize); resize();
+  let last=performance.now();
+  function tick(now){
+    let dt=Math.min((now-last)/1000,0.05); last=now;
+    dt*=state.speed;
+    if(state.mode==='anim'){
+      state.animT+=dt;
+      if(state.anim==='bite'&&state.animT>2.4)setAnim('idle');
+      if(state.anim==='hit'&&state.animT>0.95)setAnim('idle');
+      const P=pose(state.anim,state.animT,state.s);
+      state.s+=P.vel*dt;
+    }else if(state.mode==='death'){ state.deathT+=dt; }
+    else if(state.mode==='revive'){ state.reviveT+=dt;
+      if(state.reviveT>1.95){state.mode='anim';setAnim('idle');} }
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    const zoom=Math.min(W/860,H/640)*0.9;
+    drawScene({g:ctx,w:W,h:H,anim:state.anim,
+      t:state.mode==='anim'?state.animT:state.deathT+9,
+      s:state.s,av:state.av,bones:state.bones,zoom,
+      deathT:state.mode==='death'?state.deathT:null,
+      reviveT:state.mode==='revive'?state.reviveT:null});
+    if(state.swapFx>0){                                   // 아바타 전환 뿅
+      state.swapFx+=dt;
+      ctx.save(); ctx.translate(W/2,H*0.80); ctx.scale(zoom,zoom);
+      drawPuffCloud(ctx,0,-100,state.swapFx-0.016,1.0); ctx.restore();
+      if(state.swapFx>0.65)state.swapFx=0;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  const btns=[...document.querySelectorAll('button[data-anim]')];
+  window.setAnim=function(a){
+    if(a==='death'){ if(state.mode==='death')return;
+      state.mode='death';state.deathT=0;
+      document.getElementById('btnRevive').disabled=false; }
+    else if(a==='revive'){ if(state.mode!=='death'||state.deathT<1.4)return;
+      state.mode='revive';state.reviveT=0;
+      document.getElementById('btnRevive').disabled=true; }
+    else{ state.mode='anim';state.anim=a;state.animT=0;
+      document.getElementById('btnRevive').disabled=true; }
+    btns.forEach(b=>b.classList.toggle('on',
+      b.dataset.anim===(state.mode==='death'?'death':state.mode==='revive'?'revive':a)));
+  };
+  btns.forEach(b=>b.onclick=()=>setAnim(b.dataset.anim));
+  const avB=document.getElementById('avBase'),avD=document.getElementById('avDemon');
+  function setAv(av){ if(state.av===av)return;
+    state.av=av; state.swapFx=0.001;
+    avB.classList.toggle('on',av==='base'); avD.classList.toggle('on',av==='demon'); }
+  avB.onclick=()=>setAv('base'); avD.onclick=()=>setAv('demon');
+  document.getElementById('ckBones').onchange=e=>state.bones=e.target.checked;
+  const spd=document.getElementById('spd'),spdV=document.getElementById('spdV');
+  spd.oninput=()=>{state.speed=spd.value/100;spdV.textContent=state.speed.toFixed(2)+'×';};
+}
+
+// ==== 10. 몽타주 모드 ====
+if(IS_MONTAGE){
+  document.body.classList.add('montage');
+  const MWc=1680,MHc=1500;
+  cv.width=MWc; cv.height=MHc; cv.style.width=MWc+'px'; cv.style.height=MHc+'px';
+  const g=ctx;
+  g.fillStyle='#14181c'; g.fillRect(0,0,MWc,MHc);
+  g.fillStyle='#ffe9c4'; g.font='600 20px "Segoe UI","Malgun Gothic",sans-serif';
+  g.fillText('몬스터 도감 — 이빨호박 「펌킨조」 · 절차적 본 리깅 (pump-bone) · 기본 ↔ 악마 호박',16,28);
+  function cell(x,y,w,h,label,fn){
+    g.save(); g.translate(x,y);
+    g.strokeStyle='#2a3138'; g.lineWidth=1; g.strokeRect(0.5,0.5,w-1,h-1);
+    g.save(); g.beginPath(); g.rect(1,1,w-2,h-2); g.clip(); fn(w,h); g.restore();
+    g.fillStyle='rgba(0,0,0,.55)'; g.fillRect(1,h-24,w-2,23);
+    g.fillStyle='#ffffff'; g.font='13px "Segoe UI","Malgun Gothic",sans-serif';
+    g.textAlign='center'; g.fillText(label,w/2,h-8); g.textAlign='left';
+    g.restore();
+  }
+  const CW=280,CH=424,Y0=42;
+  // Row A: 대기+걷기 — 앞3 기본 / 뒤3 악마
+  const rowA=[
+    {av:'base', anim:'idle',t:1.30,s:0,          lb:'대기 · 기본 (부득부득)'},
+    {av:'base', anim:'walk',t:0.30,s:0,          lb:'걷기 0/6 · 기본'},
+    {av:'base', anim:'walk',t:0.60,s:STRIDE/3,   lb:'걷기 2/6 · 기본'},
+    {av:'demon',anim:'idle',t:0.85,s:0,          lb:'대기 · 악마 호박'},
+    {av:'demon',anim:'walk',t:0.90,s:STRIDE/2,   lb:'걷기 3/6 · 악마'},
+    {av:'demon',anim:'walk',t:1.20,s:STRIDE*5/6, lb:'걷기 5/6 · 악마'},
+  ];
+  rowA.forEach((c,i)=>cell(i*CW,Y0,CW,CH,c.lb,(w,h)=>
+    drawScene({g,w,h,anim:c.anim,t:c.t,s:c.s,av:c.av,zoom:0.60})));
+  // Row B: 죽음 시퀀스 6키 (1~4 기본, 5~6 악마 = 보라 글로우 조각)
+  const rowB=[
+    {T:0.15,av:'base', lb:'① 피격 경직'},
+    {T:0.36,av:'base', lb:'② 뿅! 연기+별 (몸 소멸)'},
+    {T:0.62,av:'base', lb:'③ 호박 조각 포물선'},
+    {T:0.95,av:'base', lb:'④ 바닥 바운스 (스쿼시)'},
+    {T:2.20,av:'demon',lb:'⑤ 안착 · 악마=보라 글로우'},
+    {T:3.30,av:'demon',lb:'⑥ 반짝✨ — 부활 대기'},
+  ];
+  rowB.forEach((c,i)=>cell(i*CW,Y0+CH+6,CW,CH,c.lb,(w,h)=>
+    drawScene({g,w,h,anim:'idle',t:c.T,s:0,av:c.av,zoom:0.60,deathT:c.T})));
+  // Row C
+  const C3W=420,C3H=548,Y2=Y0+CH*2+12;
+  cell(0,Y2,C3W,C3H,'뷰티샷 · 기본 「펌킨조」',(w,h)=>
+    drawScene({g,w,h,anim:'idle',t:1.30,s:0,av:'base',zoom:1.12,oy:-30}));
+  cell(C3W,Y2,C3W,C3H,'뷰티샷 · 악마 호박 (화염 눈입+뿔+도깨비불)',(w,h)=>
+    drawScene({g,w,h,anim:'idle',t:0.85,s:0,av:'demon',zoom:1.12,oy:-30}));
+  cell(C3W*2,Y2,C3W,C3H,'조각 클로즈업 — 단면 (위: 기본 / 아래: 악마 글로우)',(w,h)=>{
+    const bg=g.createRadialGradient(w/2,h/2,20,w/2,h/2,w*0.7);
+    bg.addColorStop(0,'#3a2c20'); bg.addColorStop(1,'#221812');
+    g.fillStyle=bg; g.fillRect(0,0,w,h);
+    const rows=[{demon:false,y:h*0.26,cap:'호박 웨지 · 슬라이스(씨 별배치) · 꼭지'},
+                {demon:true, y:h*0.71,cap:'악마 조각 — 속살 보라 글로우'}];
+    for(const r of rows){
+      const types=['wedge','slice','stem'];
+      types.forEach((tp,k)=>{
+        g.save(); g.translate(w*(0.19+k*0.31),r.y); g.scale(2.3,2.3);
+        drawPiece(g,{type:tp,demon:r.demon,x:0,y:0,rot:k===1?0.12:-0.08,sq:0,
+          settled:1,sparkle:0,seed:k,imp:0,impPow:0},1.9+k);
+        g.restore();
+      });
+      g.fillStyle='rgba(255,255,255,.8)'; g.font='12px "Segoe UI","Malgun Gothic",sans-serif';
+      g.textAlign='center'; g.fillText(r.cap,w/2,r.y+86); g.textAlign='left';
+    }
+  });
+  cell(C3W*3,Y2,C3W,C3H,'리깅 오버레이 — 본·관절·접지락 (걷기)',(w,h)=>{
+    drawScene({g,w,h,anim:'walk',t:0.6,s:STRIDE*0.35,av:'base',zoom:1.0,oy:-30,
+      bones:true,alpha:0.35});
+  });
 }
 </script>
-</body>
-</html>

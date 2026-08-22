@@ -285,7 +285,7 @@ function poseHit(t){
 
 // ==== 4. 죽음/부활 — 결정적 시뮬 (순수 함수: t → 상태) ========================
 // 시퀀스: 경직(0~0.24) → 뿅!연기(0.24) → 조각 포물선+바운스 → 안착 → 반짝/김
-var D_STUN=0.24, D_SPAWN=0.34, GRAV=1080;
+var D_STUN=0.24, D_SPAWN=0.40, GRAV=1080;
 var PIECE_KINDS=['ham','steak','sausage','ham','steak','ham','sausage'];
 var PIECE_REST={ham:19,steak:11,sausage:11};
 function makePieces(){
@@ -293,7 +293,7 @@ function makePieces(){
  for(var i=0;i<n;i++){
    var r1=rnd(i*7.13+2.1),r2=rnd(i*3.71+5.5),r3=rnd(i*9.29+1.3);
    arr.push({kind:PIECE_KINDS[i],
-     x0:(i-(n-1)/2)*13, y0:-96-r2*18,
+     x0:(i-(n-1)/2)*17, y0:-90-r2*26,
      vx:((i/(n-1))-0.5)*195+(r1-0.5)*46,
      vy:-(240+r2*170), w:(r3-0.5)*13, rot0:(r1-0.5)*1.4,
      s:0.82+r1*0.34, rest:0});
@@ -314,15 +314,16 @@ function simPiece(p,t){ // t: 스폰 이후 경과. 절차 물리: 중력+바운
      else{landed=true;landAt=time;vy=0;vx=0;}
    }
  }
+ var pop=0.35+0.65*eO(clamp(t/0.22,0,1)); // 스폰 직후 뿅 스케일-인
  if(landed){
    var st=Math.min(t,3.2)-landAt+Math.max(0,t-3.2);
    var nr=rot%TAU; if(nr>PI)nr-=TAU; if(nr<-PI)nr+=TAU;
    rot=nr*Math.exp(-st*7);
    var sq=Math.max(0,1-st*8)*0.35;
-   return {x:x,y:floor+p.rest*sq*0.5,rot:rot,sqx:1+sq,sqy:1-sq,landed:true,settleT:st};
+   return {x:x,y:floor+p.rest*sq*0.5,rot:rot,sqx:1+sq,sqy:1-sq,landed:true,settleT:st,pop:1};
  }
  var sq2=Math.max(0,1-bAge*8)*0.4*bAmt;
- return {x:x,y:y,rot:rot,sqx:1+sq2,sqy:1-sq2,landed:false,settleT:0};
+ return {x:x,y:y,rot:rot,sqx:1+sq2,sqy:1-sq2,landed:false,settleT:0,pop:pop};
 }
 function simDeath(t){
  var st={stun:t<D_STUN,stunT:t,poofT:t<D_STUN?-1:(t-D_STUN),
@@ -914,8 +915,8 @@ function drawScene(g,w,h,st){
      // 조각 그림자
      g.fillStyle='rgba(30,60,22,0.25)';
      var hgt=clamp((-q.y-PIECES[i].rest)/120,0,1);
-     ell(g,q.x,3,26*PIECES[i].s*(1-hgt*0.4),6*(1-hgt*0.4));g.fill();
-     drawPiece(g,PIECES[i].kind,fire,q.x,q.y,q.rot,q.sqx,q.sqy,PIECES[i].s);
+     ell(g,q.x,3,26*PIECES[i].s*(1-hgt*0.4)*q.pop,6*(1-hgt*0.4));g.fill();
+     drawPiece(g,PIECES[i].kind,fire,q.x,q.y,q.rot,q.sqx,q.sqy,PIECES[i].s*q.pop);
      if(q.landed&&q.settleT>0.25){
        if(fire)drawSteam(g,q.x,q.y-PIECES[i].rest,st.time||dt2,i);
        drawSparkle(g,q.x+14,q.y-PIECES[i].rest-8,(st.time||dt2)+i,i);
@@ -923,8 +924,8 @@ function drawScene(g,w,h,st){
      }
    });
    if(ds.poofT>=0){
-     drawPuff(g,0,-96,ds.poofT/0.55,1.25);
-     drawPopStars(g,0,-96,ds.poofT/0.7,1.1);
+     drawPuff(g,0,-96,ds.poofT/0.62,1.5);
+     drawPopStars(g,0,-96,ds.poofT/0.75,1.2);
    }
  }else if(st.anim==='revive'){
    var rs=simRevive(st.t);
@@ -966,6 +967,19 @@ function drawScene(g,w,h,st){
        var a3=(st.time||st.t)*4+j*TAU/3;
        g.globalAlpha=pose.aux.stars;g.fillStyle='#ffd54a';
        star4(g,bp[0]+Math.cos(a3)*44,bp[1]+Math.sin(a3)*12,9,a3);
+     }
+     g.globalAlpha=1;
+   }
+   // 불속성: 몸에서 피어오르는 불티
+   if(st.avatar==='fire'){
+     var tt=st.time||1;
+     for(var ei=0;ei<5;ei++){
+       var ph2=(tt*0.5+rnd(ei*11.3))%1;
+       var ex=(rnd(ei*7.9)-0.5)*190+pose.root.x;
+       var ey=-120-ph2*95;
+       g.globalAlpha=Math.sin(ph2*PI)*0.85;
+       g.fillStyle=ei%2?'#ffb054':'#ff7a3c';
+       ell(g,ex+Math.sin(ph2*8+ei)*9,ey,2.6-ph2,2.6-ph2);g.fill();
      }
      g.globalAlpha=1;
    }
@@ -1099,7 +1113,7 @@ if(isMontage){
   {l:'③ 조각 튀어오름 · 기본',st:{anim:'death',t:0.72,avatar:'base',time:0.72}},
   {l:'④ 바운스 · 불속성',st:{anim:'death',t:1.05,avatar:'fire',time:1.05}},
   {l:'⑤ 안착 · 불속성(구이)',st:{anim:'death',t:2.1,avatar:'fire',time:2.1}},
-  {l:'⑥ 반짝✨/부활 시작 · 불속성',st:{anim:'revive',t:0.28,avatar:'fire',time:3.0}}
+  {l:'⑥ 반짝✨/부활 역재생 · 불속성',st:{anim:'revive',t:0.58,avatar:'fire',time:3.0}}
  ];
  rowB.forEach(function(c,i){
    cell(pad+(cwA+pad)*i,yB,cwA,hB,c.l,function(w,h){
