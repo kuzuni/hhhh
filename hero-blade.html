@@ -722,15 +722,16 @@ function hairFront(g,P){
     g.beginPath(); g.moveTo(tx-1.1,ty-3.4); g.lineTo(tx-0.15,ty+0.3); g.lineTo(tx+0.85,ty-3.5);
     g.closePath(); g.fillStyle=PAL.hairSh; g.fill();
   }
-  // 덩어리 내부 가닥 라인 — 그늘선 1 + 은발 하이라이트선 1 (클로즈업 디테일)
+  // 덩어리 내부 가닥 라인 — 그늘선 1 + 은발 하이라이트선 1 (끝은 덩어리 안에서 멈춤)
   g.lineCap="round";
   for(const s of S){
-    g.strokeStyle="rgba(139,151,173,0.7)"; g.lineWidth=0.30;
-    g.beginPath(); g.moveTo(s[0]+1.2,s[1]+1.6);
-    g.quadraticCurveTo(s[2]+1.1,s[3], s[4]+0.9,s[5]-1.2); g.stroke();
-    g.strokeStyle="rgba(255,255,255,0.55)"; g.lineWidth=0.28;
-    g.beginPath(); g.moveTo(s[0]-0.9,s[1]+2.0);
-    g.quadraticCurveTo(s[2]-1.0,s[3]+0.5, s[4]-1.0,s[5]-1.6); g.stroke();
+    const e1x=s[2]+(s[4]-s[2])*0.62, e1y=s[3]+(s[5]-s[3])*0.62;
+    g.strokeStyle="rgba(139,151,173,0.55)"; g.lineWidth=0.28;
+    g.beginPath(); g.moveTo(s[0]+1.1,s[1]+1.6);
+    g.quadraticCurveTo(s[2]+1.0,s[3]*0.7+s[1]*0.3, e1x+0.8,e1y); g.stroke();
+    g.strokeStyle="rgba(255,255,255,0.5)"; g.lineWidth=0.26;
+    g.beginPath(); g.moveTo(s[0]-0.8,s[1]+2.0);
+    g.quadraticCurveTo(s[2]-0.9,s[3]*0.7+s[1]*0.3, e1x-0.9,e1y-0.4); g.stroke();
   }
   // 눈을 스치는 반투명 가닥 2개 (고급 연출: 눈이 비침)
   g.globalAlpha=0.32;
@@ -740,38 +741,40 @@ function hairFront(g,P){
   // 가는 액센트 + 결 디테일 획
   strand(g,[{x:-3.8,y:-15.5},{x:-4.8,y:-9},{x:-5.2,y:-2.5}],1.5,0.5,PAL.hair,null);
   strand(g,[{x:7.0,y:-16.2},{x:7.4,y:-10},{x:7.4,y:-2.2}],1.4,0.5,PAL.hair,null);
-  g.strokeStyle="rgba(139,151,173,0.55)"; g.lineWidth=0.5; g.lineCap="round";
+  g.strokeStyle="rgba(139,151,173,0.45)"; g.lineWidth=0.34; g.lineCap="round";
   for(const d of[[-7.2,-9,-7.6,-3.5],[0.0,-10,-0.4,-4],[6.8,-10,6.8,-4],[12.6,-9,13.0,-3]]){
     g.beginPath(); g.moveTo(d[0],d[1]); g.quadraticCurveTo((d[0]+d[2])/2-0.4,(d[1]+d[3])/2,d[2],d[3]);
     g.stroke();
   }
   // 관자놀이 커버 가닥 (캡 헤어라인 단차 가림)
   strand(g,[{x:-12.2,y:-14},{x:-12.6,y:-8},{x:-12.2,y:-1}],3.4,1.2,PAL.hairCap,null);
-  // 사이드락(근): 턱선까지 — 실루엣 가장자리만 옅은 외곽선
-  strand(g,[{x:-10.8,y:-12},{x:-13.2,y:-2},{x:-13.6+tip(4)*0.7,y:9},
-    {x:-12.4+tip(5)*1.2,y:18}],4.8,1.0,PAL.hair,"rgba(25,22,36,0.5)",0.5);
-  strand(g,[{x:-9.8,y:-11},{x:-11.4,y:0},{x:-10.8+tip(4.5)*0.7,y:8}],2.0,0.6,PAL.hairSh,null);
+  // 사이드락(근): 턱선까지 — 5점 완만 S커브, 옅은 회청 외곽선 (각진 플랩 방지)
+  strand(g,[{x:-10.6,y:-12},{x:-12.6,y:-5},{x:-13.4,y:2},
+    {x:-13.3+tip(4)*0.7,y:10},{x:-12.2+tip(5)*1.2,y:18}],
+    4.6,1.0,PAL.hair,"rgba(74,84,110,0.4)",0.42);
+  strand(g,[{x:-9.8,y:-11},{x:-11.2,y:-3},{x:-11.3,y:3},{x:-10.8+tip(4.5)*0.7,y:9}],
+    2.0,0.6,PAL.hairSh,null);
   // 사이드락(원): 광대 앞 가늘게
-  strand(g,[{x:18.2,y:-11},{x:20.4,y:-4},{x:20.8+tip(2.5)*0.4,y:5.0}],2.3,0.7,
-    PAL.hair,"rgba(25,22,36,0.35)",0.4);
-  // 정수리 림라이트 — 천사고리형 지그재그 밴드 (실루엣 안쪽에 수납, 티아라 방지)
-  const N=9, a0=142*RAD, a1=40*RAD, cyR=-8.5;
-  function ring(dy,rHi,rLo,rIn,fill){
-    g.beginPath();
-    for(let i=0;i<=N;i++){
-      const u=i/N, a=a0+(a1-a0)*u;
-      const r=(i%2===0)?rHi:rLo;
-      const X=1.5+Math.cos(a)*r*1.06, Y=cyR+dy-Math.sin(a)*r*0.98;
-      if(i===0)g.moveTo(X,Y); else g.lineTo(X,Y);
+  strand(g,[{x:18.2,y:-11},{x:19.6,y:-7},{x:20.5,y:-2},{x:20.8+tip(2.5)*0.4,y:5.0}],
+    2.2,0.7,PAL.hair,"rgba(74,84,110,0.3)",0.38);
+  // 정수리 천사고리 — 결 방향 짧은 광택 획을 끊어 배치 (밴드/티아라로 안 읽히게)
+  {
+    const cyR=-8.5, a0=146*RAD, a1=36*RAD, ND=7;
+    g.lineCap="round";
+    for(let i=0;i<ND;i++){
+      const u=(i+0.5)/ND, a=a0+(a1-a0)*u;
+      const r=12.4+(i%2)*1.5;                       // 반경 요철로 밴드 균일성 파괴
+      const X=1.5+Math.cos(a)*r*1.06, Y=cyR-Math.sin(a)*r*0.98;
+      const dx=Math.cos(a)*0.5, dy2=-Math.sin(a)*0.5; // 획은 가닥 결(방사) 방향
+      g.strokeStyle="rgba(255,255,255,"+(0.42+(i%2)*0.16)+")"; g.lineWidth=0.85;
+      g.beginPath(); g.moveTo(X-dx*2.6,Y-dy2*2.6);
+      g.quadraticCurveTo(X+dx*0.4-dy2*0.5,Y+dy2*0.4+dx*0.5, X+dx*2.6,Y+dy2*2.6);
+      g.stroke();
+      if(i%2===0){ g.strokeStyle="rgba(139,151,173,0.28)"; g.lineWidth=0.5;
+        g.beginPath(); g.moveTo(X-dx*1.8+0.7,Y-dy2*1.8+1.1);
+        g.lineTo(X+dx*1.8+0.7,Y+dy2*1.8+1.1); g.stroke(); }
     }
-    for(let i=N;i>=0;i--){
-      const u=i/N, a=a0+(a1-a0)*u;
-      g.lineTo(1.5+Math.cos(a)*rIn*1.06, cyR+dy-Math.sin(a)*rIn*0.98);
-    }
-    g.closePath(); g.fillStyle=fill; g.fill();
   }
-  ring(1.3,14.8,12.6,10.8,"rgba(139,151,173,0.32)");  // 그늘 언더라인
-  ring(0,14.8,12.6,10.8,"rgba(255,255,255,0.75)");    // 백색 밴드
   g.restore();
 }
 // --- 검/칼집 ---------------------------------------------------------
@@ -866,7 +869,7 @@ function drawArm(g,P,side){
   const sh=j["sh"+side], el=j["el"+side], wr=j["wr"+side];
   const col=far?shade(PAL.coat,-16):PAL.coat;
   limb(g,sh,el,wr,9.8,7.2,5.6,col,1.0);
-  if(!far)rimEdge(g,sh,el,wr,9.8,7.2,5.6,"rgba(190,218,250,0.55)",1.3);
+  if(!far)rimEdge(g,sh,el,wr,9.8,7.2,5.6,"rgba(190,218,250,0.75)",1.5);
   // 커프스
   const cu={x:lerp(el.x,wr.x,0.72),y:lerp(el.y,wr.y,0.72)};
   limb(g,cu,{x:lerp(cu.x,wr.x,0.5),y:lerp(cu.y,wr.y,0.5)},wr,6.4,6.0,5.8,
@@ -1034,7 +1037,7 @@ function drawTrail(g,anim,t,strength){
     const u=k/(N-1);
     tips.push(P.j.swordTip);
     // 리본 폭: 후단으로 갈수록 테이퍼 (안쪽 에지를 칼끝 쪽으로 끌어올림)
-    const f=lerp(0.24,0.85,E.in2(u));
+    const f=lerp(0.44,0.90,E.in2(u));
     guards.push({x:lerp(P.j.swordGrip.x,P.j.swordTip.x,f),
                  y:lerp(P.j.swordGrip.y,P.j.swordTip.y,f)});
   }
@@ -1042,8 +1045,8 @@ function drawTrail(g,anim,t,strength){
   g.globalCompositeOperation="lighter";
   for(let k=0;k<N-1;k++){
     if(!tips[k]||!tips[k+1])continue;
-    // 진행 방향 투명도 그라디언트: 선단 ~90% → 후단 0
-    const u=k/(N-1), a=Math.pow(1-u,2.2)*0.9*strength;
+    // 진행 방향 투명도 그라디언트: 선단 → 후단 0 (평면 쐐기 방지: 피크 절제)
+    const u=k/(N-1), a=Math.pow(1-u,1.9)*0.55*strength;
     if(a<=0.01)continue;
     const cr=Math.round(lerp(255,159,u)), cg=Math.round(lerp(255,216,u));
     g.beginPath();
@@ -1349,12 +1352,12 @@ function drawMontage(){
   cell(cw4,yC+20,cw4,ch4,"② 얼굴 클로즈업 (머리 세로 460px+)",(w,h)=>{
     // 헤드 클로즈업: 머리높이 46 → scale 10 (460px 유지), 턱선까지 프레임 안
     const t=0.8, P=pose("idle",t);
-    P.face={blink:0,brow:0,narrow:0,mouth:0.02,px:0.12,py:0.02}; // 냉정한 카메라 응시
+    P.face={blink:0,brow:0,narrow:0,mouth:0.02,px:0.10,py:0.02}; // 냉정한 카메라 응시
     drawBG(ctx,w,h,t,h*0.97,false);
-    const sc=10;
+    const sc=9.5; // 머리 세로 ≈ 478px (턱끝·턱선까지 프레임 안)
     LW=0.36; // 클로즈업 외곽선 1/3 축소 — 헬멧 테두리 방지
     ctx.save();
-    ctx.translate(w*0.5-(P.j.head.x+5)*sc, h*0.455-(P.j.head.y-0.5)*sc);
+    ctx.translate(w*0.5-(P.j.head.x+5)*sc, h*0.435-(P.j.head.y-0.5)*sc);
     ctx.scale(sc,sc);
     drawChar(ctx,P);
     ctx.restore();
