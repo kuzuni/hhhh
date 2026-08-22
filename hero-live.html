@@ -530,7 +530,8 @@ var LAYERS=[
  {n:'bangsC',   bb:[418,244,164,200], grid:[5,6], depth:1, headW:1, rollW:1, sway:20, paint:function(g){paintStrands(g,BANGS_C)}}
 ];
 var TS=2, PAD=14; // 텍스처 해상도 배율·패딩
-var EXPAND=/[?&]ex0/.test(location.search)?0:.65; // 삼각 팽창량 (실금 방지)
+var EXPAND=/[?&]ex0/.test(location.search)?0:2.6; // 삼각 팽창량 px (실금 방지)
+var FULLTEX=/[?&]full/.test(location.search); // 디버그: 소스렉트 없이 전체 텍스처
 var APCLIP=null;
 function buildTextures(){
  LAYERS.forEach(function(L){
@@ -641,10 +642,12 @@ function drawMesh(ctx,L,P,view,alpha,tex){
       u0=verts[t0].u,v0=verts[t0].v,u1=verts[t1].u,v1=verts[t1].v,u2=verts[t2].u,v2=verts[t2].v,
       den=u0*(v1-v2)+u1*(v2-v0)+u2*(v0-v1);
   if(den>-1e-6&&den<1e-6)continue;
+  // 무게중심 방사 팽창: 대각 엣지도 확실히 밀어내 실금 방지
   var cx=(x0+x1+x2)/3,cy=(y0+y1+y2)/3,EX=EXPAND,
-      e0x=x0+(x0>cx?EX:-EX),e0y=y0+(y0>cy?EX:-EX),
-      e1x=x1+(x1>cx?EX:-EX),e1y=y1+(y1>cy?EX:-EX),
-      e2x=x2+(x2>cx?EX:-EX),e2y=y2+(y2>cy?EX:-EX),
+      d0=Math.hypot(x0-cx,y0-cy)||1,d1=Math.hypot(x1-cx,y1-cy)||1,d2=Math.hypot(x2-cx,y2-cy)||1,
+      e0x=x0+(x0-cx)/d0*EX,e0y=y0+(y0-cy)/d0*EX,
+      e1x=x1+(x1-cx)/d1*EX,e1y=y1+(y1-cy)/d1*EX,
+      e2x=x2+(x2-cx)/d2*EX,e2y=y2+(y2-cy)/d2*EX,
       a=(x0*(v1-v2)+x1*(v2-v0)+x2*(v0-v1))/den,
       c=(x0*(u2-u1)+x1*(u0-u2)+x2*(u1-u0))/den,
       e=x0-a*u0-c*v0,
@@ -656,9 +659,9 @@ function drawMesh(ctx,L,P,view,alpha,tex){
   ctx.setTransform(a,b,c,d,e,f);
   if(FULLTEX){ctx.drawImage(tex,0,0)}
   else{
-   var su=Math.max(0,Math.min(u0,u1,u2)-2), sv=Math.max(0,Math.min(v0,v1,v2)-2),
-       sw=Math.min(Math.max(u0,u1,u2)-su+4,tex.width-su),
-       sh=Math.min(Math.max(v0,v1,v2)-sv+4,tex.height-sv);
+   var su=Math.max(0,Math.min(u0,u1,u2)-14), sv=Math.max(0,Math.min(v0,v1,v2)-14),
+       sw=Math.min(Math.max(u0,u1,u2)-su+28,tex.width-su),
+       sh=Math.min(Math.max(v0,v1,v2)-sv+28,tex.height-sv);
    ctx.drawImage(tex,su,sv,sw,sh,su,sv,sw,sh);
   }
   ctx.restore();
