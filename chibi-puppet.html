@@ -372,6 +372,336 @@ makePart('hand',-17,-6,17,30,3,c=>{
   c.strokeStyle='rgba(230,150,115,.5)';c.lineWidth=2;
   c.beginPath();c.moveTo(3,16);c.quadraticCurveTo(7,14,9,9);c.stroke(); // 엄지 힌트
 });
+// ---- 2k. 공통 팔 (맨팔 — 해적용. 소매는 마법사 파트에서 교체) ----
+makePart('armU',-14,-8,14,60,3,c=>{ // 피벗=어깨, 아래로 52
+  path(c,[-10,-2,[-13,20,-11,44,-9,52],[0,58,9,52],[11,44,13,20,10,-2],[4,-8,-4,-8,-10,-2]]);
+  c.closePath();c.fillStyle=PAL.skin;c.fill();
+  c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+});
+makePart('armL',-13,-8,13,54,3,c=>{ // 피벗=팔꿈치, 아래로 46
+  path(c,[-10,-2,[-12,18,-10,38,-8,46],[0,52,8,46],[10,38,12,18,10,-2],[4,-7,-4,-7,-10,-2]]);
+  c.closePath();c.fillStyle=PAL.skin;c.fill();
+  c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+  c.strokeStyle='rgba(230,150,115,.4)';c.lineWidth=2;
+  c.beginPath();c.moveTo(-5,10);c.quadraticCurveTo(-7,26,-4,38);c.stroke();
+});
+
+// ==== 2P. 해적 스킨 파트 ====================================================
+// ---- 몸통: 크롭톱 + 데님 반바지 + 벨트 (피벗=골반) ----
+makePart('p_torso',-72,-126,72,46,2.6,c=>{
+  // 데님 반바지 (밑단 롤업)
+  path(c,[-52,-16,[-56,10,-54,26,-50,34],[-30,40,-26,32],[-14,26,0,26],[14,26,26,32],[30,40,50,34],[54,26,56,10,52,-16],[0,-24,-52,-16]]);
+  c.closePath();c.fillStyle=PAL.denim;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  c.strokeStyle=PAL.denimL;c.lineWidth=3;
+  c.beginPath();c.moveTo(-46,26);c.quadraticCurveTo(-36,32,-27,28);c.stroke();
+  c.beginPath();c.moveTo(46,26);c.quadraticCurveTo(36,32,27,28);c.stroke();
+  c.strokeStyle=PAL.denimD;c.lineWidth=2.2;
+  c.beginPath();c.moveTo(0,-20);c.lineTo(0,22);c.stroke();
+  // 배꼽 라인 (미드리프 스킨)
+  path(c,[-46,-42,[-48,-28,-50,-17],[0,-25,50,-17],[48,-28,46,-42],[0,-50,-46,-42]]);
+  c.closePath();c.fillStyle=PAL.skin;c.fill();
+  c.lineWidth=OLW*.9;c.strokeStyle=PAL.outline;c.stroke();
+  // 크롭 톱 (흰색 + 네이비 트림, 밑단 살짝 팔랑)
+  path(c,[-54,-104,
+    [-58,-84,-52,-58,-48,-44],[-40,-36,-30,-42],[-18,-48,-8,-42],[0,-38,8,-42],[18,-48,30,-42],[40,-36,48,-44],
+    [52,-58,58,-84,54,-104],[30,-122,0,-122],[-30,-122,-54,-104]]);
+  c.closePath();c.fillStyle=PAL.top;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  c.fillStyle='rgba(0,0,0,.07)';
+  path(c,[-48,-56,[-40,-44,-30,-50],[-18,-56,-8,-50],[0,-46,8,-50],[18,-56,30,-50],[40,-44,48,-56],[46,-48,44,-40],[0,-30,-44,-40],[-46,-48,-48,-56]]);
+  c.closePath();c.fill();
+  // 네이비 카라 V넥 + 소매 트림
+  c.strokeStyle=PAL.navy;c.lineWidth=5;
+  c.beginPath();c.moveTo(-30,-120);c.lineTo(0,-98);c.lineTo(30,-120);c.stroke();
+  c.strokeStyle=PAL.navy;c.lineWidth=4;
+  c.beginPath();c.moveTo(-54,-102);c.quadraticCurveTo(-58,-92,-56,-82);c.stroke();
+  c.beginPath();c.moveTo(54,-102);c.quadraticCurveTo(58,-92,56,-82);c.stroke();
+  // 벨트 + 금장 버클
+  path(c,[-53,-20,[-55,-12,-53,-4],[0,4,53,-4],[55,-12,53,-20],[0,-28,-53,-20]]);
+  c.closePath();c.fillStyle=PAL.belt;c.fill();
+  c.lineWidth=3.4;c.strokeStyle=PAL.outline;c.stroke();
+  c.fillStyle=PAL.buckle;
+  c.fillRect(-11,-22,22,16);
+  c.lineWidth=2.6;c.strokeStyle=PAL.outline;c.strokeRect(-11,-22,22,16);
+  c.fillStyle='#8a5a10';c.fillRect(-3,-18,6,8);
+});
+
+// ---- 허벅지 (맨다리) / 부츠 다리 ----
+makePart('p_legU',-16,-8,16,62,3,c=>{
+  path(c,[-13,-2,[-15,20,-13,44,-11,54],[0,60,11,54],[13,44,15,20,13,-2],[6,-8,-6,-8,-13,-2]]);
+  c.closePath();c.fillStyle=PAL.skin;c.fill();
+  c.lineWidth=OLW*.9;c.strokeStyle=PAL.outline;c.stroke();
+});
+makePart('p_legL',-18,-8,34,64,3,c=>{ // 피벗=무릎, 발끝 +x (왼발은 sx=-1 미러)
+  // 부츠 샤프트
+  path(c,[-13,-2,[-15,16,-14,34,-13,42],[6,46,13,42],[15,34,15,14,13,-2],[6,-8,-6,-8,-13,-2]]);
+  c.closePath();c.fillStyle=PAL.pboot;c.fill();
+  c.lineWidth=OLW*.9;c.strokeStyle=PAL.outline;c.stroke();
+  // 발 (앞코 둥글게)
+  path(c,[-14,40,[-16,50,-12,57,-2,58],[16,60,26,58],[33,56,32,49],[30,42,18,42],[4,44,-14,40]]);
+  c.closePath();c.fillStyle=PAL.pbootD;c.fill();
+  c.lineWidth=OLW*.9;c.strokeStyle=PAL.outline;c.stroke();
+  // 커프
+  path(c,[-15,-4,[0,4,15,-4],[16,4,15,10],[0,18,-15,10],[-16,4,-15,-4]]);
+  c.closePath();c.fillStyle=PAL.pbootL;c.fill();
+  c.lineWidth=3;c.strokeStyle=PAL.outline;c.stroke();
+});
+
+// ---- 반다나 (백골 프린트 + 옆 매듭) — 머리 좌표계, 피벗=목 ----
+makePart('p_band',-120,-224,126,-116,2.2,c=>{
+  // 매듭 리본 꼬리 2가닥 (오른쪽 뒤)
+  path(c,[96,-162,[124,-158,122,-136],[118,-124,110,-132],[104,-140,96,-148],[92,-156,96,-162]]);
+  c.closePath();c.fillStyle=PAL.bandD;c.fill();c.lineWidth=3.4;c.strokeStyle=PAL.outline;c.stroke();
+  path(c,[98,-168,[126,-180,122,-196],[116,-206,108,-196],[102,-186,96,-176],[94,-170,98,-168]]);
+  c.closePath();c.fillStyle=PAL.band;c.fill();c.stroke();
+  // 본체 돔 (이마 밴드까지)
+  path(c,[-104,-152,
+    [-108,-196,-58,-222,0,-222],
+    [58,-222,108,-196,104,-152],
+    [106,-142,102,-136],[60,-148,0,-150],[-60,-148,-102,-136],[-106,-142,-104,-152]]);
+  c.closePath();c.fillStyle=PAL.band;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  // 이마 밴드 라인 + 하이라이트
+  c.strokeStyle=PAL.bandD;c.lineWidth=3;
+  c.beginPath();c.moveTo(-98,-144);c.quadraticCurveTo(0,-158,98,-144);c.stroke();
+  c.strokeStyle=PAL.bandL;c.lineWidth=4;
+  c.beginPath();c.moveTo(-72,-196);c.quadraticCurveTo(-30,-212,20,-210);c.stroke();
+  // 주름
+  c.strokeStyle='rgba(42,79,168,.8)';c.lineWidth=2.4;
+  c.beginPath();c.moveTo(40,-208);c.quadraticCurveTo(70,-196,88,-172);c.stroke();
+  c.beginPath();c.moveTo(-52,-206);c.quadraticCurveTo(-76,-192,-92,-168);c.stroke();
+  // 백골 문양 (졸리 로저)
+  c.fillStyle='#fff';
+  ell(c,-6,-190,13,11,0);c.fill();
+  path(c,[-14,-182,[-14,-176,-10,-176],[-6,-176,-6,-179],[-6,-176,-2,-176],[2,-176,2,-179],[2,-176,6,-176],[8,-176,8,-182],[-2,-184,-14,-182]]);
+  c.closePath();c.fill();
+  c.fillStyle=PAL.band;
+  ell(c,-11,-192,3.4,4,0);c.fill();ell(c,-1,-192,3.4,4,0);c.fill();
+  c.strokeStyle='#fff';c.lineWidth=3;c.lineCap='round';
+  c.beginPath();c.moveTo(-24,-200);c.lineTo(10,-176);c.stroke();
+  c.beginPath();c.moveTo(10,-200);c.lineTo(-24,-176);c.stroke();
+});
+
+// ---- 빨간 스카프 (목 뒤로 나부낌, 2세그) ----
+makePart('p_scarf1',-70,-16,26,58,2.6,c=>{ // 피벗=목뒤
+  // 목 감는 칼라
+  path(c,[-24,-8,[0,2,24,-8],[26,2,24,10],[0,20,-24,10],[-26,2,-24,-8]]);
+  c.closePath();c.fillStyle=PAL.scarf;c.fill();
+  c.lineWidth=3.6;c.strokeStyle=PAL.outline;c.stroke();
+  // 흘러내리는 자락 1
+  path(c,[-12,8,[-34,20,-52,38],[-64,50,-62,54],[-48,56,-34,48],[-16,38,-4,20],[0,12,-12,8]]);
+  c.closePath();c.fillStyle=PAL.scarf;c.fill();c.stroke();
+  c.strokeStyle=PAL.scarfL;c.lineWidth=2.6;
+  c.beginPath();c.moveTo(-14,16);c.quadraticCurveTo(-32,28,-48,44);c.stroke();
+});
+makePart('p_scarf2',-64,-12,10,44,2.6,c=>{ // 피벗=자락1 끝
+  path(c,[0,-6,[-22,4,-40,16],[-56,28,-58,36],[-52,40,-40,34],[-38,30,-36,36],[-30,40,-22,32],[-8,18,4,4],[6,-4,0,-6]]);
+  c.closePath();c.fillStyle=PAL.scarfD;c.fill();
+  c.lineWidth=3.4;c.strokeStyle=PAL.outline;c.stroke();
+  c.strokeStyle=PAL.scarf;c.lineWidth=2.4;
+  c.beginPath();c.moveTo(-6,6);c.quadraticCurveTo(-24,16,-42,28);c.stroke();
+});
+
+// ---- 거대 커틀러스 (식칼형 대검, 피벗=그립) ----
+makePart('p_sword',-58,-268,36,42,2,c=>{
+  // 칼날 (넓은 식칼 실루엣, 위로)
+  path(c,[-14,-28,
+    [-24,-96,-26,-170,-20,-218],[-16,-248,-2,-258],
+    [8,-252,14,-238],[22,-204,24,-160],[26,-96,20,-28],[2,-22,-14,-28]]);
+  c.closePath();
+  const g=c.createLinearGradient(-24,0,26,0);
+  g.addColorStop(0,PAL.steelD);g.addColorStop(.45,PAL.steel);g.addColorStop(1,PAL.steelL);
+  c.fillStyle=g;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  // 칼등 라인 + 스펙큘러 획
+  c.strokeStyle=PAL.steelL;c.lineWidth=3.4;
+  c.beginPath();c.moveTo(-16,-52);c.quadraticCurveTo(-22,-150,-14,-226);c.stroke();
+  c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=5;
+  c.beginPath();c.moveTo(6,-90);c.lineTo(10,-180);c.stroke();
+  c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=3;
+  c.beginPath();c.moveTo(2,-200);c.lineTo(0,-236);c.stroke();
+  // 리벳 2개
+  c.fillStyle=PAL.steelD;ell(c,0,-60,4,4,0);c.fill();ell(c,2,-120,4,4,0);c.fill();
+  // 가드 (금장)
+  path(c,[-26,-30,[0,-38,26,-30],[30,-22,26,-16],[0,-24,-26,-16],[-30,-22,-26,-30]]);
+  c.closePath();c.fillStyle=PAL.buckle;c.fill();
+  c.lineWidth=3.4;c.strokeStyle=PAL.outline;c.stroke();
+  // 그립 (가죽 감김)
+  path(c,[-8,-18,[-10,4,-8,26],[0,32,8,26],[10,4,8,-18],[0,-22,-8,-18]]);
+  c.closePath();c.fillStyle=PAL.belt;c.fill();c.stroke();
+  c.strokeStyle='rgba(58,32,12,.8)';c.lineWidth=2.4;
+  for(let y=-12;y<24;y+=8){c.beginPath();c.moveTo(-8,y);c.lineTo(8,y+4);c.stroke();}
+  // 폼멜
+  ell(c,0,32,7,7,0);c.fillStyle=PAL.buckle;c.fill();c.lineWidth=3;c.strokeStyle=PAL.outline;c.stroke();
+});
+// ==== 2M. 마법사 스킨 파트 ==================================================
+// ---- 몸통: 별 장식 로브 원피스 (피벗=골반) ----
+makePart('m_torso',-84,-126,84,52,2.6,c=>{
+  // 플레어 스커트
+  path(c,[-46,-52,
+    [-62,-18,-74,18],[-80,36,-76,40],[-58,46,-40,40],[-26,36,-14,42],[0,46,14,42],[26,36,40,40],[58,46,76,40],[80,36,74,18],
+    [62,-18,46,-52],[0,-64,-46,-52]]);
+  c.closePath();c.fillStyle=PAL.vio;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  // 스커트 주름 그림자
+  c.strokeStyle=PAL.vioD;c.lineWidth=3;
+  [[-38,-30,-52,28],[-12,-40,-16,34],[14,-40,18,34],[40,-30,54,28]].forEach(s=>{
+    c.beginPath();c.moveTo(s[0],s[1]);c.quadraticCurveTo((s[0]+s[2])/2+3,(s[1]+s[3])/2,s[2],s[3]);c.stroke();});
+  // 밑단 별테두리 밴드
+  c.strokeStyle=PAL.vioDeep;c.lineWidth=6;
+  c.beginPath();c.moveTo(-72,32);c.quadraticCurveTo(0,52,72,32);c.stroke();
+  c.fillStyle=PAL.star;
+  [[-56,32],[-28,40],[0,42],[28,40],[56,32]].forEach(p=>{star5(c,p[0],p[1],6,.3);c.fill();});
+  // 보디스
+  path(c,[-50,-104,
+    [-54,-84,-50,-62,-46,-50],[-20,-60,0,-60],[20,-60,46,-50],
+    [50,-62,54,-84,50,-104],[28,-122,0,-122],[-28,-122,-50,-104]]);
+  c.closePath();c.fillStyle=PAL.vioL;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  c.fillStyle='rgba(69,36,134,.28)';
+  path(c,[-46,-62,[-20,-70,0,-70],[20,-70,46,-62],[46,-54,44,-50],[0,-62,-44,-50],[-46,-54,-46,-62]]);
+  c.closePath();c.fill();
+  // 흰 카라 + 별 브로치
+  path(c,[-28,-120,[-14,-104,0,-104],[14,-104,28,-120],[30,-112,24,-106],[10,-96,0,-96],[-10,-96,-24,-106],[-30,-112,-28,-120]]);
+  c.closePath();c.fillStyle='#fdf6ff';c.fill();
+  c.lineWidth=3;c.strokeStyle=PAL.outline;c.stroke();
+  star5(c,0,-98,9,0);c.fillStyle=PAL.star;c.fill();
+  c.lineWidth=2.6;c.strokeStyle=PAL.starD;c.stroke();
+  // 허리 리본
+  path(c,[-48,-58,[0,-46,48,-58],[50,-50,48,-44],[0,-32,-48,-44],[-50,-50,-48,-58]]);
+  c.closePath();c.fillStyle=PAL.pink;c.fill();
+  c.lineWidth=3;c.strokeStyle=PAL.outline;c.stroke();
+});
+
+// ---- 소매 팔 ----
+makePart('m_armU',-17,-10,17,60,3,c=>{ // 퍼프 소매 + 맨팔 아래
+  path(c,[-8,26,[-10,40,-9,52],[0,58,9,52],[10,40,8,26],[0,22,-8,26]]);
+  c.closePath();c.fillStyle=PAL.skin;c.fill();
+  c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+  path(c,[-12,-4,[-17,10,-14,24],[-8,32,0,32],[8,32,14,24],[17,10,12,-4],[5,-10,-5,-10,-12,-4]]);
+  c.closePath();c.fillStyle=PAL.vioL;c.fill();
+  c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+  c.strokeStyle=PAL.vioD;c.lineWidth=2.4;
+  c.beginPath();c.moveTo(-9,24);c.quadraticCurveTo(0,30,9,24);c.stroke();
+});
+makePart('m_armL',-14,-8,14,54,3,c=>{ // 긴 소매 + 넓은 커프
+  path(c,[-9,-4,[-11,14,-10,28],[0,32,10,28],[11,14,9,-4],[4,-8,-4,-8,-9,-4]]);
+  c.closePath();c.fillStyle=PAL.vio;c.fill();
+  c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+  path(c,[-12,26,[-14,38,-12,44],[0,50,12,44],[14,38,12,26],[0,32,-12,26]]);
+  c.closePath();c.fillStyle=PAL.vioDeep;c.fill();
+  c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+  star5(c,0,38,4.6,.2);c.fillStyle=PAL.star;c.fill();
+});
+
+// ---- 스트라이프 스타킹 / 마법 부츠 ----
+makePart('m_legU',-16,-8,16,62,3,c=>{
+  path(c,[-13,-2,[-15,20,-13,44,-11,54],[0,60,11,54],[13,44,15,20,13,-2],[6,-8,-6,-8,-13,-2]]);
+  c.closePath();c.fillStyle=PAL.stockB;c.fill();
+  c.save();c.clip();
+  c.fillStyle=PAL.stockA;
+  for(let y=-6;y<60;y+=16)c.fillRect(-16,y,32,8);
+  c.restore();
+  c.lineWidth=OLW*.9;c.strokeStyle=PAL.outline;c.stroke();
+});
+makePart('m_legL',-18,-8,34,64,3,c=>{
+  // 스타킹 이어짐
+  path(c,[-12,-4,[-14,6,-13,14],[0,20,13,14],[14,6,12,-4],[5,-8,-5,-8,-12,-4]]);
+  c.closePath();c.fillStyle=PAL.stockB;c.fill();
+  c.save();c.clip();c.fillStyle=PAL.stockA;
+  for(let y=-8;y<20;y+=16)c.fillRect(-18,y,36,8);
+  c.restore();c.lineWidth=OLW*.85;c.strokeStyle=PAL.outline;c.stroke();
+  // 보라 부츠 (발끝 살짝 말림)
+  path(c,[-13,10,[-15,26,-14,38],[-15,50,-4,56],[12,60,24,58],[33,55,32,48],[31,42,20,42],[10,42,12,30],[14,16,13,10],[0,4,-13,10]]);
+  c.closePath();c.fillStyle=PAL.mboot;c.fill();
+  c.lineWidth=OLW*.9;c.strokeStyle=PAL.outline;c.stroke();
+  c.strokeStyle=PAL.mbootL;c.lineWidth=2.6;
+  c.beginPath();c.moveTo(-9,16);c.quadraticCurveTo(-11,32,-8,44);c.stroke();
+  star5(c,2,26,5,0);c.fillStyle=PAL.star;c.fill();
+});
+
+// ---- 마녀 모자 (챙 크고 끝이 꺾임) — 머리 좌표계, 피벗=목 ----
+makePart('m_hat',-160,-368,160,-128,1.8,c=>{
+  // 챙 (큰 타원)
+  ell(c,0,-186,152,40,0);
+  c.fillStyle=PAL.vioD;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  const gg=c.createLinearGradient(0,-226,0,-150);
+  gg.addColorStop(0,PAL.vio);gg.addColorStop(1,PAL.vioD);
+  ell(c,0,-192,140,32,0);c.fillStyle=gg;c.fill();
+  // 콘 (끝이 오른쪽으로 꺾임)
+  path(c,[-86,-196,
+    [-74,-268,-40,-316],[-18,-346,6,-352],   // 왼쪽 사면
+    [40,-360,66,-344],[84,-334,80,-322],     // 꺾인 끝
+    [76,-312,58,-320],[40,-328,30,-312],     // 접힌 골
+    [58,-266,74,-212],[80,-198,86,-190],
+    [30,-172,0,-170],[-30,-172,-86,-196]]);
+  c.closePath();c.fillStyle=PAL.vio;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  // 콘 셰이딩
+  c.strokeStyle=PAL.vioD;c.lineWidth=4;
+  c.beginPath();c.moveTo(-52,-212);c.quadraticCurveTo(-38,-270,-6,-320);c.stroke();
+  c.strokeStyle=PAL.vioL;c.lineWidth=3.4;
+  c.beginPath();c.moveTo(38,-230);c.quadraticCurveTo(46,-280,44,-316);c.stroke();
+  // 모자 밴드 + 버클 별
+  path(c,[-82,-192,[0,-166,82,-192],[84,-206,80,-214],[0,-190,-80,-214],[-84,-206,-82,-192]]);
+  c.closePath();c.fillStyle=PAL.vioDeep;c.fill();
+  c.lineWidth=3.4;c.strokeStyle=PAL.outline;c.stroke();
+  star5(c,2,-196,15,.15);c.fillStyle=PAL.star;c.fill();
+  c.lineWidth=3;c.strokeStyle=PAL.starD;c.stroke();
+  // 꺾인 끝 방울
+  ell(c,84,-326,11,11,0);c.fillStyle=PAL.star;c.fill();
+  c.lineWidth=3.2;c.strokeStyle=PAL.outline;c.stroke();
+  // 챙 밑 그림자 힌트
+  c.strokeStyle='rgba(40,16,80,.5)';c.lineWidth=5;
+  c.beginPath();c.moveTo(-116,-172);c.quadraticCurveTo(0,-142,116,-172);c.stroke();
+});
+
+// ---- 별 케이프 (등 뒤, 팔랑 1세그) ----
+makePart('m_cape1',-76,-12,76,150,2.2,c=>{
+  path(c,[-40,-2,
+    [-58,44,-66,92],[-72,124,-66,130],[-54,136,-42,126],[-34,120,-26,130],[-14,140,0,140],[14,140,26,130],[34,120,42,126],[54,136,66,130],[72,124,66,92],
+    [58,44,40,-2],[0,-12,-40,-2]]);
+  c.closePath();
+  const g=c.createLinearGradient(0,0,0,140);
+  g.addColorStop(0,PAL.vioD);g.addColorStop(1,PAL.vioDeep);
+  c.fillStyle=g;c.fill();
+  c.lineWidth=OLW;c.strokeStyle=PAL.outline;c.stroke();
+  c.fillStyle='rgba(255,217,78,.9)';
+  [[-38,60,7],[16,88,6],[44,52,5],[-10,116,6],[38,112,4.5]].forEach(p=>{star5(c,p[0],p[1],p[2],.4);c.fill();});
+  c.fillStyle='rgba(255,255,255,.5)';
+  [[-20,40],[30,70],[-44,96],[8,64]].forEach(p=>{spark4(c,p[0],p[1],2.2);c.fill();});
+});
+
+// ---- 별 지팡이 (피벗=그립, 끝 보석 발광) ----
+makePart('m_staff',-52,-300,52,52,2,c=>{
+  // 샤프트 (나무 + 나선 리본)
+  path(c,[-6,-236,[-8,-120,-7,-20],[-7,36,-5,42],[0,48,5,42],[7,36,7,-20],[8,-120,6,-236],[0,-242,-6,-236]]);
+  c.closePath();c.fillStyle='#7a4a94';c.fill();
+  c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
+  c.strokeStyle=PAL.pink;c.lineWidth=3.2;
+  c.beginPath();
+  for(let y=-230;y<40;y+=26){c.moveTo(-6,y);c.quadraticCurveTo(0,y+8,6,y+13);}
+  c.stroke();
+  // 발광 글로우 (보석 뒤)
+  const gl=c.createRadialGradient(0,-262,4,0,-262,46);
+  gl.addColorStop(0,'rgba(255,240,150,.95)');gl.addColorStop(.5,'rgba(255,214,90,.4)');gl.addColorStop(1,'rgba(255,214,90,0)');
+  ell(c,0,-262,46,46,0);c.fillStyle=gl;c.fill();
+  // 큰 별 + 링
+  c.strokeStyle='rgba(255,217,78,.9)';c.lineWidth=3;
+  ell(c,0,-262,32,32,0);c.stroke();
+  star5(c,0,-262,26,0);c.fillStyle=PAL.star;c.fill();
+  c.lineWidth=3.6;c.strokeStyle=PAL.starD;c.stroke();
+  star5(c,0,-262,12,0);c.fillStyle='#fff8dc';c.fill();
+  // 작은 위성 별 2개
+  star5(c,-38,-240,7,.4);c.fillStyle=PAL.pink;c.fill();
+  star5(c,38,-286,6,.2);c.fillStyle='#9fe8ff';c.fill();
+  // 그립 리본
+  path(c,[-9,-8,[0,-2,9,-8],[11,0,9,6],[0,12,-9,6],[-11,0,-9,-8]]);
+  c.closePath();c.fillStyle=PAL.pink;c.fill();
+  c.lineWidth=3;c.strokeStyle=PAL.outline;c.stroke();
+});
 /*__NEXT__*/
 </script>
 </body>

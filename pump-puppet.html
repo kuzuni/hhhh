@@ -32,7 +32,7 @@
   #ui input[type=range]{width:100px;accent-color:#ff9a3c;}
   #hint{position:fixed;bottom:66px;left:0;right:0;text-align:center;color:rgba(216,160,112,.8);
     font-size:12px;pointer-events:none;z-index:5;letter-spacing:.5px;}
-  body.montage #ui,body.montage #hint,body.montage #title,body.montage #badge{display:none;}
+  body.montage #ui,body.montage #hint,body.montage #title,body.montage #badge,body.montage #back{display:none;}
 </style>
 </head>
 <body>
@@ -514,8 +514,8 @@ const ATLAS={base:bakeAtlas('base'),demon:bakeAtlas('demon')};
 // [이름, 부모, x, y, z, 부품] — 부모 먼저 정의. 피벗 좌표는 부모 로컬.
 const NODE_DEFS=[
  ['root',null,0,0,0,null],
- ['footL','root',-64,-30,4,'footL'],
- ['footR','root',64,-30,4,'footR'],
+ ['footL','root',-74,-32,4,'footL'],
+ ['footR','root',74,-32,4,'footR'],
  ['body','root',0,-26,10,'body'],
  ['armL','body',-148,-140,6,'armL'],
  ['armR','body',148,-140,6,'armR'],
@@ -528,8 +528,8 @@ const NODE_DEFS=[
  ['mouthInG','body',0,-124,15,'mouthInG'],
  ['jawBot','body',0,-62,16,'jawBot'],
  ['jawTop','body',0,-186,17,'jawTop'],
- ['eyeL','body',-34,-206,18,'eyeL'],
- ['eyeR','body',30,-204,18,'eyeR'],
+ ['eyeL','body',-36,-216,18,'eyeL'],
+ ['eyeR','body',32,-214,18,'eyeR'],
 ];
 const nodes={},nodeList=[];
 for(const[n,p,x,y,z,part]of NODE_DEFS){
@@ -673,8 +673,8 @@ function applyPose(p,av){
   N.body.x=p.bx;N.body.y=-26+p.by;N.body.rot=p.brot;N.body.sx=p.bsx;N.body.sy=p.bsy;
   N.jawTop.y=-186+p.jt;N.jawTop.x=-p.jgx*0.5;
   N.jawBot.y=-62+p.jb;N.jawBot.x=p.jgx;
-  N.footL.x=-64+p.flx;N.footL.y=-30+p.fly;N.footL.rot=p.flr;
-  N.footR.x=64+p.frx;N.footR.y=-30+p.fry;N.footR.rot=p.frr;
+  N.footL.x=-74+p.flx;N.footL.y=-32+p.fly;N.footL.rot=p.flr;
+  N.footR.x=74+p.frx;N.footR.y=-32+p.fry;N.footR.rot=p.frr;
   N.armL.rot=p.armL;N.armR.rot=p.armR;
   N.stem.rot=p.stemR;N.leaf.rot=p.leafR;
   N.goo.sy=p.gooS;N.goo.sx=1+(1-p.gooS)*0.4;
@@ -688,15 +688,15 @@ function applyPose(p,av){
 // ==== 5. 죽음/부활 — 조각 결정론 물리 =======================================
 const DIE_POOF=0.30,G=1500,REST=0.42,FRX=0.55;
 const PIECE_DEFS=[
- {n:'wedgeA',hh:30, x0:-28,y0:-168, vx:-225,vy:-780, sp:4.0, rr:-0.16},
- {n:'wedgeB',hh:27, x0:22,y0:-158, vx:155,vy:-840, sp:-3.2, rr:0.12},
- {n:'wedgeC',hh:24, x0:-6,y0:-138, vx:-95,vy:-700, sp:4.8, rr:-0.28},
- {n:'sliceA',hh:36, x0:36,y0:-172, vx:245,vy:-730, sp:-2.4, rr:0.05},
- {n:'sliceB',hh:29, x0:-46,y0:-150, vx:-170,vy:-650, sp:2.8, rr:-0.08},
- {n:'stemPc',hh:20, x0:4,y0:-232, vx:48,vy:-890, sp:-4.4, rr:0.18},
- {n:'seed',hh:6, x0:-14,y0:-160, vx:-305,vy:-560, sp:6, rr:0.4},
- {n:'seed',hh:6, x0:10,y0:-165, vx:325,vy:-620, sp:-6, rr:-0.4},
- {n:'seed',hh:6, x0:0,y0:-150, vx:70,vy:-950, sp:5, rr:0.9},
+ {n:'wedgeA',hh:32, x0:-28,y0:-168, vx:-165,vy:-780, sp:4.0, rr:-0.16},
+ {n:'wedgeB',hh:29, x0:22,y0:-158, vx:112,vy:-840, sp:-3.2, rr:0.12},
+ {n:'wedgeC',hh:26, x0:-6,y0:-138, vx:-70,vy:-700, sp:4.8, rr:-0.28},
+ {n:'sliceA',hh:36, x0:36,y0:-172, vx:172,vy:-730, sp:-2.4, rr:0.05},
+ {n:'sliceB',hh:29, x0:-46,y0:-150, vx:-122,vy:-650, sp:2.8, rr:-0.08},
+ {n:'stemPc',hh:20, x0:4,y0:-232, vx:36,vy:-890, sp:-4.4, rr:0.18},
+ {n:'seed',hh:6, x0:-14,y0:-160, vx:-215,vy:-560, sp:6, rr:0.4},
+ {n:'seed',hh:6, x0:10,y0:-165, vx:230,vy:-620, sp:-6, rr:-0.4},
+ {n:'seed',hh:6, x0:0,y0:-150, vx:55,vy:-950, sp:5, rr:0.9},
 ];
 function buildTraj(d,i){
   const segs=[];let t=0,x=d.x0,y=d.y0,vx=d.vx,vy=d.vy,sp=d.sp,rot=rnd(i*5+2)*1.2-0.6;
@@ -1007,35 +1007,42 @@ function drawReviveScene(c,av,t){
 const PART_LABELS={body:'몸통(호박)',jawTop:'윗니·잇몸',jawBot:'아랫니·턱',mouthIn:'입 안',mouthInG:'화염(초록)',
  eyeL:'왼눈',eyeR:'오른눈',armL:'왼팔(선인장)',armR:'오른팔',footL:'왼발',footR:'오른발',
  stem:'덩굴 꼭지',leaf:'잎',goo:'진액',hornL:'왼뿔',hornR:'오른뿔',
- wedgeA:'조각·웨지A',wedgeB:'조각·웨지B',wedgeC:'조각·웨지C',sliceA:'조각·슬라이스A',sliceB:'조각·슬라이스B',stemPc:'조각·꼭지'};
+ wedgeA:'웨지A',wedgeB:'웨지B',wedgeC:'웨지C',sliceA:'슬라이스A',sliceB:'슬라이스B',stemPc:'꼭지 조각'};
+const PART_SHORT={body:'몸통',jawTop:'윗니',jawBot:'아랫니',mouthIn:'입안',mouthInG:'화염',
+ eyeL:'눈L',eyeR:'눈R',armL:'팔L',armR:'팔R',footL:'발L',footR:'발R',
+ stem:'꼭지',leaf:'잎',goo:'진액',hornL:'뿔L',hornR:'뿔R',
+ wedgeA:'웨지A',wedgeB:'웨지B',wedgeC:'웨지C',sliceA:'슬라이스A',sliceB:'슬라이스B',stemPc:'꼭지조각'};
 const PART_ORDER=['body','jawTop','jawBot','mouthIn','mouthInG','eyeL','eyeR','armL','armR',
  'footL','footR','stem','leaf','goo','hornL','hornR','wedgeA','wedgeB','wedgeC','sliceA','sliceB','stemPc'];
-function drawExplode(c,w,h){
+function drawExplode(c,w,h,compact){
   c.save();
-  c.fillStyle='rgba(20,10,4,.88)';c.fillRect(0,0,w,h);
-  const colW=w/2;
+  c.fillStyle='rgba(20,10,4,.9)';c.fillRect(0,0,w,h);
+  const colW=w/2,headH=compact?34:56;
   const heads=[['기본 아바타 부품',PALS.base.body,'base',0],['악마 아바타 부품',PALS.demon.glowA,'demon',colW]];
   for(const[title,col,av,x0]of heads){
-    c.fillStyle=col;c.font='700 20px "Segoe UI","Malgun Gothic",sans-serif';
-    c.textAlign='center';c.fillText(title,x0+colW/2,44);
+    c.fillStyle=col;c.font='700 '+(compact?14:20)+'px "Segoe UI","Malgun Gothic",sans-serif';
+    c.textAlign='center';c.fillText(title,x0+colW/2,compact?22:40);
     const atlas=ATLAS[av];
     const names=PART_ORDER.filter(n=>atlas[n]);
-    const cols=4,cw=(colW-40)/cols,ch=(h-110)/Math.ceil(names.length/cols);
+    const cols=compact?4:5,pad=compact?8:24;
+    const cw=(colW-pad*2)/cols,ch=(h-headH-(compact?6:24))/Math.ceil(names.length/cols);
+    const fs=compact?9:12;
     for(let i=0;i<names.length;i++){
       const n=names[i],p=atlas[n];
-      const cx=x0+20+(i%cols)*cw+cw/2,cy=66+Math.floor(i/cols)*ch+ch/2;
-      c.strokeStyle='rgba(255,180,100,.14)';c.lineWidth=1;
-      c.strokeRect(cx-cw/2+4,cy-ch/2+3,cw-8,ch-6);
-      const sc=Math.min((cw-18)/p.w,(ch-32)/p.h,1.15);
-      c.save();c.translate(cx,cy-7);c.scale(sc,sc);
+      const cx=x0+pad+(i%cols)*cw+cw/2,cy=headH+Math.floor(i/cols)*ch+ch/2;
+      c.strokeStyle='rgba(255,180,100,.15)';c.lineWidth=1;
+      c.strokeRect(cx-cw/2+2,cy-ch/2+2,cw-4,ch-4);
+      const sc=Math.min((cw-12)/p.w,(ch-fs-14)/p.h,compact?0.8:1.2);
+      c.save();c.translate(cx,cy-fs*0.7);c.scale(sc,sc);
       c.translate(-(p.x0+p.w/2),-(p.y0+p.h/2));
       drawPart(c,atlas,n);c.restore();
-      c.fillStyle='#e8d2b8';c.font='11px "Segoe UI","Malgun Gothic",sans-serif';
-      c.fillText(PART_LABELS[n]||n,cx,cy+ch/2-9);
+      c.fillStyle='#e8d2b8';c.font=fs+'px "Segoe UI","Malgun Gothic",sans-serif';
+      c.textAlign='center';
+      c.fillText(compact?(PART_SHORT[n]||n):(PART_LABELS[n]||n),cx,cy+ch/2-5);
     }
   }
   c.strokeStyle='rgba(255,180,100,.3)';c.lineWidth=1;
-  c.beginPath();c.moveTo(colW,16);c.lineTo(colW,h-16);c.stroke();
+  c.beginPath();c.moveTo(colW,10);c.lineTo(colW,h-10);c.stroke();
   c.restore();
 }
 
@@ -1224,11 +1231,8 @@ function montage(){
     }
   });
   cell(CW*3,CY,CW,CH,'C4 · 부품 분해 — 아틀라스 2세트 비교 (컷아웃)',(w,h)=>{
-    drawExplode(c,w,h-26);
+    drawExplode(c,w,h-26,true);
   });
-  // 헤더 크레딧
-  c.fillStyle='rgba(255,255,255,.55)';c.font='11px "Segoe UI","Malgun Gothic",sans-serif';
-  c.textAlign='right';c.fillText('pump-puppet · 컷아웃 리깅 · 아바타 2벌 · 죽음=음식 조각',MW-10,MH-6);
 }
 
 // ---- 부트스트랩 ------------------------------------------------------------

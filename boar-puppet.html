@@ -111,7 +111,9 @@ function bodyPath(c){ c.beginPath(); c.ellipse(0,-108,122,106,0,0,TAU); }
 function drawBody(c,P,fire){
   bodyPath(c); c.fillStyle=P.body; c.fill();
   c.save(); bodyPath(c); c.clip();
-  c.fillStyle=P.shade; c.beginPath(); c.ellipse(34,-94,122,106,0,0,TAU); c.fill();      // 우하 셀그림자
+  // 우하단 얇은 셀그림자 림 (어두운 전체 채움 → 베이스를 좌상으로 시프트해 덮음)
+  c.fillStyle=P.shade; c.fillRect(-146,-226,292,236);
+  c.fillStyle=P.body; c.beginPath(); c.ellipse(-14,-116,122,106,0,0,TAU); c.fill();
   c.fillStyle=P.belly; c.beginPath(); c.ellipse(-22,-62,84,58,0.12,0,TAU); c.fill();     // 배 밝음
   c.globalAlpha=0.55; c.fillStyle=P.top; c.beginPath(); c.ellipse(-30,-178,80,36,-0.18,0,TAU); c.fill(); // 톱라이트
   c.globalAlpha=1; c.restore();
@@ -230,7 +232,7 @@ function drawMane(c,P){
   for(let i=0;i<MB.length-1;i++){
     const a=MB[i], b=MB[i+1];
     const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
-    const dx=mx+16, dy=my+44; const dl=Math.hypot(dx,dy)||1;
+    const dx=mx+16, dy=my-44; const dl=Math.hypot(dx,dy)||1;
     const tip=[mx+dx/dl*L[i]+9+i*1.5, my+dy/dl*L[i]-3];
     c.quadraticCurveTo(a[0]+(tip[0]-a[0])*0.24, a[1]+(tip[1]-a[1])*0.62, tip[0], tip[1]);
     c.quadraticCurveTo(b[0]+(tip[0]-b[0])*0.24, b[1]+(tip[1]-b[1])*0.62, b[0], b[1]);
@@ -251,7 +253,7 @@ function drawFlame(c,frame){
       const b=MB[i];
       const j=Math.sin(i*3.1+frame*2.4)*8, j2=Math.cos(i*2.3+frame*1.9)*5;
       const L=(52+16*Math.sin(i*2.0+frame*2.1))*sf*(1-i*0.07);
-      const dx=b[0]+16, dy=b[1]+44; const dl=Math.hypot(dx,dy)||1;
+      const dx=b[0]+16, dy=b[1]-44; const dl=Math.hypot(dx,dy)||1;
       const tip=[b[0]+dx/dl*L+10+j, b[1]+dy/dl*L+j2];
       const w=15*sf;
       c.moveTo(b[0]-w,b[1]+6);
@@ -474,7 +476,7 @@ const PIECES=(()=>{
   const R=mulberry32(20250823);
   const kinds=['ham','steak','saus','ham','steak','ham','saus','steak'];
   const hh={ham:29,steak:23,saus:16};
-  const spread=[-186,-128,-66,-20,28,80,136,190];
+  const spread=[-158,-112,-58,-18,24,66,112,158];
   return kinds.map((k,i)=>{
     const s=0.72+R()*0.34;
     return { kind:k, s,
@@ -549,15 +551,15 @@ function drawSparkle(c,x,y,s,al){
   c.closePath(); c.fill();
   c.restore(); c.globalAlpha=1;
 }
-function drawSteam(c,x,y,t,seed){
-  const ph=t*1.4+seed*3.7;
+function drawSteam(c,x,y,time,amt,seed){
   c.save(); c.strokeStyle='#ffffff'; c.lineCap='round';
-  for(let k=0;k<2;k++){
-    const p2=ph+k*1.9, rise=((p2%1.6)/1.6);
-    const yy=y-rise*54, al=(1-rise)*0.55*Math.min(1,t);
-    c.globalAlpha=al; c.lineWidth=3.4-rise*1.6;
-    c.beginPath(); c.moveTo(x+k*9-4, y-6);
-    c.quadraticCurveTo(x+k*9-4+Math.sin(p2*3)*7, (y-6+yy)/2, x+k*9-4+Math.sin(p2*2)*5, yy);
+  for(let k=0;k<3;k++){
+    const p2=time*0.9+seed*3.7+k*0.55, rise=((p2%1.4)/1.4);
+    const yy=y-8-rise*62, al=Math.sin(rise*Math.PI)*0.75*amt;
+    c.globalAlpha=al; c.lineWidth=4.4-rise*2;
+    const bx=x+(k-1)*11;
+    c.beginPath(); c.moveTo(bx, y-6-rise*16);
+    c.quadraticCurveTo(bx+Math.sin(p2*4+k)*9, (y-6+yy)/2, bx+Math.sin(p2*2.6+k*2)*7, yy);
     c.stroke();
   }
   c.restore(); c.globalAlpha=1;
@@ -597,16 +599,13 @@ function drawDeathScene(ctx, dT, av, absT){
   drawStarPop(ctx,t/0.9,0,-130,1);
   // 안착 후 — 반짝 + 김 모락모락 (맛있게)
   if(dT>SETTLE_T-0.4){
-    const amt=sstep((dT-(SETTLE_T-0.4))/0.5);
+    const amt=sstep((dT-(SETTLE_T-0.4))/0.5), tm=(absT!==undefined?absT:dT);
     for(let i=0;i<PIECES.length;i++){
       const pc=PIECES[i], st=pieceState(pc,t-pc.stag);
       if(st.air) continue;
-      if(av==='fire'||i%2===0) drawSteam(ctx,st.x,st.y-pc.hh*0.4,amt*(0.5+((absT||dT)%2)/4+0.5),i);
-    }
-    for(let i=0;i<6;i++){
-      const sx2=-200+i*78+Math.sin(i*7)*18, sy2=-46-(i%3)*36;
-      const tw=Math.sin((absT||dT)*3.1+i*1.9);
-      if(tw>0.2) drawSparkle(ctx,sx2,sy2,(5+i%3*2.5)*tw,amt*tw);
+      if(av==='fire'||i%3===0) drawSteam(ctx,st.x,st.y-pc.hh*0.5,tm,amt,i);
+      const tw=Math.sin(tm*3.1+i*2.3);
+      if(tw>0.15) drawSparkle(ctx, st.x+18*Math.sin(i*5), st.y-pc.hh-14-(i%3)*8, (7+(i%3)*3)*tw, amt*Math.min(1,tw+0.2));
     }
   }
 }
@@ -785,7 +784,7 @@ if(IS_MONTAGE){
     opts=opts||{};
     const gy=h*0.60;
     drawField(ctx,w,h,gy,scroll||0);
-    const s=opts.scale||((h-64)/318);
+    const s=opts.scale||Math.min((h-72)/335,(w-24)/312);
     ctx.save();
     try{
       ctx.translate(w/2+(opts.ox||0), gy+(h-gy)*0.62); ctx.scale(s,s);
@@ -799,7 +798,7 @@ if(IS_MONTAGE){
   function deathCell(w,h,av,dT){
     const gy=h*0.60;
     drawField(ctx,w,h,gy,0);
-    const s=(h-64)/330;
+    const s=Math.min((h-64)/330,(w-20)/460);
     ctx.save();
     try{
       ctx.translate(w/2, gy+(h-gy)*0.62); ctx.scale(s,s);
@@ -830,8 +829,8 @@ if(IS_MONTAGE){
   rowB.forEach(([lb,fn],i)=>cell(2+ag+i*(aw+ag),by,aw,bh,lb,fn));
   // Row C — 뷰티샷 ×2 / 조각 클로즈업 / 부품 분해
   const cy=880, chh=612, cw2=410;
-  cell(2+ag, cy, cw2, chh, '뷰티샷 · 기본 「투기」', (w,h)=>monsterCell(w,h,'base','idle',0.3,0,{scale:(h-70)/330}));
-  cell(2+ag+(cw2+ag), cy, cw2, chh, '뷰티샷 · 불속성 (불꽃 갈기·마그마 균열)', (w,h)=>monsterCell(w,h,'fire','idle',0.34,0,{scale:(h-70)/330,tofs:5.1}));
+  cell(2+ag, cy, cw2, chh, '뷰티샷 · 기본 「투기」', (w,h)=>monsterCell(w,h,'base','idle',0.3,0));
+  cell(2+ag+(cw2+ag), cy, cw2, chh, '뷰티샷 · 불속성 (불꽃 갈기·마그마 균열)', (w,h)=>monsterCell(w,h,'fire','idle',0.34,0,{tofs:5.1}));
   cell(2+ag+2*(cw2+ag), cy, cw2, chh, '조각 클로즈업 — 햄·스테이크·소시지 단면', (w,h)=>{
     ctx.fillStyle='#20242c'; ctx.fillRect(0,0,w,h);
     ctx.fillStyle='#c8e29a'; ctx.font='600 15px "Segoe UI","Malgun Gothic",sans-serif';
@@ -845,7 +844,7 @@ if(IS_MONTAGE){
         ctx.save(); ctx.translate(gx,yy); ctx.scale(2.15,2.15);
         ctx.lineJoin='round'; ctx.lineCap='round';
         fn(ctx,gr); ctx.restore();
-        if(gr){ drawSteam(ctx,gx,yy-64,1,yy); drawSteam(ctx,gx+30,yy-58,0.8,yy+3); }
+        if(gr){ drawSteam(ctx,gx-14,yy-56,0.9,1,yy); drawSteam(ctx,gx+34,yy-50,1.6,0.85,yy+3); }
       }
     }
     for(let i=0;i<7;i++){
@@ -853,7 +852,7 @@ if(IS_MONTAGE){
       if(tw>0) drawSparkle(ctx, 30+i*55, 60+(i%4)*130, 6+tw*4, 0.5+tw*0.4);
     }
   });
-  cell(2+ag+3*(cw2+ag), cy, cw2, chh, '부품 분해 — 퍼펫 아틀라스 (기본 vs 불속성)', (w,h)=>drawExplode(ctx,w,h));
+  cell(2+ag+3*(cw2+ag), cy, cw2, chh, '부품 분해 — 퍼펫 아틀라스 (기본 vs 불속성)', (w,h)=>drawExplode(ctx,w,h-28));
 } else {
   // ==== 9. 라이브 모드 ====
   let DPR=1, VW=0, VH=0;
