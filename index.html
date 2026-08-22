@@ -424,9 +424,11 @@ const api={buildMechaDef:buildMechaDef};
 if(typeof module!=='undefined'&&module.exports) module.exports=api;
 else global.MECHA=api;
 })(typeof window!=='undefined'?window:globalThis);
-/* Shared mecha animation: joint euler rotations + root offset for a gait phase /
-   state. Used by the game (smoothed per-frame) and the Node critique renderer
-   (sampled at target poses). Pure math, no deps.
+const RETARGET={"FR":16,"walk":{"hip":{"mean":0.33,"d":[-0.074,-0.276,-0.367,-0.483,-0.627,-0.551,-0.242,0.049,0.274,0.427,0.422,0.272,0.344,0.376,0.307,0.149]},"knee":{"mean":-0.714,"d":[0.192,0.367,0.324,0.302,0.331,0.058,-0.454,-0.669,-0.636,-0.415,0.031,0.467,0.245,-0.01,-0.108,-0.025]},"ankle":{"mean":1.113,"d":[0.1,0.141,0.235,0.332,0.236,-0.179,-0.405,-0.283,-0.09,0.056,0.045,-0.026,-0.151,-0.128,0.02,0.098]},"sh":{"mean":0.012,"d":[0.047,0.17,0.331,0.465,0.464,0.337,0.184,0.057,-0.083,-0.229,-0.349,-0.415,-0.404,-0.309,-0.195,-0.069]},"el":{"mean":0.251,"d":[0.1,0.152,0.135,0.066,0.027,0.013,-0.007,-0.056,-0.085,-0.08,-0.06,-0.062,-0.086,-0.08,-0.02,0.042]},"torso":{"mean":-1.158,"d":[4.281,4.278,4.285,4.292,-1.965,-1.935,-1.929,-1.934,-1.929,-1.94,-1.956,-1.965,-1.965,-1.952,-1.963,4.299]},"hy":{"mean":0.997,"d":[0.037,0.049,0.026,-0.005,-0.02,-0.031,-0.034,-0.013,0.013,0.026,0.022,0.003,-0.02,-0.033,-0.026,0.003]}},"run":{"hip":{"mean":0.475,"d":[0.032,-0.325,-0.624,-0.707,-0.709,-0.554,-0.286,0.096,0.45,0.614,0.606,0.461,0.342,0.195,0.204,0.205]},"knee":{"mean":-1.168,"d":[0.015,0.221,0.455,0.433,0.209,-0.185,-0.616,-0.93,-0.989,-0.756,-0.293,0.253,0.565,0.826,0.596,0.195]},"ankle":{"mean":1.105,"d":[0.479,0.595,0.31,-0.193,-0.242,-0.321,-0.376,-0.381,-0.241,-0.045,0.039,0.057,0.19,0.061,-0.057,0.123]},"sh":{"mean":-0.084,"d":[0.206,0.61,0.791,0.932,0.959,0.841,0.623,0.297,-0.026,-0.448,-0.767,-0.949,-1.007,-0.949,-0.732,-0.381]},"el":{"mean":1.337,"d":[0.015,-0.331,-0.385,-0.453,-0.518,-0.565,-0.471,-0.349,-0.151,0.209,0.463,0.588,0.607,0.542,0.458,0.339]},"torso":{"mean":2.967,"d":[-0.072,-0.053,-0.023,0.018,0.045,0.065,0.064,0.009,-0.027,-0.042,-0.027,0,0.028,0.026,0.011,-0.022]},"hy":{"mean":0.954,"d":[-0.05,-0.033,0.001,0.031,0.042,0.033,-0.003,-0.037,-0.056,-0.037,0.005,0.034,0.047,0.041,0.011,-0.027]}}};
+/* Shared mecha animation. Locomotion is RETARGETED from Mixamo human walk/run
+   curves (see retarget-data.js) so the gait reads as a person, not a sine wave;
+   feet are then IK-planted on the ground. The saber swing is a hand-authored,
+   samurai-style step-through cut. Pure math, no deps.
    Returns { joints:{name:[rx,ry,rz]}, root:{x,y,rx,rz} }. */
 (function(global){
 const PI=Math.PI;
@@ -435,13 +437,10 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const easeIn=t=>t*t;
 const easeOut=t=>1-(1-t)*(1-t);
 const easeInOut=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const RD=(typeof RETARGET!=='undefined')?RETARGET:(typeof require!=='undefined'?require('./retarget-data.js')&&RETARGET:null);
 
-/* leg segment lengths from the def (hip->knee, knee->ankle) */
 const L1=0.92, L2=1.02;
-/* ankle-local foot corners (y,z): toe tip, heel tip, mid sole */
 const FOOT_CORNERS=[[-0.26,0.57],[-0.28,-0.28],[-0.20,0.0]];
-/* precise foot-bottom height relative to the root origin (root.y excluded),
-   accounting for how the ankle roll tilts the toe/heel toward the floor */
 function footBottom(hip,knee,ankWorld){
   const ankleY=-0.12 - L1*Math.cos(hip) - L2*Math.cos(hip+knee);
   let lo=Infinity;
@@ -452,89 +451,102 @@ function footBottom(hip,knee,ankWorld){
   }
   return lo;
 }
+/* sample a de-meaned channel at a cyclic phase (0..1) */
+function tbl(ch,phase){
+  const n=RD.FR;
+  let p=phase-Math.floor(phase);
+  const t=p*n, i=Math.floor(t)%n, f=t-Math.floor(t);
+  const d=ch.d;
+  return d[i]+(d[(i+1)%n]-d[i])*f;
+}
+/* retargeting sign/scale from Mixamo swing to the mech's joint rotations */
+const HIP_S=-1.0, KNEE_S=1.0, ANK_S=-1.0, TORSO_S=-1.0;
 
 function mechaPose(o){
   const ph=o.ph||0;
+  const phase=ph/(2*PI);
   const gait=clamp(o.gait||0);
   const idleW=1-gait;
   const br=o.breath!==undefined?o.breath:0;
   const J={};
   const slashK=(o.state==='slash')?o.slashK:-1;
+  const runBlend=clamp((gait-0.55)/0.45);   /* walk -> run as speed rises */
 
-  /* ---- saber swing profile ---- (rest→raise/coil→snap→low follow→settle)
-     weight timing: near-upright + weight back on windup, then pitch forward
-     and crouch AT the strike so power drives into the cut. */
+  /* ---- saber swing: samurai step-through cut (kesa-giri) ---- */
   let saber=null;
   if(slashK>=0){
     const k=slashK;
-    let shR,elR,yaw,pitch,coil;
-    if(k<0.18){                    /* windup: cock overhead, fold elbow, lean BACK (coil) */
-      const e=easeIn(k/0.18);
-      shR=lerp(-0.32,-2.65,e); elR=lerp(0,-1.95,e); yaw=lerp(0,-0.34,e);
-      pitch=lerp(0,-0.13,e); coil=lerp(0,0.12,e);
-    }else if(k<0.3){               /* strike: whip out FRONT, elbow extends, pitch forward */
-      const e=easeOut((k-0.18)/0.12);
-      shR=lerp(-2.65,-0.28,e); elR=lerp(-1.95,-0.02,e); yaw=lerp(-0.34,0.46,e);
-      pitch=lerp(-0.13,0.4,e); coil=lerp(0.12,0.5,e);
-    }else if(k<0.42){              /* low follow-through across the body + overshoot */
-      const e=easeOut((k-0.3)/0.12);
-      shR=lerp(-0.28,0.6,e); elR=lerp(-0.02,-0.2,e); yaw=lerp(0.46,0.28,e);
-      pitch=lerp(0.4,0.15,e); coil=lerp(0.5,0.1,e);
-    }else{                        /* settle back to guard */
-      const e=easeInOut((k-0.42)/0.18);
-      shR=lerp(0.6,-0.32,e); elR=lerp(-0.2,0,e); yaw=lerp(0.28,0,e);
-      pitch=lerp(0.15,0,e); coil=lerp(0.1,0,e);
+    let shR,elR,yaw,pitch,coil,step;
+    if(k<0.2){                     /* jodan-no-kamae: raise overhead, weight back, gather */
+      const e=easeIn(k/0.2);
+      shR=lerp(-0.32,-2.7,e); elR=lerp(0,-2.0,e); yaw=lerp(0,-0.4,e);
+      pitch=lerp(0,-0.14,e); coil=lerp(0,0.14,e); step=lerp(0,-0.1,e);
+    }else if(k<0.32){              /* kiru: step in, twist hips, drop the cut, extend */
+      const e=easeOut((k-0.2)/0.12);
+      shR=lerp(-2.7,-0.25,e); elR=lerp(-2.0,-0.02,e); yaw=lerp(-0.4,0.5,e);
+      pitch=lerp(-0.14,0.42,e); coil=lerp(0.14,0.52,e); step=lerp(-0.1,0.42,e);
+    }else if(k<0.44){             /* follow-through low across the body */
+      const e=easeOut((k-0.32)/0.12);
+      shR=lerp(-0.25,0.5,e); elR=lerp(-0.02,-0.18,e); yaw=lerp(0.5,0.32,e);
+      pitch=lerp(0.42,0.16,e); coil=lerp(0.52,0.12,e); step=lerp(0.42,0.28,e);
+    }else{                        /* zanshin: recover to guard */
+      const e=easeInOut((k-0.44)/0.16);
+      shR=lerp(0.5,-0.32,e); elR=lerp(-0.18,0,e); yaw=lerp(0.32,0,e);
+      pitch=lerp(0.16,0,e); coil=lerp(0.12,0,e); step=lerp(0.28,0,e);
     }
-    saber={shR,elR,yaw,pitch,coil};
+    saber={shR,elR,yaw,pitch,coil,step};
   }
 
-  /* ---- legs ---- symmetric curves offset by pi.
-     hip swing; contact (foot forward) at ph=3pi/2 for L, knee flexes through the
-     swing-through (peak at ph=pi), plus a small loading flex so it never locks.
-     ankle WORLD pitch does the heel(-)→flat→toe(+) roll across the stance. */
-  /* double-support crouch: both knees bend at ph=pi/2 & 3pi/2 (feet spread apart),
-     straighten at mid-stance (ph=0,pi) -> deepens the natural pelvis bob to a
-     real ~14px amplitude with the pelvis highest at mid-stance */
-  const dsCrouch=gait*0.22*Math.max(0,-Math.cos(2*ph));
-  function legAngles(p){
-    const hip=Math.sin(p)*0.4*gait;
-    let knee=Math.max(0,Math.sin(p-PI/2))*1.34*gait + 0.12*gait + dsCrouch;
-    if(saber) knee+=saber.coil;
-    /* ankle world pitch: heel-up at contact (p=3pi/2), toe-down at toe-off (p=pi/2) */
-    const ankWorld=gait*(0.1+0.32*Math.sin(p));
+  /* ---- legs: retargeted human gait (right leg leads, left is phase+0.5) ---- */
+  function legAngles(pOff){
+    const p=phase+pOff;
+    const hipW=tbl(RD.walk.hip,p),  kneeW=tbl(RD.walk.knee,p),  ankW=tbl(RD.walk.ankle,p);
+    const hipR=tbl(RD.run.hip,p),   kneeR=tbl(RD.run.knee,p),   ankR=tbl(RD.run.ankle,p);
+    let hip=HIP_S*lerp(hipW,hipR,runBlend)*gait;
+    let knee=KNEE_S*lerp(kneeW,kneeR,runBlend)*gait;
+    /* knee only bends one way; keep a small floor so it never hyperextends */
+    knee=Math.max(0.03*gait, knee + 0.12*gait);
+    const ankLocalRoll=ANK_S*lerp(ankW,ankR,runBlend)*gait;
+    if(saber){ knee+=saber.coil; }
+    const ankWorld=hip+knee+ankLocalRoll;   /* world pitch of the foot */
     const ankLocal=ankWorld-(hip+knee);
     return {hip,knee,ankLocal,ankWorld};
   }
-  const legL=legAngles(ph), legR=legAngles(ph+PI);
+  const legL=legAngles(0.5), legR=legAngles(0.0);
+  /* saber: plant a forward step on the leading (right) leg */
+  if(saber){ legR.hip+=-saber.step*0.5; legL.hip+=saber.step*0.25; }
   J.hipL=[legL.hip,0,0]; J.hipR=[legR.hip,0,0];
   J.kneeL=[legL.knee,0,0]; J.kneeR=[legR.knee,0,0];
   J.ankleL=[legL.ankLocal,0,0]; J.ankleR=[legR.ankLocal,0,0];
 
-  /* ---- precise foot IK: lowest of the two feet touches the ground (0.08) ---- */
+  /* ---- foot IK: lowest actual foot corner rests on the ground (0.08) ---- */
   const lowest=Math.min(footBottom(legL.hip,legL.knee,legL.ankWorld),
                         footBottom(legR.hip,legR.knee,legR.ankWorld));
   let rootY=0.08-lowest;
-  if(saber) rootY-=saber.coil*0.12;   /* extra hip drop on the strike crouch */
+  if(saber) rootY-=saber.coil*0.12;
 
-  /* ---- arms / torso ---- */
-  let torsoYaw=Math.sin(ph)*0.1*gait;
-  let torsoPitch=0.045*gait+0.02*br*idleW;
-  let shR=-0.32+Math.sin(ph+PI)*0.16*gait;
+  /* ---- torso / arms ---- */
+  let torsoLean=TORSO_S*(tbl(RD.walk.torso,phase)*(1-runBlend)+tbl(RD.run.torso,phase)*runBlend)*gait;
+  let torsoPitch=0.03*gait+torsoLean+0.02*br*idleW;
+  let torsoYaw=0;
+  /* subtle upper-body counter-rotation for walk swagger */
+  torsoYaw+=Math.sin(ph)*0.05*gait;
+  let shR=-0.32+tbl(RD.walk.sh,phase)*0.35*gait*(1-runBlend);   /* rifle arm barely swings */
   let elR=0;
   if(o.state==='aim'){ shR=-1.32; elR=-0.15; }
   if(saber){ shR=saber.shR; elR=saber.elR; torsoYaw+=saber.yaw; torsoPitch+=saber.pitch; }
   if(o.state==='victory') shR=-2.6;
   J.shoulderR=[shR,0,0]; J.elbowR=[elR,0,0];
-  const shL=-0.12+Math.sin(ph)*0.18*gait;
+  const shL=-0.12+tbl(RD.walk.sh,phase+0.5)*0.4*gait;           /* shield arm swings a bit more */
   J.shoulderL=[shL,0,0];
   J.torso=[torsoPitch, torsoYaw, 0];
-  J.head=[-0.04*gait-torsoPitch*0.4+0.015*(o.headBob||0)*idleW, -torsoYaw*0.6, 0];
+  J.head=[-0.03*gait-torsoPitch*0.5+0.015*(o.headBob||0)*idleW, -torsoYaw*0.5, 0];
 
   const root={
-    x:Math.sin(ph)*0.045*gait,
+    x:Math.sin(ph)*0.04*gait,
     y:rootY,
-    rx:0.06*gait,
-    rz:Math.sin(ph)*0.045*gait
+    rx:0,
+    rz:Math.sin(ph)*0.05*gait
   };
   return {joints:J, root:root};
 }
@@ -2845,16 +2857,21 @@ function buildArcKnight(x,heading){
       blending:THREE.AdditiveBlending,depthWrite:false}));
   bladeCore.position.set(0,-1.55,0); bladeCore.visible=false;
   joints.elbowR.add(bladeCore);
-  /* funnels docked on the backpack */
+  /* funnels (twin-scale drones) — dock on the backpack, deploy/retract from it */
   const funnels=[];
   for(let i=0;i<4;i++){
     const fg=new THREE.Group();
-    const body=box(0.12,0.3,0.12,0x8a919c); fg.add(body);
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),
+    const fbody=box(0.24,0.62,0.24,0x8a919c); fbody.add(...[]); fg.add(fbody);
+    const fin1=box(0.5,0.16,0.1,0xf2f4f8); fin1.position.y=0.1; fg.add(fin1);
+    const fin2=box(0.1,0.16,0.5,0xf2f4f8); fin2.position.y=0.1; fg.add(fin2);
+    const nose=coneM(0.12,0.24,0xc8322e,8); nose.rotation.x=Math.PI/2; nose.position.set(0,-0.34,0.1); fg.add(nose);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),
       new THREE.MeshBasicMaterial({color:0x40e8a0,blending:THREE.AdditiveBlending,transparent:true}));
-    eye.position.y=-0.16; fg.add(eye);
+    eye.position.set(0,-0.28,0.16); fg.add(eye);
     fg.visible=false; scene.add(fg);
-    funnels.push({m:fg,ang:i/4*TAU,fireT:rnd(0.2,0.5)});
+    /* docking slot on the backpack: 2x2 grid behind the shoulders */
+    const dockLocal=V3((i%2-0.5)*0.5,0.5+(i<2?0.34:-0.02),-0.72);
+    funnels.push({m:fg,ang:i/4*TAU,fireT:rnd(0.2,0.5),dock:'docked',dockT:0,dockLocal});
   }
   const c={cfg:{kind:'mecha',stone:0xf2f4f8,accent:0x4a86e8},group:g,parts,wheels:null,mRoot:rootG,
     hp:1000,maxHp:1000,alive:true,pos:V3(x,0,0),heading,speed:0,prevSpeed:0,pitch:0,roll:0,
@@ -2903,28 +2920,51 @@ function mechaSlash(c,n){
     applyDamage(foe,dmg,hp,crit,'rocket');
   }
 }
+/* face the foe while keeping the chosen strafe/standoff distance */
+function mechaStrafe(c,dt,ideal,spd){
+  const foe=c.foe;
+  /* turn to face the foe */
+  const desired=Math.atan2(foe.pos.x-c.pos.x, foe.pos.z-c.pos.z);
+  const diff=normAngle(desired-c.heading);
+  const applied=clamp(diff,-3.4*dt,3.4*dt);
+  c.heading+=applied; c.lastTurn=applied/Math.max(dt,1e-4);
+  /* forward/back to hold standoff, lateral strafe to circle */
+  const dist=Math.hypot(foe.pos.x-c.pos.x,foe.pos.z-c.pos.z);
+  c.strafeT=(c.strafeT||0)-dt;
+  if(c.strafeT<=0){ c.strafeSign=(c.strafeSign||1)*-1; c.strafeT=rnd(1.8,3.2); }
+  const fwd=clamp((dist-ideal)*0.5,-spd,spd);
+  c.speed+=clamp(fwd-c.speed,-16*dt,16*dt);
+  const wantSide=(c.strafeSign||1)*spd*0.7;
+  c.sideVel=(c.sideVel||0)+clamp(wantSide-(c.sideVel||0),-14*dt,14*dt);
+  /* clamp to arena */
+  const L=Math.hypot(c.pos.x,c.pos.z);
+  if(L>ARENA-2){ c.sideVel*=0.2; c.speed=Math.min(c.speed,0); }
+}
 function updateMechaAI(c,dt){
   const foe=c.foe;
   const d3=centerOf(c).distanceTo(centerOf(foe));
   const dist=Math.hypot(foe.pos.x-c.pos.x,foe.pos.z-c.pos.z);
   switch(c.state){
     case 'engage':
-      kiteMove(c,dt,12,7.5);
+      mechaStrafe(c,dt,13,7.5);
       c.rifleCd-=dt;
-      if(c.rifleCd<=0&&dist>6){ c.rifleCd=rnd(2.6,3.6); mechaRifleShot(c); }
+      if(c.rifleCd<=0&&dist>6&&Math.abs(normAngle(Math.atan2(foe.pos.x-c.pos.x,foe.pos.z-c.pos.z)-c.heading))<0.5){
+        c.rifleCd=rnd(2.6,3.6); mechaRifleShot(c);
+      }
       c.funnelCd-=dt;
       if(c.funnelCd<=0&&dist<24){
-        c.funnelCd=rnd(10,13); c.state='funnel'; c.stateT=4.2;
+        c.funnelCd=rnd(10,13); c.state='funnel'; c.stateT=4.6;
         note('판넬 사출!'); SND.rev();
-        for(const f of c.funnels){ f.m.visible=true; f.deployT=0; }
+        for(const f of c.funnels){ f.m.visible=true; f.dock='deploy'; f.dockT=0; }
       }
       if(d3<5){ c.state='saber'; c.slashN=2; c.slashT=0.1; }
       break;
     case 'saber':
-      driveToward(c,foe.pos,4,10,3,dt);
+      driveToward(c,foe.pos,4,10,3.5,dt);
+      c.sideVel=(c.sideVel||0)*Math.pow(0.02,dt);
       c.slashT-=dt;
       if(c.slashT<=0){
-        if(c.slashN>0){ c.slashN--; c.slashT=0.5; mechaSlash(c,c.slashN); }
+        if(c.slashN>0){ c.slashN--; c.slashT=0.55; mechaSlash(c,c.slashN); }
         else{
           c.state='engage';
           c.mBlade[0].visible=false; c.mBlade[1].visible=false;
@@ -2932,16 +2972,24 @@ function updateMechaAI(c,dt){
       }
       break;
     case 'funnel':
-      kiteMove(c,dt,14,8);
+      mechaStrafe(c,dt,15,8);
       c.stateT-=dt;
       c.rifleCd-=dt;
-      if(c.rifleCd<=0&&dist>6){ c.rifleCd=rnd(2.6,3.6); mechaRifleShot(c); }
+      if(c.rifleCd<=0&&dist>6&&Math.abs(normAngle(Math.atan2(foe.pos.x-c.pos.x,foe.pos.z-c.pos.z)-c.heading))<0.5){
+        c.rifleCd=rnd(2.6,3.6); mechaRifleShot(c);
+      }
       if(c.stateT<=0){
         c.state='engage';
-        for(const f of c.funnels) f.m.visible=false;
+        for(const f of c.funnels){ f.dock='retract'; f.dockT=0; }
       }
       break;
   }
+}
+const _dockW=V3();
+function funnelDockPos(c,f){
+  /* world position of this funnel's backpack slot (follows the mech) */
+  return _dockW.copy(f.dockLocal).applyAxisAngle(V3(0,1,0),c.heading)
+    .add(V3(c.pos.x,(c.flying?c.alt:0),c.pos.z)).add(V3(0,2.7,0));
 }
 function updateMechaFunnels(c,dt){
   const foe=c.foe;
@@ -2950,21 +2998,48 @@ function updateMechaFunnels(c,dt){
   for(const f of c.funnels){
     if(!f.m.visible) continue;
     f.ang+=dt*2.2;
-    const R2=5.5;
-    const tx=tgt.pos.x+Math.sin(f.ang)*R2;
-    const tz=tgt.pos.z+Math.cos(f.ang)*R2;
-    const ty=(tgt.flying?tgt.alt:0)+tgt.centerH+2.5+Math.sin(f.ang*2)*0.8;
-    f.m.position.lerp(V3(tx,ty,tz),Math.min(1,dt*4));
-    f.m.rotation.y+=dt*3;
-    if(active){
-      f.fireT-=dt;
-      if(f.fireT<=0){
-        f.fireT=rnd(0.5,0.9);
-        const target=centerOf(foe).add(V3(rnd(-1,1),rnd(-0.5,0.5),rnd(-1,1)));
-        beamShow(f.m.position.clone(),target,0x40e8a0);
-        glowP.spawn({pos:target.clone(),vel:V3(),size:1,grow:2,ttl:0.15,opacity:1,color:0xa0ffd8});
-        if(Math.random()<0.75) applyDamage(foe,rnd(8,13),target,false,'nature');
-        SND.shot();
+    const dockP=funnelDockPos(c,f);
+    if(f.dock==='deploy'){
+      f.dockT+=dt;
+      /* launch from the backpack slot to the orbit ring */
+      const R2=5.5;
+      const orbit=V3(tgt.pos.x+Math.sin(f.ang)*R2,(tgt.flying?tgt.alt:0)+tgt.centerH+2.5,tgt.pos.z+Math.cos(f.ang)*R2);
+      const k=Math.min(1,f.dockT/0.5);
+      f.m.position.lerpVectors(dockP,orbit,k*k);
+      f.m.scale.setScalar(0.4+0.6*k);
+      if(f.dockT<0.16&&Math.random()<dt*30)
+        glowP.spawn({pos:dockP.clone(),vel:V3(rnd(-1,1),rnd(0,2),rnd(-1,1)),size:0.4,grow:-0.2,ttl:0.3,opacity:1,color:0x7ab8ff});
+      if(k>=1) f.dock='active';
+      f.m.rotation.y+=dt*8;
+    }else if(f.dock==='retract'){
+      f.dockT+=dt;
+      const k=Math.min(1,f.dockT/0.55);
+      /* fly back into the backpack, shrink, then vanish */
+      f.m.position.lerp(dockP,Math.min(1,dt*7));
+      f.m.scale.setScalar(1-0.7*k);
+      f.m.rotation.y+=dt*14;
+      if(f.m.position.distanceTo(dockP)<0.3){
+        glowP.spawn({pos:dockP.clone(),vel:V3(),size:1.2,grow:2,ttl:0.15,opacity:1,color:0x7ab8ff});
+        f.m.visible=false; f.dock='docked'; f.m.scale.setScalar(1);
+      }
+    }else{  /* active: orbit and strafe-fire */
+      const R2=5.5;
+      const tx=tgt.pos.x+Math.sin(f.ang)*R2;
+      const tz=tgt.pos.z+Math.cos(f.ang)*R2;
+      const ty=(tgt.flying?tgt.alt:0)+tgt.centerH+2.5+Math.sin(f.ang*2)*0.8;
+      f.m.position.lerp(V3(tx,ty,tz),Math.min(1,dt*4));
+      /* aim the nose at the foe */
+      if(foe&&foe.alive) f.m.lookAt(centerOf(foe));
+      if(active){
+        f.fireT-=dt;
+        if(f.fireT<=0){
+          f.fireT=rnd(0.5,0.9);
+          const target=centerOf(foe).add(V3(rnd(-1,1),rnd(-0.5,0.5),rnd(-1,1)));
+          beamShow(f.m.position.clone(),target,0x40e8a0);
+          glowP.spawn({pos:target.clone(),vel:V3(),size:1,grow:2,ttl:0.15,opacity:1,color:0xa0ffd8});
+          if(Math.random()<0.75) applyDamage(foe,rnd(8,13),target,false,'nature');
+          SND.shot();
+        }
       }
     }
   }
@@ -3457,6 +3532,8 @@ function driveToward(c,goal,maxSpd,accel,turnRate,dt,reverse=false){
 function integrate(c,dt){
   const dirX=Math.sin(c.heading), dirZ=Math.cos(c.heading);
   c.velVec.set(dirX*c.speed+c.kb.x, 0, dirZ*c.speed+c.kb.z);
+  /* lateral strafe (used by fighters that face the foe while sidestepping) */
+  if(c.sideVel){ c.velVec.x+=dirZ*c.sideVel; c.velVec.z+=-dirX*c.sideVel; }
   /* status effects */
   if(c.slowT>0){ c.slowT-=dt; c.velVec.multiplyScalar(0.5); }
   if(c.rootT>0){
