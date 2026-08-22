@@ -70,12 +70,14 @@ const PAL={
   hair:"#eef1f6", hairSh:"#b9c3d4", hairDeep:"#8b97ad", hairRim:"#ffffff",
   hairCap:"#d7dee9",
   coat:"#2c3e63", coatSh:"#1e2b47", trim:"#cfd6e4", lining:"#1b2a55",
-  pants:"#232a3e", boots:"#1b2133", glove:"#1d2436",
+  pants:"#2b3450", boots:"#242d49", glove:"#232b43",
+  rim:"rgba(190,218,250,0.8)", rimDim:"rgba(176,205,240,0.4)",
   steel0:"#e6ecf4", steel1:"#98a4b8", steelDark:"#5d6878", guard:"#39415a",
   saya:"#202839", trail0:"#9fd8ff", trail1:"#ffffff",
   eyeTop:"#24476e", eyeMid:"#5c8cc2", eyeLow:"#bfe3fa", pupil:"#13233a",
   brow:"#8b93a6", ground:"#10121f"
 };
+let LW=1; // 외곽선 굵기 배율 (얼굴 클로즈업에서 축소 — 헬멧 테두리 방지)
 // 신체 치수 (모델 단위, y-down, 지면 y=0)
 const B={
   hipY:-176, thigh:86, shin:84, ankleH:7, footL:17,

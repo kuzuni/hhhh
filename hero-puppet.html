@@ -123,19 +123,19 @@ makePart('head',-46,-112,52,6,5,c=>{
   path(c,[-36,-56, [-44,-58,-46,-46,-40,-40], [-37,-37,-35,-42,-36,-50]]);
   c.closePath();c.fillStyle=PAL.skin;c.fill();c.lineWidth=1.3;c.stroke();
   path(c,[-40,-52,[-42,-48,-39,-44,-38,-46]]);c.lineWidth=.8;c.strokeStyle=PAL.skinSh;c.stroke();
-  // 셀셰이딩: 턱밑 그림자 + 이마 왼쪽 음영
-  c.fillStyle='rgba(214,160,125,.45)';
-  path(c,[10,-7,[-1,-4,-15,-13,-26,-30],[-16,-22,-4,-15,2,-13],[6,-10,9,-8,10,-7]]);
-  c.closePath();c.fill();
+  // 턱 음영: 턱 끝 아래 얇은 한 줄만 (팔자/뭉갬 음영 금지)
+  c.strokeStyle='rgba(214,160,125,.30)';c.lineWidth=1.3;
+  c.beginPath();c.moveTo(1,-9.5);c.quadraticCurveTo(6,-7.6,10.5,-10);c.stroke();
   // 혈색: 뺨/코끝
   c.fillStyle=PAL.blush;
   ell(c,-20,-30,7,4,-.2);c.fill();ell(c,32,-30,5.5,3.5,.2);c.fill();
-  // 코: 코끝 짧은 획만
-  c.strokeStyle='rgba(150,95,70,.95)';c.lineWidth=1.6;
-  c.beginPath();c.moveTo(22,-34);c.quadraticCurveTo(24.6,-31,21.6,-28.4);c.stroke();
-  // 아랫입술 밑 그림자 힌트
-  c.strokeStyle='rgba(190,130,105,.32)';c.lineWidth=1;
-  c.beginPath();c.moveTo(8.5,-14);c.quadraticCurveTo(11,-12.9,13.5,-14);c.stroke();
+  // 코: 짧은 ㄴ자 한 획 + 점 하이라이트
+  c.strokeStyle='rgba(150,95,70,.9)';c.lineWidth=1.4;
+  c.beginPath();c.moveTo(23.4,-33.5);c.lineTo(24.6,-29.8);c.lineTo(22.6,-28.9);c.stroke();
+  c.fillStyle='rgba(255,255,255,.85)';ell(c,22.5,-31.8,1,1,0);c.fill();
+  // 아랫입술 하이라이트 (주름선 대체)
+  c.strokeStyle='rgba(255,255,255,.42)';c.lineWidth=1.2;
+  c.beginPath();c.moveTo(7.5,-17.4);c.quadraticCurveTo(10.5,-16.4,13.5,-17.2);c.stroke();
 });
 
 // ---- 2b. 눈 (상태 3종 × 좌우) : dir=-1 왼눈(이미지 좌, 또렷) / +1 오른눈(3/4로 약간 좁게)
