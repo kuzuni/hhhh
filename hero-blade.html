@@ -524,23 +524,23 @@ function drawHead(g,P){
   g.fillStyle=PAL.skinSh; g.globalAlpha=0.30; g.fill(); g.globalAlpha=1;
   // 뺨 혈색 — 광대 위 1점만, 낮은 불투명도 (코 옆 금지)
   {
-    const bp=[7.4,8.8,3.2];
+    const bp=[7.2,8.9,4.4];
     const bg2=g.createRadialGradient(bp[0],bp[1],0,bp[0],bp[1],bp[2]);
-    bg2.addColorStop(0,"rgba(240,168,162,0.15)");
+    bg2.addColorStop(0,"rgba(240,168,162,0.12)");
     bg2.addColorStop(1,"rgba(240,168,162,0)");
-    g.beginPath(); g.ellipse(bp[0],bp[1],bp[2],bp[2]*0.5,0.08,0,TAU);
+    g.beginPath(); g.ellipse(bp[0],bp[1],bp[2],bp[2]*0.46,0.08,0,TAU);
     g.fillStyle=bg2; g.fill();
   }
   // -- 눈 --
   eye(g, 2.6,3.8, 5.3,2.55, false, F);
   eye(g,15.2,3.4, 4.0,2.40, true,  F);
-  // 코: 콧대 그림자 한 획(면 안쪽, 짧은 단선) + 코끝 하이라이트 점 (콧구멍·블러 없음)
-  g.strokeStyle="rgba(196,148,140,0.62)"; g.lineWidth=0.48; g.lineCap="round";
-  g.beginPath(); g.moveTo(17.6,5.8); g.quadraticCurveTo(18.5,7.9,18.2,9.5); g.stroke();
-  g.strokeStyle="rgba(196,148,140,0.40)"; g.lineWidth=0.42;
-  g.beginPath(); g.moveTo(18.2,9.5); g.quadraticCurveTo(17.7,9.9,17.1,9.9); g.stroke();
+  // 코: 프로필 에지에 붙는 연속 한 획(콧대→코끝→코밑 훅) + 콧대 위 하이라이트 점
+  g.strokeStyle="rgba(196,148,140,0.60)"; g.lineWidth=0.48; g.lineCap="round";
+  g.beginPath(); g.moveTo(18.7,5.9);
+  g.quadraticCurveTo(19.6,7.8, 19.3,9.2);
+  g.quadraticCurveTo(19.0,9.7, 18.3,9.8); g.stroke();
   g.fillStyle="rgba(255,255,255,0.9)";
-  g.beginPath(); g.ellipse(17.9,6.4,0.32,0.32,0,0,TAU); g.fill();
+  g.beginPath(); g.ellipse(19.15,6.6,0.30,0.30,0,0,TAU); g.fill();
   // 입: 눈 폭의 ~62% — 절제된 일자 입매 (냉정, 스머크 금지)
   g.strokeStyle="#a96a63"; g.lineWidth=0.46; g.lineCap="round";
   g.beginPath(); g.moveTo(10.3,15.3+F.mouth*0.5);
@@ -592,8 +592,8 @@ function eye(g,cx,cy,hw,hh,far,F){
   g.clip();
   // 흰자
   g.fillStyle="#fbfcfe"; g.fillRect(cx-hw-2,cy-hh-4,hw*2+4,hh*2+6);
-  // 홍채 (세로 타원, 3톤) — 개구 중심 보정 +hw*0.15: 양눈 카메라 응시(사시 방지)
-  const px=cx+hw*0.15+F.px*0.7, py=cy+F.py+0.1;
+  // 홍채 (세로 타원, 3톤) — 개구 중심 보정 +hw*0.30: 양눈 카메라 응시(측면 흘김 방지)
+  const px=cx+hw*0.30+F.px*0.7, py=cy+F.py+0.1;
   const irx=hw*0.46, iry=H*1.08;
   const gr=g.createLinearGradient(px,py-iry,px,py+iry);
   gr.addColorStop(0,PAL.eyeTop); gr.addColorStop(0.5,PAL.eyeMid);
@@ -624,12 +624,14 @@ function eye(g,cx,cy,hw,hh,far,F){
   g.quadraticCurveTo(ox-inn*0.9, outY-0.8, ox-inn*1.4, outY-1.3);
   g.quadraticCurveTo(ox-inn*0.5, outY-0.4, ox+inn*0.5, outY+0.4);
   g.closePath(); g.fillStyle=PAL.line; g.fill();
-  // 아랫라인: 바깥 2/3, 얇고 연하게 (눈 가장자리에 밀착)
-  g.strokeStyle="rgba(25,22,36,0.24)"; g.lineWidth=0.38;
-  g.beginPath();
-  g.moveTo(cx-hw*inn*0.22,cy+H*0.78);
-  g.quadraticCurveTo(cx-hw*inn*0.62,cy+H*0.70, ox,cy+H*0.14);
-  g.stroke();
+  // 아랫라인: 근안만 바깥 2/3, 얇고 연하게 (원안은 생략 — 뺨 흉터선 방지)
+  if(!far){
+    g.strokeStyle="rgba(25,22,36,0.24)"; g.lineWidth=0.38;
+    g.beginPath();
+    g.moveTo(cx-hw*inn*0.22,cy+H*0.78);
+    g.quadraticCurveTo(cx-hw*inn*0.62,cy+H*0.70, ox,cy+H*0.14);
+    g.stroke();
+  }
   // 쌍꺼풀 라인
   g.strokeStyle="rgba(25,22,36,0.26)"; g.lineWidth=0.38;
   g.beginPath();
@@ -716,11 +718,11 @@ function hairFront(g,P){
   for(const s of S)
     strand(g,[{x:s[0],y:s[1]},{x:s[2],y:s[3]},{x:s[4]+tip(s[0]*0.33),y:s[5]}],
       s[6],1.0,PAL.hair,null);
-  // 큰 덩어리 2갈래 분할 — 격번 가닥 끝에 그늘톤 노치 (끝 뾰족)
+  // 큰 덩어리 2갈래 분할 — 격번 가닥 끝에 얕은 그늘 노치 (끝 뾰족, 옅게)
   for(let i=0;i<S.length;i+=2){
     const s=S[i], tx=s[4]+tip(s[0]*0.33), ty=s[5];
-    g.beginPath(); g.moveTo(tx-1.1,ty-3.4); g.lineTo(tx-0.15,ty+0.3); g.lineTo(tx+0.85,ty-3.5);
-    g.closePath(); g.fillStyle=PAL.hairSh; g.fill();
+    g.beginPath(); g.moveTo(tx-0.95,ty-2.5); g.lineTo(tx-0.15,ty+0.2); g.lineTo(tx+0.7,ty-2.6);
+    g.closePath(); g.fillStyle="rgba(185,195,214,0.75)"; g.fill();
   }
   // 덩어리 내부 가닥 라인 — 그늘선 1 + 은발 하이라이트선 1 (끝은 덩어리 안에서 멈춤)
   g.lineCap="round";
@@ -746,14 +748,18 @@ function hairFront(g,P){
     g.beginPath(); g.moveTo(d[0],d[1]); g.quadraticCurveTo((d[0]+d[2])/2-0.4,(d[1]+d[3])/2,d[2],d[3]);
     g.stroke();
   }
-  // 관자놀이 커버 가닥 (캡 헤어라인 단차 가림)
-  strand(g,[{x:-12.2,y:-14},{x:-12.6,y:-8},{x:-12.2,y:-1}],3.4,1.2,PAL.hairCap,null);
-  // 사이드락(근): 턱선까지 — 5점 완만 S커브, 옅은 회청 외곽선 (각진 플랩 방지)
-  strand(g,[{x:-10.6,y:-12},{x:-12.6,y:-5},{x:-13.4,y:2},
-    {x:-13.3+tip(4)*0.7,y:10},{x:-12.2+tip(5)*1.2,y:18}],
-    4.6,1.0,PAL.hair,"rgba(74,84,110,0.4)",0.42);
-  strand(g,[{x:-9.8,y:-11},{x:-11.2,y:-3},{x:-11.3,y:3},{x:-10.8+tip(4.5)*0.7,y:9}],
+  // 관자놀이 커버 가닥 (캡 헤어라인 단차·피부 틈 가림 — 위로 연장)
+  strand(g,[{x:-12.0,y:-16},{x:-12.6,y:-8},{x:-12.2,y:-1}],3.8,1.2,PAL.hair,null);
+  // 사이드락(근): 캡 밑까지 올려 붙인 5점 완만 S커브 (관자 피부 틈 방지)
+  strand(g,[{x:-10.2,y:-15},{x:-12.4,y:-6},{x:-13.4,y:2},
+    {x:-13.3+tip(4)*0.7,y:10},{x:-11.8+tip(5)*1.2,y:17.6}],
+    4.7,1.0,PAL.hair,"rgba(74,84,110,0.4)",0.42);
+  strand(g,[{x:-9.8,y:-13},{x:-11.2,y:-4},{x:-11.3,y:3},{x:-10.8+tip(4.5)*0.7,y:9}],
     2.0,0.6,PAL.hairSh,null);
+  // 사이드락 내부 결선 1 (플랫 패널 방지)
+  g.strokeStyle="rgba(139,151,173,0.5)"; g.lineWidth=0.32; g.lineCap="round";
+  g.beginPath(); g.moveTo(-11.4,-9);
+  g.quadraticCurveTo(-12.4,1,-12.2+tip(4.6)*0.9,12); g.stroke();
   // 사이드락(원): 광대 앞 가늘게
   strand(g,[{x:18.2,y:-11},{x:19.6,y:-7},{x:20.5,y:-2},{x:20.8+tip(2.5)*0.4,y:5.0}],
     2.2,0.7,PAL.hair,"rgba(74,84,110,0.3)",0.38);
