@@ -165,9 +165,9 @@ function drawBodyShape(c,P,demon){
   c.globalAlpha=1;
   if(!demon){
     // 잇몸 소켓 (입 주위 어두운 잇몸 라인)
-    rr(c,-130,-196,260,142,38);c.fillStyle=P.gum;c.fill();
+    rr(c,-132,-198,264,144,38);c.fillStyle=P.gum;c.fill();
     c.strokeStyle=P.out;c.lineWidth=6;c.stroke();
-    rr(c,-124,-190,248,130,32);c.fillStyle=P.gumD;c.globalAlpha=.55;c.fill();c.globalAlpha=1;
+    rr(c,-126,-192,252,132,32);c.fillStyle=P.gumD;c.globalAlpha=.4;c.fill();c.globalAlpha=1;
   }else{
     // 잭오랜턴 조각입: 들쭉날쭉 뚫린 구멍 + 절단면 림
     c.beginPath();

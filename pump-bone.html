@@ -125,7 +125,7 @@ const FRUIT={
 const STRIDE=62, ARM_LEN=86;
 const FEET=[{fx:-52,off:0},{fx:52,off:0.5}];
 function walkFoot(s,F){
-  const D=STRIDE, swing=0.40, lift=13;
+  const D=STRIDE, swing=0.40, lift=19;
   const c=s/D+F.off, k=Math.floor(c), f=c-k;
   if(f<swing){ const u=f/swing, uu=sstep(u);
     const x0=(k-F.off)*D+F.fx-s, x1=(k+1-F.off)*D+F.fx-s;
@@ -170,15 +170,16 @@ function pose(anim,t,s){
   }
   else if(anim==='walk'){
     const c=s/STRIDE;
-    P.rot=Math.sin(c*PI)*0.11;                            // 무거운 좌우 롤
-    P.by=-26-(0.5+0.5*Math.sin(c*TAU+1.1))*4.5;
+    P.rot=Math.sin(c*PI)*0.15;                            // 무거운 좌우 롤
+    P.bx=Math.sin(c*PI)*7;
+    P.by=-26-(0.5+0.5*Math.sin(c*TAU+1.1))*7;
     const land=Math.pow(Math.max(0,Math.sin(c*TAU+2.5)),4);
-    P.sy=1-land*0.055; P.sx=1+land*0.042;                 // 착지 스쿼시
+    P.sy=1-land*0.07; P.sx=1+land*0.055;                  // 착지 스쿼시
     P.feet=FEET.map(F=>walkFoot(s,F));
     for(const F of FEET){ const f=(s/STRIDE+F.off)%1;
       if(f>0.40&&f<0.50)P.dust.push({x:F.fx,y:-3,age:(f-0.40)/0.10*0.55,r:7}); }
-    P.armL=Math.sin(c*PI)*0.34+0.04; P.armR=-Math.sin(c*PI)*0.34+0.04;
-    P.stem1=Math.sin(c*PI-1.1)*0.22; P.stem2=Math.sin(c*PI-2.0)*0.3;
+    P.armL=Math.sin(c*PI)*0.5+0.06; P.armR=-Math.sin(c*PI)*0.5+0.06;
+    P.stem1=Math.sin(c*PI-1.1)*0.3; P.stem2=Math.sin(c*PI-2.0)*0.42;
     P.grind=Math.sin(t*12)*0.8;
     P.blink=(t%3.1)<0.09?1:0;
     P.vel=95;
@@ -252,7 +253,7 @@ function deathSim(T,av){
     const r1=R(),r2=R(),r3=R(),r4=R();
     const p={type:PIECE_TYPES[i],demon,seed:i,
       x:(i/(PIECE_TYPES.length-1)-0.5)*44, y:-104-r4*26,
-      vx:(i/(PIECE_TYPES.length-1)-0.5)*290+(r1-0.5)*70,
+      vx:(i/(PIECE_TYPES.length-1)-0.5)*235+(r1-0.5)*55,
       vy:-(245+r2*180)-(PIECE_TYPES[i]==='stem'?60:0),
       w:(r3-0.5)*11, rot:(r3-0.5)*1.6,
       imp:-9, impPow:0, settled:-1};
@@ -327,11 +328,12 @@ function teethClenched(g,M,C,grind,silhouette,gapGlow){
     if(top)g.rect(-M.hw-10,-130,M.hw*2+20,mid+130);
     else   g.rect(-M.hw-10,mid,M.hw*2+20,120);
     g.clip(); g.translate(top?grind:-grind,0);
+    const pad=silhouette?2.6:1.3;
     for(let i=0;i<TEETH_N;i++){
-      const x0=-M.hw+i*cw+1.3, d=(i%2?5:-4);
-      const y0=top?-126:mid+d+(silhouette?2:0);
-      const y1=top?mid+d-(silhouette?2:0):-18;
-      rr(g,x0,y0,cw-2.6,y1-y0,4);
+      const x0=-M.hw+i*cw+pad, d=(i%2?5:-4);
+      const y0=top?-126:mid+d+(silhouette?3.5:0);
+      const y1=top?mid+d-(silhouette?3.5:0):-18;
+      rr(g,x0,y0,cw-pad*2,y1-y0,4);
       g.fillStyle=silhouette?C.teeth:(top?C.teeth:C.teethB); g.fill();
       if(!silhouette){ g.strokeStyle='rgba(60,30,12,.85)'; g.lineWidth=2.6; g.stroke();
         if(top){ g.fillStyle=C.teethShade; g.globalAlpha=.5;
@@ -515,14 +517,17 @@ function drawStem(g,rig,C,demon){
 }
 function drawHorn(g,C,sgn){
   g.beginPath();
-  g.moveTo(-11*sgn,4);
-  g.bezierCurveTo(-14*sgn,-16,-6*sgn,-34,10*sgn,-44);
-  g.bezierCurveTo(2*sgn,-30,4*sgn,-14,9*sgn,2);
+  g.moveTo(-15*sgn,6);
+  g.bezierCurveTo(-19*sgn,-20,-8*sgn,-44,16*sgn,-60);
+  g.bezierCurveTo(4*sgn,-40,6*sgn,-18,12*sgn,4);
   g.closePath();
   g.fillStyle=C.horn; g.fill();
-  g.strokeStyle=C.line; g.lineWidth=3.6; g.lineJoin='round'; g.stroke();
-  g.strokeStyle=C.hornHi; g.lineWidth=2;
-  g.beginPath(); g.moveTo(-6*sgn,-6); g.quadraticCurveTo(-4*sgn,-20,4*sgn,-32); g.stroke();
+  g.strokeStyle=C.line; g.lineWidth=3.8; g.lineJoin='round'; g.stroke();
+  g.strokeStyle=C.hornHi; g.lineWidth=2.2; g.lineCap='round';
+  g.beginPath(); g.moveTo(-9*sgn,-8); g.quadraticCurveTo(-6*sgn,-28,8*sgn,-46); g.stroke();
+  g.strokeStyle=C.line; g.lineWidth=1.8; g.globalAlpha=.55;   // 뿔 마디 주름
+  g.beginPath(); g.moveTo(-12*sgn,-10); g.lineTo(-2*sgn,-14);
+  g.moveTo(-8*sgn,-26); g.lineTo(2*sgn,-30); g.stroke(); g.globalAlpha=1;
 }
 // -- 사각 발 ------------------------------------------------------------------
 function drawFoot(g,f,C){
@@ -571,19 +576,20 @@ function drawPump(g,rig,C,demon,P,t,alpha){
   g.fillStyle=C.deep; g.globalAlpha=.4;                    // 하단 셀셰이드
   g.beginPath(); g.ellipse(0,-16,104,30,0,0,TAU); g.fill();
   g.globalAlpha=1;
-  // 꼭지 주변 진액 (꿀렁 — 길이가 숨쉼)
-  const drips=[{x:-33,l:26},{x:9,l:42},{x:35,l:20}];
+  // 꼭지 주변 진액 (꿀렁 — 길이가 숨쉼, 방울이 아래로 처짐)
+  const drips=[{x:-42,l:16},{x:8,l:26},{x:46,l:12}];
   for(let i=0;i<drips.length;i++){
-    const d=drips[i], L=d.l+Math.sin(P.sap*2.6+i*2.1)*3.5, w=5-i*0.7;
-    g.fillStyle=C.sap;
+    const d=drips[i], L=d.l+Math.sin(P.sap*2.6+i*2.1)*3, w=4.6-i*0.6, y0=-170;
     g.beginPath();
-    g.moveTo(d.x-w,-162);
-    g.lineTo(d.x-w,-162+L-5);
-    g.arc(d.x,-162+L-5,w,PI,0,true);
-    g.lineTo(d.x+w,-162);
-    g.closePath(); g.fill();
-    g.strokeStyle=C.sapHi; g.lineWidth=1.8; g.globalAlpha=.9;
-    g.beginPath(); g.moveTo(d.x-w+1.6,-158); g.lineTo(d.x-w+1.6,-162+L-6); g.stroke();
+    g.moveTo(d.x-w,y0);
+    g.lineTo(d.x-w,y0+L-w);
+    g.arc(d.x,y0+L-w,w,PI,0,false);
+    g.lineTo(d.x+w,y0);
+    g.closePath();
+    g.fillStyle=C.sap; g.fill();
+    g.strokeStyle=C.groove; g.lineWidth=1.6; g.globalAlpha=.6; g.stroke(); g.globalAlpha=1;
+    g.strokeStyle=C.sapHi; g.lineWidth=1.6; g.globalAlpha=.9; g.lineCap='round';
+    g.beginPath(); g.moveTo(d.x-w+1.7,y0+3); g.lineTo(d.x-w+1.7,y0+L-w); g.stroke();
     g.globalAlpha=1;
   }
   g.restore();
@@ -615,30 +621,33 @@ function drawPiece(g,p,t){
     g.fillStyle=F.seed; g.fill(); g.strokeStyle=F.seedO; g.lineWidth=1.6; g.stroke();
     g.restore(); };
   if(p.type==='wedge'){
+    // 수박조각형 호박 웨지 — 바깥 두꺼운 주황 껍질 호 + 밝은 과육 + 씨
     const path=()=>{ g.beginPath();
-      g.moveTo(0,21);
-      g.quadraticCurveTo(-25,15,-28,-8);
-      g.quadraticCurveTo(-17,-27,0,-28);
-      g.quadraticCurveTo(17,-27,28,-8);
-      g.quadraticCurveTo(25,15,0,21);
+      g.moveTo(-31,-8);
+      g.quadraticCurveTo(0,-33,31,-8);                     // 바깥 껍질 호
+      g.quadraticCurveTo(23,10,3,23);                      // 오른쪽 절단면
+      g.quadraticCurveTo(-1,25,-5,22);                     // 뭉툭한 끝
+      g.quadraticCurveTo(-24,9,-31,-8);                    // 왼쪽 절단면
       g.closePath(); };
     path(); g.fillStyle=F.flesh; g.fill();
     g.save(); path(); g.clip();
     g.fillStyle=F.fleshHi;                                 // 과육 하이라이트
-    g.beginPath(); g.ellipse(-4,2,15,12,0.3,0,TAU); g.fill();
+    g.beginPath(); g.ellipse(-3,4,14,11,0.4,0,TAU); g.fill();
     // 겉껍질 밴드 (바깥 호)
-    g.beginPath(); g.moveTo(-28,-8);
-    g.quadraticCurveTo(-17,-27,0,-28); g.quadraticCurveTo(17,-27,28,-8);
-    g.strokeStyle=F.rind; g.lineWidth=10; g.stroke();
-    g.strokeStyle=F.rim; g.lineWidth=3;                    // 껍질 안쪽 흰 켜
-    g.beginPath(); g.moveTo(-23,-7);
-    g.quadraticCurveTo(-14,-21,0,-22); g.quadraticCurveTo(14,-21,23,-7);
-    g.stroke();
+    g.beginPath(); g.moveTo(-33,-9);
+    g.quadraticCurveTo(0,-35,33,-9);
+    g.strokeStyle=F.rind; g.lineWidth=13; g.stroke();
+    g.strokeStyle=F.rindHi; g.lineWidth=3;                 // 껍질 윤기
+    g.beginPath(); g.moveTo(-24,-14);
+    g.quadraticCurveTo(0,-27,20,-16); g.stroke();
+    g.strokeStyle=F.rim; g.lineWidth=3.4;                  // 껍질 안쪽 흰 켜
+    g.beginPath(); g.moveTo(-25,-6);
+    g.quadraticCurveTo(0,-22,25,-6); g.stroke();
     g.restore();
     path(); g.strokeStyle=F.ol; g.lineWidth=3.6; g.stroke();
-    seed(-7,2,0,-0.5); seed(6,-1,0,0.45); seed(0,10,0,0.05);
-    g.fillStyle='rgba(255,255,255,.55)';                   // 촉촉한 윤기
-    g.beginPath(); g.ellipse(-11,-11,4.5,2,-.5,0,TAU); g.fill();
+    seed(-9,3,0,-0.55); seed(8,1,0,0.5); seed(-1,12,0,0.02);
+    g.fillStyle='rgba(255,255,255,.6)';                    // 촉촉한 윤기
+    g.beginPath(); g.ellipse(-13,-3,4.5,2,-.6,0,TAU); g.fill();
   }else if(p.type==='slice'){
     const R=25;
     const flower=(rr0,amp)=>{ g.beginPath();
@@ -1022,7 +1031,7 @@ if(IS_MONTAGE){
     {T:3.30,av:'demon',lb:'⑥ 반짝✨ — 부활 대기'},
   ];
   rowB.forEach((c,i)=>cell(i*CW,Y0+CH+6,CW,CH,c.lb,(w,h)=>
-    drawScene({g,w,h,anim:'idle',t:c.T,s:0,av:c.av,zoom:0.60,deathT:c.T})));
+    drawScene({g,w,h,anim:'idle',t:c.T,s:0,av:c.av,zoom:0.74,deathT:c.T})));
   // Row C
   const C3W=420,C3H=548,Y2=Y0+CH*2+12;
   cell(0,Y2,C3W,C3H,'뷰티샷 · 기본 「펌킨조」',(w,h)=>
