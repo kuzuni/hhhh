@@ -1014,20 +1014,24 @@ function drawGhostInline(g,P,alpha){ // 현재 변환=모델공간 가정
 }
 function drawTrail(g,anim,t,strength){
   if(strength<=0.02)return;
-  const N=15,DT=0.013;
+  const N=17,DT=0.012;
   const tips=[],guards=[];
   for(let k=0;k<N;k++){
     const P=pose(anim,t-k*DT);
     if(!P.j.swordTip){tips.push(null);guards.push(null);continue;}
+    const u=k/(N-1);
     tips.push(P.j.swordTip);
-    guards.push({x:lerp(P.j.swordGrip.x,P.j.swordTip.x,0.22),
-                 y:lerp(P.j.swordGrip.y,P.j.swordTip.y,0.22)});
+    // 리본 폭: 후단으로 갈수록 테이퍼 (안쪽 에지를 칼끝 쪽으로 끌어올림)
+    const f=lerp(0.24,0.85,E.in2(u));
+    guards.push({x:lerp(P.j.swordGrip.x,P.j.swordTip.x,f),
+                 y:lerp(P.j.swordGrip.y,P.j.swordTip.y,f)});
   }
   g.save();
   g.globalCompositeOperation="lighter";
   for(let k=0;k<N-1;k++){
     if(!tips[k]||!tips[k+1])continue;
-    const u=k/(N-1), a=(1-u)*(1-u)*0.5*strength;
+    // 진행 방향 투명도 그라디언트: 선단 ~90% → 후단 0
+    const u=k/(N-1), a=Math.pow(1-u,1.7)*0.9*strength;
     if(a<=0.01)continue;
     const cr=Math.round(lerp(255,159,u)), cg=Math.round(lerp(255,216,u));
     g.beginPath();
@@ -1036,6 +1040,16 @@ function drawTrail(g,anim,t,strength){
     g.closePath();
     g.fillStyle="rgba("+cr+","+cg+",255,"+a.toFixed(3)+")";
     g.fill();
+  }
+  // 칼끝 궤적 에지 — 1px 청백 코어 라인
+  g.lineCap="round";
+  for(let k=0;k<N-1;k++){
+    if(!tips[k]||!tips[k+1])continue;
+    const u=k/(N-1), ca=Math.pow(1-u,1.4)*0.85*strength;
+    if(ca<=0.02)continue;
+    g.strokeStyle="rgba(210,240,255,"+ca.toFixed(3)+")"; g.lineWidth=1.1;
+    g.beginPath(); g.moveTo(tips[k].x,tips[k].y); g.lineTo(tips[k+1].x,tips[k+1].y);
+    g.stroke();
   }
   g.restore();
 }
@@ -1113,13 +1127,13 @@ function drawBones(g,P){
 }
 
 // ==== 6. 배경/씬 ==================================================
-function drawBG(g,W,H,t,gy,full){
+function drawBG(g,W,H,t,gy,full,moonOff){
   const grd=g.createLinearGradient(0,0,0,H);
   grd.addColorStop(0,"#0a0d18"); grd.addColorStop(0.62,"#121830");
   grd.addColorStop(1,"#0e1224");
   g.fillStyle=grd; g.fillRect(0,0,W,H);
-  // 보름달 — 캐릭터 뒤 크게
-  const mx=W*0.56, my=H*0.31, mr=Math.min(W,H)*(full?0.28:0.33);
+  // 보름달 — 캐릭터 뒤 크게 (moonOff: 임팩트 펀치인 컷에서 프레임 밖으로)
+  const mx=moonOff?W*1.35:W*0.56, my=H*0.31, mr=Math.min(W,H)*(full?0.28:0.33);
   for(const HL of [[1.55,0.045],[1.25,0.075],[1.06,0.11]]){
     g.beginPath();g.arc(mx,my,mr*HL[0],0,TAU);
     g.fillStyle=PAL.moonHalo+HL[1]+")";g.fill();
@@ -1161,7 +1175,7 @@ function drawBG(g,W,H,t,gy,full){
   const fg=g.createLinearGradient(0,gy,0,H);
   fg.addColorStop(0,"#151a2e"); fg.addColorStop(1,"#0b0e1a");
   g.fillStyle=fg; g.fillRect(0,gy,W,H-gy);
-  g.strokeStyle="rgba(140,160,200,0.25)"; g.lineWidth=1;
+  g.strokeStyle="rgba(140,160,200,0.45)"; g.lineWidth=1;
   g.beginPath(); g.moveTo(0,gy); g.lineTo(W,gy); g.stroke();
 }
 // 씬 1프레임 렌더 (실시간/몽타주 공용)
@@ -1173,9 +1187,14 @@ function renderScene(g,anim,t,W,H,scale,opts){
   camX+=(P.fx.shakeX||0)*scale;
   const gy=(opts.gy!==undefined?opts.gy:H*0.86);
   const camY=gy+(P.fx.shakeY||0)*scale;
-  drawBG(g,W,H,t,gy,!!opts.full);
+  drawBG(g,W,H,t,gy,!!opts.full,!!opts.moonOff);
   g.save();
   g.translate(camX,camY); g.scale(scale,scale);
+  // 발밑 달빛 풀 — 어두운 부츠·바지와 지면의 대비 확보
+  const pool=g.createRadialGradient(P.px,0,5,P.px,0,95);
+  pool.addColorStop(0,"rgba(168,198,238,0.20)");
+  pool.addColorStop(1,"rgba(168,198,238,0)");
+  g.beginPath(); g.ellipse(P.px,2,95,14,0,0,TAU); g.fillStyle=pool; g.fill();
   // 바닥 그림자 + 은은한 반사
   g.beginPath(); g.ellipse(P.px+3,-1,46,7,0,0,TAU);
   g.fillStyle="rgba(0,0,0,0.42)"; g.fill();
@@ -1184,15 +1203,33 @@ function renderScene(g,anim,t,W,H,scale,opts){
     drawChar(g,P); g.restore();
   }
   if(P.fx.ghosts&&P.fx.ghosts.length&&!opts.noGhost){
-    for(let i=P.fx.ghosts.length-1;i>=0;i--){
+    // 시간순 계단 투명도: 과거 30% → 최근 60%
+    const gn=P.fx.ghosts.length;
+    for(let i=gn-1;i>=0;i--){
       const gp=pose(anim,t-P.fx.ghosts[i]);
-      drawGhostInline(g,gp,0.13+0.11*(1-i/P.fx.ghosts.length));
+      drawGhostInline(g,gp,lerp(0.60,0.30,gn>1?i/(gn-1):0));
     }
   }
   drawTrail(g,anim,t,P.fx.trail);
   drawChar(g,P);
   drawArc(g,P);
   drawSparks(g,P);
+  if(opts.marks==="walk"){ // 접지 증명: 지면 고정 눈금(스크롤) + 접지 발 십자
+    const v=(WALK.S1+WALK.S2)/(WALK.st*WALK.T), D=v*WALK.T/2;
+    g.lineCap="round";
+    for(let k=-2;k<=2;k++){
+      const tx=WALK.S1+k*D-v*t;
+      g.strokeStyle="rgba(130,160,215,0.6)"; g.lineWidth=1.3;
+      g.beginPath(); g.moveTo(tx,1.5); g.lineTo(tx,8); g.stroke();
+    }
+    g.strokeStyle="#ffd166"; g.lineWidth=1.7;
+    for(const s of["N","F"]){
+      if(!P["grounded"+s])continue;
+      const fx=P["foot"+s].x;
+      g.beginPath(); g.moveTo(fx-6,0); g.lineTo(fx+6,0);
+      g.moveTo(fx,-6); g.lineTo(fx,6); g.stroke();
+    }
+  }
   if(opts.bones)drawBones(g,P);
   g.restore();
   if(P.fx.flash>0.02&&!opts.noFlash){
@@ -1264,14 +1301,14 @@ function drawMontage(){
     ctx.font='bold 14px "Segoe UI","Malgun Gothic",sans-serif';
     ctx.fillText(txt,10,y);
   }
-  // Row A: 걷기 6위상
-  head(18,"Row A — 걷기 사이클 6위상 (접지 IK · 미끄러짐 0)");
+  // Row A: 걷기 6위상 — 지면 고정 눈금+십자로 접지(미끄러짐 0) 증명
+  head(18,"Row A — 걷기 사이클 6위상 (접지 IK · 미끄러짐 0 — 노란 십자=접지 발, 눈금=지면 고정 마커)");
   const cw=W/6;
   for(let i=0;i<6;i++){
     const t=i/6*1.05;
     const lbl="t="+i+"/6 · "+(i===0?"접지(근)":i===3?"접지(원)":i===1||i===4?"교차":"지지");
     cell(i*cw,26,cw,rowAH-45,lbl,(w,h)=>{
-      renderScene(ctx,"walk",t,w,h,(h*0.82)/380,{gy:h*0.9,noReflect:false});
+      renderScene(ctx,"walk",t,w,h,(h*0.82)/380,{gy:h*0.9,noReflect:false,marks:"walk"});
     });
   }
   // Row B: 발도 6키
@@ -1281,8 +1318,13 @@ function drawMontage(){
   const btL=["납도","예비","섬광 스텝","극점 일섬","잔심","납도(찰칵)"];
   for(let i=0;i<6;i++){
     cell(i*cw,yB+20,cw,rowBH-45,btL[i]+" (t="+btT[i]+"s)",(w,h)=>{
-      renderScene(ctx,"battou",btT[i],w,h,(h*0.80)/390,
-        {gy:h*0.9,follow:1,camX:w*0.5,noFlash:true});
+      if(i===3){ // 임팩트 프레임 위계: 카메라 펀치인 1.3x + 달 프레임 밖
+        renderScene(ctx,"battou",btT[i],w,h,(h*0.80)/390*1.32,
+          {gy:h*0.93,follow:1,camX:w*0.44,noFlash:true,moonOff:true});
+      }else{
+        renderScene(ctx,"battou",btT[i],w,h,(h*0.80)/390,
+          {gy:h*0.9,follow:1,camX:w*0.5,noFlash:true});
+      }
     });
   }
   // Row C: 뷰티샷 / 얼굴 클로즈업 / 리깅 오버레이 / 트레일 컷
@@ -1293,18 +1335,45 @@ function drawMontage(){
     renderScene(ctx,"idle",0.8,w,h,(h*0.86)/380,{gy:h*0.92,full:true});
   });
   cell(cw4,yC+20,cw4,ch4,"② 얼굴 클로즈업 (머리 세로 460px+)",(w,h)=>{
-    // 헤드 클로즈업: 머리높이 46 → scale 10, 얼굴(로컬 +5,-1) 중심 프레이밍
+    // 헤드 클로즈업: 머리높이 46 → scale 10 (460px 유지), 턱선까지 프레임 안
     const t=0.8, P=pose("idle",t);
+    P.face={blink:0,brow:0,narrow:0.1,mouth:0.05,px:0.12,py:0.02}; // 냉정한 카메라 응시
     drawBG(ctx,w,h,t,h*0.97,false);
     const sc=10;
+    LW=0.36; // 클로즈업 외곽선 1/3 축소 — 헬멧 테두리 방지
     ctx.save();
-    ctx.translate(w*0.5-(P.j.head.x+5)*sc, h*0.50-(P.j.head.y-1)*sc);
+    ctx.translate(w*0.5-(P.j.head.x+5)*sc, h*0.455-(P.j.head.y-0.5)*sc);
     ctx.scale(sc,sc);
     drawChar(ctx,P);
     ctx.restore();
+    LW=1;
   });
   cell(cw4*2,yC+20,cw4,ch4,"③ 리깅 오버레이 (걷기)",(w,h)=>{
-    renderScene(ctx,"walk",0.30,w,h,(h*0.84)/380,{gy:h*0.92,bones:true});
+    const scl=(h*0.84)/380;
+    const P=renderScene(ctx,"walk",0.30,w,h,scl,{gy:h*0.92,bones:true});
+    // 주요 본 라벨 (pelvis/knee/ankle)
+    const SS=p=>({x:w*0.5+p.x*scl, y:h*0.92+p.y*scl});
+    ctx.font='11px "Segoe UI","Malgun Gothic",sans-serif'; ctx.textAlign="left";
+    const lab=(p,txt,dx,dy)=>{const s=SS(p);
+      ctx.strokeStyle="rgba(255,255,255,0.45)"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.x+dx,s.y+dy); ctx.stroke();
+      ctx.fillStyle="#d5e2f5"; ctx.fillText(txt,s.x+dx+3,s.y+dy+3);};
+    lab(P.j.pelvis,"pelvis",30,-12);
+    lab(P.j.kneeN,"knee",28,2);
+    lab(P.j.ankleN,"ankle",24,12);
+    // 미니 범례 (컷 우상단)
+    const lx=w-132, ly=8;
+    ctx.fillStyle="rgba(10,14,26,0.8)"; ctx.fillRect(lx,ly,124,64);
+    ctx.strokeStyle="#33436e"; ctx.lineWidth=1; ctx.strokeRect(lx+0.5,ly+0.5,124,64);
+    ctx.strokeStyle="rgba(80,255,200,0.9)"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(lx+9,ly+13); ctx.lineTo(lx+27,ly+13); ctx.stroke();
+    ctx.fillStyle="#c9d6ee"; ctx.fillText("본 체인",lx+34,ly+17);
+    ctx.strokeStyle="#ff6fd8"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(lx+18,ly+26); ctx.lineTo(lx+18,ly+36);
+    ctx.moveTo(lx+13,ly+31); ctx.lineTo(lx+23,ly+31); ctx.stroke();
+    ctx.fillStyle="#c9d6ee"; ctx.fillText("IK 타깃",lx+34,ly+35);
+    ctx.strokeStyle="#6dff6d"; ctx.lineWidth=1.6; ctx.strokeRect(lx+12,ly+44,12,7);
+    ctx.fillStyle="#c9d6ee"; ctx.fillText("접지 락",lx+34,ly+53);
   });
   cell(cw4*3,yC+20,cw4,ch4,"④ 베기 — 트레일+잔상 (S1 임팩트)",(w,h)=>{
     renderScene(ctx,"slash",0.56,w,h,(h*0.80)/390,{gy:h*0.92});

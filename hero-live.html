@@ -513,10 +513,25 @@ function paintBody(g){
  g.closePath();
  g.fillStyle=C.coat; g.fill(); g.strokeStyle=C.line; g.lineWidth=3.2; g.lineJoin='round'; g.stroke();
  g.save(); g.clip();
- // 몸 음영
+ // 몸 음영 (완전 검정으로 뭉개지지 않게 절제)
  var gr=g.createLinearGradient(260,0,740,0);
- gr.addColorStop(0,'rgba(14,11,22,0)'); gr.addColorStop(.5,'rgba(14,11,22,.0)'); gr.addColorStop(1,'rgba(14,11,22,.75)');
+ gr.addColorStop(0,'rgba(14,11,22,0)'); gr.addColorStop(.55,'rgba(14,11,22,0)'); gr.addColorStop(1,'rgba(14,11,22,.5)');
  g.fillStyle=gr; g.fillRect(260,600,480,560);
+ // 어깨 상단 광 (실루엣 분리)
+ var sg=g.createLinearGradient(0,610,0,700);
+ sg.addColorStop(0,'rgba(120,110,168,.30)'); sg.addColorStop(1,'rgba(120,110,168,0)');
+ g.fillStyle=sg; g.fillRect(260,600,480,110);
+ // 팔 경계 내부선 (겨드랑이→소매): 어깨·팔 실루엣 분절
+ g.strokeStyle='rgba(8,6,14,.9)'; g.lineWidth=2.6; g.lineCap='round';
+ g.beginPath(); g.moveTo(392,690); g.bezierCurveTo(370,780,362,920,368,1090); g.stroke();
+ g.beginPath(); g.moveTo(608,690); g.bezierCurveTo(630,780,638,920,632,1090); g.stroke();
+ g.strokeStyle='rgba(150,140,200,.22)'; g.lineWidth=1.6;
+ g.beginPath(); g.moveTo(388,692); g.bezierCurveTo(366,782,358,920,364,1088); g.stroke();
+ g.beginPath(); g.moveTo(612,692); g.bezierCurveTo(634,782,642,920,638,1088); g.stroke();
+ // 팔꿈치 주름 (소매)
+ g.strokeStyle='rgba(10,8,16,.85)'; g.lineWidth=2;
+ [[318,880,344,872],[322,912,350,900],[652,876,682,884],[648,904,678,916]].forEach(function(q){
+  g.beginPath(); g.moveTo(q[0],q[1]); g.quadraticCurveTo((q[0]+q[2])/2,(q[1]+q[3])/2+8,q[2],q[3]); g.stroke();});
  // 가슴 중앙 여밈 + 은 클래스프
  g.strokeStyle='rgba(20,16,28,1)'; g.lineWidth=2.4;
  g.beginPath(); g.moveTo(500,668); g.lineTo(496,1150); g.stroke();
@@ -529,44 +544,62 @@ function paintBody(g){
   g.beginPath(); g.arc(494.4,yy-1.6,1.8,0,TAU); g.fillStyle='#fff'; g.fill();
  }
  // 어깨 재봉선 + 견장 힌트
- g.strokeStyle='rgba(140,146,160,.5)'; g.lineWidth=2;
+ g.strokeStyle='rgba(140,146,160,.55)'; g.lineWidth=2;
  g.beginPath(); g.moveTo(340,656); g.quadraticCurveTo(368,700,372,760); g.stroke();
  g.beginPath(); g.moveTo(660,656); g.quadraticCurveTo(632,700,628,760); g.stroke();
- // 좌측 보라 림라이트 (흑염 환경광)
- g.strokeStyle='rgba(138,118,232,.5)'; g.lineWidth=4;
+ // 양측 보라 림라이트 (흑염 환경광 — 좌 강, 우 약)
+ g.strokeStyle='rgba(138,118,232,.55)'; g.lineWidth=4.5;
  g.beginPath(); g.moveTo(330,654); g.bezierCurveTo(292,680,272,722,263,792); g.stroke();
+ g.beginPath(); g.moveTo(263,800); g.bezierCurveTo(256,880,258,980,261,1090); g.stroke();
+ g.strokeStyle='rgba(138,118,232,.3)'; g.lineWidth=3.5;
+ g.beginPath(); g.moveTo(670,654); g.bezierCurveTo(708,680,728,722,737,792); g.stroke();
  // 주름
  g.strokeStyle='rgba(10,8,16,.8)'; g.lineWidth=2;
  g.beginPath(); g.moveTo(420,760); g.quadraticCurveTo(430,860,414,980); g.stroke();
  g.beginPath(); g.moveTo(580,760); g.quadraticCurveTo(572,880,588,1000); g.stroke();
+ g.beginPath(); g.moveTo(470,880); g.quadraticCurveTo(478,950,468,1020); g.stroke();
  g.restore();
 }
-// 어깨 너머 검자루 (가드 없는 장검 힐트, 뷰어 좌측)
+// 등 뒤 사선 장검 (칼자루·크로스가드·칼집이 구분되게, 실루엣 밖으로 명확히)
 function paintSword(g){
- g.save(); g.translate(310,640); g.rotate(-.75);
- // 자루 랩 (보라 사선 랩 + 은 캡)
- g.beginPath(); g.rect(-8.5,-158,17,150); g.fillStyle='#2c2240'; g.fill();
- g.strokeStyle=C.line; g.lineWidth=2.4; g.stroke();
- var i; g.strokeStyle='rgba(138,118,232,.6)'; g.lineWidth=2;
- for(i=0;i<7;i++){g.beginPath(); g.moveTo(-8.5,-148+i*20); g.lineTo(8.5,-138+i*20); g.stroke();}
- g.beginPath(); g.moveTo(-6,-152); g.lineTo(-6,-16);
- g.strokeStyle='rgba(240,238,250,.35)'; g.lineWidth=2; g.stroke(); // 스펙큘러
- // 은 스로트(하단 캡)
- g.beginPath(); g.rect(-10,-14,20,10);
- var gr=g.createLinearGradient(-10,0,10,0);
+ g.save(); g.translate(318,608); g.rotate(-.72);
+ var gr=g.createLinearGradient(-12,0,12,0);
  gr.addColorStop(0,C.silverDk); gr.addColorStop(.45,'#eef0f4'); gr.addColorStop(1,C.silverDk);
- g.fillStyle=gr; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
- // 폼멜 + 체인 참
- g.beginPath(); g.arc(0,-164,10.5,0,TAU); g.fillStyle=gr; g.fill(); g.stroke();
- g.beginPath(); g.arc(0,-164,4.2,0,TAU); g.fillStyle=C.ember; g.fill();
- g.beginPath(); g.moveTo(7,-158); g.quadraticCurveTo(20,-149,22,-133);
+ // 칼집 (아래로 — 몸 뒤로 들어감): 폭 있는 다크 + 은 로킷 밴드
+ g.beginPath(); g.moveTo(-14,4); g.lineTo(14,4); g.lineTo(11,300); g.lineTo(-11,300); g.closePath();
+ g.fillStyle='#1e1732'; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.6; g.lineJoin='round'; g.stroke();
+ g.beginPath(); g.moveTo(-9,8); g.lineTo(-8,290);
+ g.strokeStyle='rgba(179,166,240,.5)'; g.lineWidth=2.2; g.stroke(); // 칼집 림
+ g.beginPath(); g.rect(-14.5,14,29,13); g.fillStyle=gr; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
+ g.beginPath(); g.rect(-13.5,66,27,9); g.fillStyle=gr; g.fill(); g.stroke();
+ // 크로스가드: 좌우로 뻗는 은 날개형
+ g.beginPath();
+ g.moveTo(-34,-2); g.quadraticCurveTo(-14,-9,0,-8); g.quadraticCurveTo(14,-9,34,-2);
+ g.quadraticCurveTo(14,5,0,4); g.quadraticCurveTo(-14,5,-34,-2); g.closePath();
+ g.fillStyle=gr; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.2; g.stroke();
+ g.beginPath(); g.moveTo(-30,-2.5); g.quadraticCurveTo(0,-7.5,30,-2.5);
+ g.strokeStyle='rgba(255,255,255,.75)'; g.lineWidth=1.4; g.stroke();
+ g.beginPath(); g.arc(0,-2,5,0,TAU); g.fillStyle='#2c2240'; g.fill(); g.strokeStyle=C.silver; g.lineWidth=1.6; g.stroke();
+ g.beginPath(); g.arc(0,-2,2.2,0,TAU); g.fillStyle=C.ember; g.fill();
+ // 자루: 보라 사선 랩 + 하이라이트 1획
+ g.beginPath(); g.rect(-8,-96,16,88); g.fillStyle='#2c2240'; g.fill();
+ g.strokeStyle=C.line; g.lineWidth=2.4; g.stroke();
+ var i; g.strokeStyle='rgba(138,118,232,.65)'; g.lineWidth=2;
+ for(i=0;i<5;i++){g.beginPath(); g.moveTo(-8,-88+i*17); g.lineTo(8,-79+i*17); g.stroke();}
+ g.beginPath(); g.moveTo(-5.4,-92); g.lineTo(-5.4,-12);
+ g.strokeStyle='rgba(240,238,250,.55)'; g.lineWidth=2.2; g.stroke(); // 자루 하이라이트
+ // 폼멜 + 자수정 + 체인 참
+ g.beginPath(); g.arc(0,-104,10.5,0,TAU); g.fillStyle=gr; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.2; g.stroke();
+ g.beginPath(); g.arc(0,-104,4.4,0,TAU); g.fillStyle=C.ember; g.fill();
+ g.beginPath(); g.arc(-2,-106,1.5,0,TAU); g.fillStyle='#fff'; g.fill();
+ g.beginPath(); g.moveTo(8,-100); g.quadraticCurveTo(22,-92,24,-74);
  g.strokeStyle=C.silver; g.lineWidth=1.8; g.stroke();
- g.beginPath(); g.arc(23,-127,3.8,0,TAU); g.fillStyle=C.hairRim; g.fill();
+ g.beginPath(); g.arc(25,-68,3.8,0,TAU); g.fillStyle=C.hairRim; g.fill();
  g.restore();
 }
 // 이어링 (뷰어 우측 귀 아래 은사슬 + 자수정)
 function paintEarring(g){
- var x=612,y=458;
+ var x=606,y=452;
  g.strokeStyle=C.silver; g.lineWidth=1.8;
  g.beginPath(); g.moveTo(x,y); g.lineTo(x+1,y+14); g.stroke();
  g.beginPath(); g.arc(x+1,y+7,2.2,0,TAU); g.strokeStyle='#fff'; g.lineWidth=1; g.stroke();
@@ -579,11 +612,12 @@ function paintEarring(g){
 // depth: 요/피치 시차 계수(음수=뒤). headW: 머리 추종 가중. sway: 헤어 스윙 진폭.
 var LAYERS=[
  {n:'backHair', bb:[336,224,328,496], grid:[7,7], depth:-.42, headW:1, rollW:.75, sway:26, paint:paintBackHair},
- {n:'sword',    bb:[168,486,196,196], grid:[4,4], depth:0, headW:0, rollW:.04, breathW:.8, breathTaper:1, paint:paintSword},
+ {n:'sword',    bb:[228,506,312,348], grid:[5,5], depth:0, headW:0, rollW:.04, breathW:.8, breathTaper:1, paint:paintSword},
  {n:'body',     bb:[240,600,520,552], grid:[7,6], depth:.05, headW:.12, rollW:.08, breathW:1, breathTaper:1, paint:paintBody},
  {n:'neck',     bb:[440,520,120,140], grid:[3,4], depth:.42, headW:1, taperV:1, rollW:.5, paint:paintNeck},
  {n:'collar',   bb:[390,540,220,140], grid:[6,4], depth:.1, headW:.16, rollW:.12, breathW:.9, paint:paintCollar},
  {n:'face',     bb:[368,248,264,330], grid:[6,7], depth:.52, headW:1, rollW:1, paint:paintFace},
+ {n:'nose',     bb:[474,420,52,56], grid:[2,2], depth:.8, headW:1, rollW:1, paint:paintNose},
  {n:'eyeWL',    bb:[398,390,90,50], grid:[4,3], depth:.62, headW:1, rollW:1, kind:'eyew', side:'L', paint:function(g){paintEyeWhite(g,-1)}},
  {n:'eyeWR',    bb:[512,390,90,50], grid:[4,3], depth:.62, headW:1, rollW:1, kind:'eyew', side:'R', paint:function(g){paintEyeWhite(g,1)}},
  {n:'irisL',    bb:[420,392,44,50], grid:[3,3], depth:.68, headW:1, rollW:1, kind:'iris', side:'L', clip:'L', paint:function(g){paintIris(g,-1)}},
@@ -593,9 +627,9 @@ var LAYERS=[
  {n:'browL',    bb:[382,360,112,42], grid:[3,2], depth:.7, headW:1, rollW:1, kind:'brow', side:'L', innerU:1, paint:function(g){paintBrow(g,-1)}},
  {n:'browR',    bb:[506,360,112,42], grid:[3,2], depth:.7, headW:1, rollW:1, kind:'brow', side:'R', innerU:0, paint:function(g){paintBrow(g,1)}},
  {n:'mouth',    bb:[452,478,96,66], grid:[3,3], depth:.6, headW:1, rollW:1, kind:'mouth', paint:function(g){paintMouth(g,0)}},
- {n:'earring',  bb:[596,446,42,52], grid:[2,3], depth:.5, headW:1, rollW:1, kind:'ear', paint:paintEarring},
- {n:'sideL',    bb:[344,302,72,266], grid:[3,6], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,-1)}},
- {n:'sideR',    bb:[584,302,72,266], grid:[3,6], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,1)}},
+ {n:'earring',  bb:[590,440,42,52], grid:[2,3], depth:.5, headW:1, rollW:1, kind:'ear', paint:paintEarring},
+ {n:'sideL',    bb:[344,296,76,272], grid:[3,6], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,-1)}},
+ {n:'sideR',    bb:[580,296,76,272], grid:[3,6], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,1)}},
  {n:'hairTop',  bb:[364,208,272,178], grid:[6,3], depth:.8, headW:1, rollW:1, sway:6, paint:paintHairTop},
  {n:'bangsL',   bb:[364,212,132,248], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_L)}},
  {n:'bangsR',   bb:[532,212,116,248], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_R)}},
@@ -651,8 +685,10 @@ function deformVertex(L,x0,y0,nu,nv,P){
  if(L.breathW)y-=P.breath*L.breathW*(L.breathTaper?(1-nv):1)*7;
  if(L.sway){var wv=nv*nv; x+=(P.sway*wv+P.swayTip*nv*wv)*(L.sway/34); y+=Math.abs(P.sway)*wv*(L.sway/34)*.12}
  if(L.kind==='iris'){
-  var b=side==='L'?P.blinkL:P.blinkR;
-  x+=P.eyeX*10.5; y+=P.eyeY*6.5+Math.max(0,b)*APH*.32;
+  var b=side==='L'?P.blinkL:P.blinkR,
+      isc=P.irisS==null?1:P.irisS, icx=L.bb[0]+L.bb[2]/2, icy=L.bb[1]+L.bb[3]/2;
+  x=icx+(x-icx)*isc; y=icy+(y-icy)*isc; // 동공·홍채 축소 (놀람)
+  x+=P.eyeX*11.5; y+=P.eyeY*6.5+Math.max(0,b)*APH*.32;
  }else if(L.kind==='eyew'){
   var b2=side==='L'?P.blinkL:P.blinkR;
   y+=b2*APH*((1-nv)*.8-nv*.2);
@@ -665,16 +701,19 @@ function deformVertex(L,x0,y0,nu,nv,P){
       f=L.innerU===0?nu:1-nu, bb4=side==='L'?P.blinkL:P.blinkR;
   y+=-lift*11+tilt*(4.5-10*f)+Math.max(0,bb4)*3;
  }else if(L.kind==='ear'){
-  var ax=612,ay=458,edx=x-ax,edy=y-ay,eca=Math.cos(P.earAng),esa=Math.sin(P.earAng);
+  var ax=606,ay=452,edx=x-ax,edy=y-ay,eca=Math.cos(P.earAng),esa=Math.sin(P.earAng);
   x=ax+edx*eca-edy*esa; y=ay+edx*esa+edy*eca;
  }
  if(hf>0){
   var yawN=P.yaw/30, pitN=P.pitch/20, d=L.depth==null?.5:L.depth;
-  x+=yawN*40*d*hf;
-  y-=pitN*30*(d*.75+.12)*hf;
+  // 요: 깊이별 시차 증폭. 피치: 깊이별 상하 시차 (앞머리 후퇴/뒷머리 잔류)
+  x+=yawN*54*d*hf;
+  y-=pitN*44*(d*.85+.08)*hf;
   var un=clamp((x0-HCX)/130,-1.3,1.3);
-  x=HCX+(x-HCX)*(1+yawN*un*.055*hf);
-  y=HCY+(y-HCY)*(1-pitN*.05*hf);
+  // 원측 볼 압축 / 근측 볼 확장 (비대칭 변형)
+  x=HCX+(x-HCX)*(1+yawN*un*.11*hf);
+  // 피치 업: 얼굴 세로 압축 (턱 상승·하관 단축)
+  y=HCY+(y-HCY)*(1-pitN*.085*hf);
  }
  var rw=(L.rollW==null?1:L.rollW), ang=P.roll*Math.PI/180*rw;
  if(ang){
@@ -760,15 +799,16 @@ Spring.prototype.to=function(target,dt){
  this.v+=(-this.k*(this.x-target)-this.d*this.v)*dt;
  this.x+=this.v*dt; return this.x;
 };
+// 표정: 눈꺼풀(lid)·눈썹 상승(bl)·눈썹 기울기(bt)·홍채 스케일(irs)·입(m) 5요소 세트 리깅
 var EXPRS=[
- {name:'기본', m:0, lidL:.09,lidR:.09, blL:0,blR:0, btL:0,btR:0},
- {name:'미소', m:1, lidL:.34,lidR:.34, blL:.18,blR:.18, btL:-.25,btR:-.25},
- {name:'진지', m:2, lidL:.1,lidR:.1, blL:-.1,blR:-.1, btL:1,btR:1},
- {name:'놀람', m:3, lidL:-.14,lidR:-.14, blL:1,blR:1, btL:-.3,btR:-.3},
- {name:'윙크', m:1, lidL:.16,lidR:1.15, blL:.1,blR:.55, btL:-.2,btR:-.4}
+ {name:'기본', m:0, lidL:.02,lidR:.02, blL:-.05,blR:-.05, btL:.3,btR:.3, irs:1},
+ {name:'미소', m:1, lidL:.34,lidR:.34, blL:.18,blR:.18, btL:-.25,btR:-.25, irs:1},
+ {name:'진지', m:2, lidL:.15,lidR:.15, blL:-.3,blR:-.3, btL:1.2,btR:1.2, irs:.95},
+ {name:'놀람', m:3, lidL:-.5,lidR:-.5, blL:1.15,blR:1.15, btL:-.5,btR:-.5, irs:.8},
+ {name:'윙크', m:1, lidL:.1,lidR:1.15, blL:.05,blR:.5, btL:-.2,btR:-.45, irs:1}
 ];
 var anim={
- t:0, exprIdx:0, exprCur:{lidL:.13,lidR:.13,blL:0,blR:0,btL:0,btR:0},
+ t:0, exprIdx:0, exprCur:{lidL:.06,lidR:.06,blL:-.05,blR:-.05,btL:.3,btR:.3,irs:1},
  mouthA:0, mouthB:0, mouthFade:1,
  blinkT:2.2, blinkPhase:-1, blinkDouble:false, blinkVal:0,
  spYaw:new Spring(34,9), spPitch:new Spring(34,9), spRoll:new Spring(28,8),
@@ -820,11 +860,11 @@ function stepAnim(dt,w,h,manual){
  }
  // 표정 크로스페이드
  var e=EXPRS[a.exprIdx],cc=a.exprCur,sp=Math.min(1,dt*6);
- ['lidL','lidR','blL','blR','btL','btR'].forEach(function(k){cc[k]=lerp(cc[k],e[k],sp)});
+ ['lidL','lidR','blL','blR','btL','btR','irs'].forEach(function(k){cc[k]=lerp(cc[k],e[k],sp)});
  a.mouthFade=Math.min(1,a.mouthFade+dt*4);
  // 최종 P
- var bl=a.blinkVal, blinkL=clamp(cc.lidL+bl*(1-Math.max(0,cc.lidL)),-.15,1.15),
-     blinkR=clamp(cc.lidR+bl*(1-Math.max(0,cc.lidR)),-.15,1.15),
+ var bl=a.blinkVal, blinkL=clamp(cc.lidL+bl*(1-Math.max(0,cc.lidL)),-.6,1.15),
+     blinkR=clamp(cc.lidR+bl*(1-Math.max(0,cc.lidR)),-.6,1.15),
      breath=(Math.sin(a.t*TAU/3.2-Math.PI/2)+1)/2;
  if(manual.blink!=null){blinkL=manual.blink;blinkR=manual.blink}
  return {yaw:a.spYaw.x, pitch:a.spPitch.x, roll:a.spRoll.x,
