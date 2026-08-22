@@ -469,8 +469,11 @@ function strand(g,pts,w0,w1,fill,outline){
 }
 function bez(g,pts){ // moveTo + 이어지는 스무드 콰드 폴리라인
   g.moveTo(pts[0][0],pts[0][1]);
-  for(let i=1;i<pts.length;i+=2)
-    g.quadraticCurveTo(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]);
+  for(let i=1;i<pts.length;i+=2){
+    if(i+1<pts.length)
+      g.quadraticCurveTo(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]);
+    else g.lineTo(pts[i][0],pts[i][1]);
+  }
 }
 
 // --- 얼굴: 미소년의 급소. 헤드 로컬(중심 원점, 머리높이 46, +x=진행방향) ---
@@ -904,3 +907,328 @@ function drawChar(g,P){
   drawSword(g,P);
   drawArm(g,P,"N");
 }
+
+// --- 이펙트: 잔상 / 검 트레일 / 일섬 아크 / 스파크 --------------------
+let gCv=null,gCtx=null;
+function drawGhostInline(g,P,alpha){ // 현재 변환=모델공간 가정
+  if(!gCv){gCv=document.createElement("canvas");
+    gCv.width=760;gCv.height=540;gCtx=gCv.getContext("2d");}
+  gCtx.setTransform(1,0,0,1,0,0);
+  gCtx.clearRect(0,0,760,540);
+  gCtx.globalCompositeOperation="source-over";
+  gCtx.translate(240,500);
+  drawChar(gCtx,P);
+  gCtx.globalCompositeOperation="source-in";
+  gCtx.fillStyle="rgb(140,205,255)";
+  gCtx.fillRect(-240,-500,760,540);
+  g.save();
+  g.globalCompositeOperation="lighter";
+  g.globalAlpha=alpha;
+  g.drawImage(gCv,-240,-500);
+  g.restore();
+}
+function drawTrail(g,anim,t,strength){
+  if(strength<=0.02)return;
+  const N=15,DT=0.013;
+  const tips=[],guards=[];
+  for(let k=0;k<N;k++){
+    const P=pose(anim,t-k*DT);
+    if(!P.j.swordTip){tips.push(null);guards.push(null);continue;}
+    tips.push(P.j.swordTip);
+    guards.push({x:lerp(P.j.swordGrip.x,P.j.swordTip.x,0.22),
+                 y:lerp(P.j.swordGrip.y,P.j.swordTip.y,0.22)});
+  }
+  g.save();
+  g.globalCompositeOperation="lighter";
+  for(let k=0;k<N-1;k++){
+    if(!tips[k]||!tips[k+1])continue;
+    const u=k/(N-1), a=(1-u)*(1-u)*0.5*strength;
+    if(a<=0.01)continue;
+    const cr=Math.round(lerp(255,159,u)), cg=Math.round(lerp(255,216,u));
+    g.beginPath();
+    g.moveTo(tips[k].x,tips[k].y); g.lineTo(tips[k+1].x,tips[k+1].y);
+    g.lineTo(guards[k+1].x,guards[k+1].y); g.lineTo(guards[k].x,guards[k].y);
+    g.closePath();
+    g.fillStyle="rgba("+cr+","+cg+",255,"+a.toFixed(3)+")";
+    g.fill();
+  }
+  g.restore();
+}
+function drawArc(g,P){ // 발도 일섬: 화면 가로지르는 흰-청 아크
+  const a=P.fx.arc; if(a<=0.02)return;
+  const j=P.j; if(!j.swordGrip)return;
+  const cx=j.swordGrip.x-60, cy=j.swordGrip.y-8;
+  g.save();
+  g.globalCompositeOperation="lighter";
+  for(const AR of [[150,196,0.5],[120,150,0.30],[196,214,0.16]]){
+    const r0=AR[0],r1=AR[1],al=AR[2];
+    g.beginPath();
+    g.arc(cx,cy,r1,-0.34,0.30);
+    g.arc(cx,cy,r0,0.30,-0.34,true);
+    g.closePath();
+    const gr=g.createRadialGradient(cx,cy,r0,cx,cy,r1);
+    gr.addColorStop(0,"rgba(159,216,255,0)");
+    gr.addColorStop(0.7,"rgba(190,230,255,"+(al*a).toFixed(3)+")");
+    gr.addColorStop(1,"rgba(255,255,255,"+Math.min(1,al*a*1.5).toFixed(3)+")");
+    g.fillStyle=gr; g.fill();
+  }
+  g.strokeStyle="rgba(255,255,255,"+(0.9*a).toFixed(3)+")";
+  g.lineWidth=2.2; g.lineCap="round";
+  g.beginPath(); g.arc(cx,cy,206,-0.30,0.26); g.stroke();
+  g.restore();
+}
+function drawSparks(g,P){
+  const s=P.fx.spark; if(s<=0.02)return;
+  const j=P.j;
+  const ox=j.swordTip?j.swordTip.x:P.px+40;
+  const oy=j.swordTip?Math.min(-2,j.swordTip.y):-4;
+  g.save(); g.globalCompositeOperation="lighter";
+  for(let i=0;i<10;i++){
+    const a=hash(i*3.7)*TAU, r=6+hash(i*9.1)*30*(1-s*0.5);
+    const x=ox+Math.cos(a)*r, y=oy-Math.abs(Math.sin(a))*r*0.8;
+    g.strokeStyle="rgba(200,235,255,"+(s*(0.4+hash(i)*0.5)).toFixed(2)+")";
+    g.lineWidth=1.4;
+    g.beginPath(); g.moveTo(ox,oy); g.lineTo(x,y); g.stroke();
+  }
+  g.restore();
+}
+// --- 뼈대 오버레이 ----------------------------------------------------
+function drawBones(g,P){
+  const j=P.j;
+  g.save(); g.lineCap="round";
+  const seg=(a,b)=>{g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();};
+  g.strokeStyle="rgba(80,255,200,0.9)"; g.lineWidth=1.6;
+  seg(j.pelvis,j.spine1);seg(j.spine1,j.spine2);seg(j.spine2,j.chest);
+  seg(j.chest,j.neckTop);seg(j.neckTop,j.head);
+  for(const s of["N","F"]){
+    seg(j.pelvis,j["hip"+s]);seg(j["hip"+s],j["knee"+s]);
+    seg(j["knee"+s],j["ankle"+s]);seg(j["ankle"+s],j["toe"+s]);
+    seg(j.chest,j["sh"+s]);seg(j["sh"+s],j["el"+s]);seg(j["el"+s],j["wr"+s]);
+  }
+  if(j.swordGrip&&j.swordTip){
+    g.strokeStyle="rgba(255,220,90,0.8)";seg(j.swordGrip,j.swordTip);
+  }
+  g.fillStyle="#5cffd0";
+  for(const k of["pelvis","spine1","spine2","chest","neckTop","head",
+    "hipN","kneeN","ankleN","toeN","hipF","kneeF","ankleF","toeF",
+    "shN","elN","wrN","shF","elF","wrF"]){
+    const p=j[k]; if(!p)continue;
+    g.beginPath();g.arc(p.x,p.y,2.4,0,TAU);g.fill();
+  }
+  g.strokeStyle="#ff6fd8"; g.lineWidth=1.5;
+  const cross=(x,y)=>{g.beginPath();g.moveTo(x-5,y);g.lineTo(x+5,y);
+    g.moveTo(x,y-5);g.lineTo(x,y+5);g.stroke();};
+  cross(P.footN.x,P.footN.y-B.ankleH); cross(P.footF.x,P.footF.y-B.ankleH);
+  if(P.armN.mode==="ik")cross(j.wrN.x,j.wrN.y);
+  if(P.armF.mode==="ik")cross(j.wrF.x,j.wrF.y);
+  g.strokeStyle="#6dff6d"; g.lineWidth=1.6;
+  if(P.groundedN)g.strokeRect(P.footN.x-7,-4,14,4);
+  if(P.groundedF)g.strokeRect(P.footF.x-7,-4,14,4);
+  g.restore();
+}
+
+// ==== 6. 배경/씬 ==================================================
+function drawBG(g,W,H,t,gy,full){
+  const grd=g.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,"#0a0d18"); grd.addColorStop(0.62,"#121830");
+  grd.addColorStop(1,"#0e1224");
+  g.fillStyle=grd; g.fillRect(0,0,W,H);
+  // 보름달 — 캐릭터 뒤 크게
+  const mx=W*0.56, my=H*0.31, mr=Math.min(W,H)*(full?0.28:0.33);
+  for(const HL of [[1.55,0.045],[1.25,0.075],[1.06,0.11]]){
+    g.beginPath();g.arc(mx,my,mr*HL[0],0,TAU);
+    g.fillStyle=PAL.moonHalo+HL[1]+")";g.fill();
+  }
+  g.beginPath(); g.arc(mx,my,mr,0,TAU);
+  const mg=g.createRadialGradient(mx-mr*0.3,my-mr*0.3,mr*0.1,mx,my,mr);
+  mg.addColorStop(0,"#f4f7fb"); mg.addColorStop(0.8,PAL.moon); mg.addColorStop(1,"#cfd8e6");
+  g.fillStyle=mg; g.fill();
+  g.globalAlpha=0.10; g.fillStyle="#b9c3d4";
+  g.beginPath();g.arc(mx-mr*0.3,my+mr*0.2,mr*0.16,0,TAU);g.fill();
+  g.beginPath();g.arc(mx+mr*0.25,my-mr*0.28,mr*0.1,0,TAU);g.fill();
+  g.beginPath();g.arc(mx+mr*0.1,my+mr*0.4,mr*0.08,0,TAU);g.fill();
+  g.globalAlpha=1;
+  // 별 + 떠다니는 입자
+  const NS=full?70:24;
+  for(let i=0;i<NS;i++){
+    const x=hash(i*1.3)*W, y=hash(i*2.7)*gy*0.9;
+    const tw=0.35+0.5*Math.sin(t*1.4+i*2.2);
+    g.fillStyle="rgba(210,225,250,"+(0.14+0.3*hash(i)*tw).toFixed(2)+")";
+    g.fillRect(x,y,1.6,1.6);
+  }
+  const NP=full?26:10;
+  for(let i=0;i<NP;i++){
+    const sp=0.5+hash(i*5.1)*1.2;
+    const x=fract(hash(i*7.7)+t*0.016*sp)*W;
+    const y=gy-10-hash(i*3.3)*gy*0.72+Math.sin(t*0.8+i)*8;
+    g.fillStyle="rgba(159,216,255,"+(0.10+0.22*hash(i+40)).toFixed(2)+")";
+    g.beginPath(); g.arc(x,y,1.1+hash(i)*1.6,0,TAU); g.fill();
+  }
+  // 안개층
+  for(let i=0;i<3;i++){
+    const y=gy-8-i*20, a=0.05-i*0.012;
+    g.fillStyle="rgba(160,180,215,"+a.toFixed(3)+")";
+    g.beginPath();
+    g.ellipse(W*0.5+Math.sin(t*0.2+i*2)*40, y, W*0.62, 14+i*7, 0,0,TAU);
+    g.fill();
+  }
+  // 바닥
+  const fg=g.createLinearGradient(0,gy,0,H);
+  fg.addColorStop(0,"#151a2e"); fg.addColorStop(1,"#0b0e1a");
+  g.fillStyle=fg; g.fillRect(0,gy,W,H-gy);
+  g.strokeStyle="rgba(140,160,200,0.25)"; g.lineWidth=1;
+  g.beginPath(); g.moveTo(0,gy); g.lineTo(W,gy); g.stroke();
+}
+// 씬 1프레임 렌더 (실시간/몽타주 공용)
+function renderScene(g,anim,t,W,H,scale,opts){
+  opts=opts||{};
+  const P=pose(anim,t);
+  let camX=(opts.camX!==undefined?opts.camX:W*0.5);
+  if(opts.follow)camX-=P.px*scale*opts.follow;
+  camX+=(P.fx.shakeX||0)*scale;
+  const gy=(opts.gy!==undefined?opts.gy:H*0.86);
+  const camY=gy+(P.fx.shakeY||0)*scale;
+  drawBG(g,W,H,t,gy,!!opts.full);
+  g.save();
+  g.translate(camX,camY); g.scale(scale,scale);
+  // 바닥 그림자 + 은은한 반사
+  g.beginPath(); g.ellipse(P.px+3,-1,46,7,0,0,TAU);
+  g.fillStyle="rgba(0,0,0,0.42)"; g.fill();
+  if(!opts.noReflect){
+    g.save(); g.scale(1,-1); g.globalAlpha=0.07;
+    drawChar(g,P); g.restore();
+  }
+  if(P.fx.ghosts&&P.fx.ghosts.length&&!opts.noGhost){
+    for(let i=P.fx.ghosts.length-1;i>=0;i--){
+      const gp=pose(anim,t-P.fx.ghosts[i]);
+      drawGhostInline(g,gp,0.13+0.11*(1-i/P.fx.ghosts.length));
+    }
+  }
+  drawTrail(g,anim,t,P.fx.trail);
+  drawChar(g,P);
+  drawArc(g,P);
+  drawSparks(g,P);
+  if(opts.bones)drawBones(g,P);
+  g.restore();
+  if(P.fx.flash>0.02){
+    g.fillStyle="rgba(230,245,255,"+(P.fx.flash*0.55).toFixed(3)+")";
+    g.fillRect(0,0,W,H);
+  }
+  return P;
+}
+
+// ==== 7. UI·실시간 루프 / 8. 몽타주 ================================
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const MONTAGE=/[?&]montage/.test(location.search);
+if(MONTAGE){
+  document.body.classList.add("montage");
+  drawMontage();
+}else{
+  startLive();
+}
+function startLive(){
+  let anim="idle", animT=0, last=performance.now(), speed=1, showBones=false;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  function resize(){
+    cv.width=innerWidth*dpr; cv.height=innerHeight*dpr;
+    cv.style.width=innerWidth+"px"; cv.style.height=innerHeight+"px";
+  }
+  addEventListener("resize",resize); resize();
+  document.querySelectorAll("#panel button").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll("#panel button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); anim=b.dataset.anim; animT=0;
+    });
+  });
+  document.getElementById("bones").addEventListener("change",e=>showBones=e.target.checked);
+  document.getElementById("speed").addEventListener("input",e=>speed=+e.target.value);
+  function frame(now){
+    const dt=Math.min(0.05,(now-last)/1000); last=now;
+    animT+=dt*speed;
+    const W=innerWidth,H=innerHeight;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const scale=Math.min(H*0.78/380, W*0.5/380);
+    renderScene(ctx,anim,animT,W,H,scale,
+      {full:true,gy:H*0.85,follow:anim==="battou"?0.75:0,bones:showBones});
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// --- 몽타주: 1680×1500, 로드 즉시 동기 렌더 ------------------------
+function drawMontage(){
+  const W=1680,H=1500;
+  cv.width=W; cv.height=H;
+  cv.style.width=W+"px"; cv.style.height=H+"px";
+  ctx.fillStyle="#0d1120"; ctx.fillRect(0,0,W,H);
+  const rowAH=395,rowBH=395,rowCH=H-rowAH-rowBH-90;
+  function cell(x,y,w,h,label,fn){
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+    ctx.translate(x,y);
+    fn(w,h);
+    ctx.restore();
+    ctx.strokeStyle="#2a3050"; ctx.lineWidth=1;
+    ctx.strokeRect(x+0.5,y+0.5,w,h);
+    ctx.fillStyle="#ffffff";
+    ctx.font='13px "Segoe UI","Malgun Gothic",sans-serif';
+    ctx.textAlign="center";
+    ctx.fillText(label,x+w/2,y+h+17);
+  }
+  function head(y,txt){
+    ctx.fillStyle="#9fb0d4"; ctx.textAlign="left";
+    ctx.font='bold 14px "Segoe UI","Malgun Gothic",sans-serif';
+    ctx.fillText(txt,10,y);
+  }
+  // Row A: 걷기 6위상
+  head(18,"Row A — 걷기 사이클 6위상 (접지 IK · 미끄러짐 0)");
+  const cw=W/6;
+  for(let i=0;i<6;i++){
+    const t=i/6*1.05;
+    const lbl="t="+i+"/6 · "+(i===0?"접지(근)":i===3?"접지(원)":i===1||i===4?"교차":"지지");
+    cell(i*cw,26,cw,rowAH-45,lbl,(w,h)=>{
+      renderScene(ctx,"walk",t,w,h,(h*0.82)/380,{gy:h*0.9,noReflect:false});
+    });
+  }
+  // Row B: 발도 6키
+  const yB=rowAH+8;
+  head(yB+12,"Row B — 발도 시퀀스 (납도→예비→섬광→극점→잔심→납도)");
+  const btT=[0.5,1.02,1.24,1.365,1.9,3.9];
+  const btL=["납도","예비","섬광 스텝","극점 일섬","잔심","납도(찰칵)"];
+  for(let i=0;i<6;i++){
+    cell(i*cw,yB+20,cw,rowBH-45,btL[i]+" (t="+btT[i]+"s)",(w,h)=>{
+      renderScene(ctx,"battou",btT[i],w,h,(h*0.80)/390,
+        {gy:h*0.9,follow:1,camX:w*0.5});
+    });
+  }
+  // Row C: 뷰티샷 / 얼굴 클로즈업 / 리깅 오버레이 / 트레일 컷
+  const yC=rowAH+rowBH+16;
+  head(yC+12,"Row C — ①뷰티샷 ②얼굴 클로즈업 ③리깅 오버레이(뼈·IK 타깃·접지 락) ④베기 트레일+잔상");
+  const cw4=W/4, ch4=rowCH;
+  cell(0,yC+20,cw4,ch4,"① 전신 뷰티샷 (대기)",(w,h)=>{
+    renderScene(ctx,"idle",0.8,w,h,(h*0.86)/380,{gy:h*0.92,full:true});
+  });
+  cell(cw4,yC+20,cw4,ch4,"② 얼굴 클로즈업 (머리 세로 460px+)",(w,h)=>{
+    // 헤드 클로즈업: 머리높이 46 → scale 10
+    const t=0.8, P=pose("idle",t);
+    drawBG(ctx,w,h,t,h*0.97,false);
+    const sc=10;
+    ctx.save();
+    ctx.translate(w*0.5-P.j.head.x*sc, h*0.53-P.j.head.y*sc);
+    ctx.scale(sc,sc);
+    drawChar(ctx,P);
+    ctx.restore();
+  });
+  cell(cw4*2,yC+20,cw4,ch4,"③ 리깅 오버레이 (걷기)",(w,h)=>{
+    renderScene(ctx,"walk",0.30,w,h,(h*0.84)/380,{gy:h*0.92,bones:true});
+  });
+  cell(cw4*3,yC+20,cw4,ch4,"④ 베기 — 트레일+잔상 (S1 임팩트)",(w,h)=>{
+    renderScene(ctx,"slash",0.56,w,h,(h*0.80)/390,{gy:h*0.92});
+  });
+  // 타이틀
+  ctx.fillStyle="#e8ecf2"; ctx.textAlign="right";
+  ctx.font='bold 15px "Segoe UI","Malgun Gothic",sans-serif';
+  ctx.fillText("아스렐 · 銀月의 검성 — 절차적 스켈레톤 + IK",W-12,18);
+}
+</script>
+</body>
+</html>

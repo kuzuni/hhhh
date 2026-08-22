@@ -675,7 +675,6 @@ function drawBones(ctx){
   }
   for(const n of RIG){
     ctx.beginPath();ctx.arc(n.wx,n.wy,n.parent?4:6,0,TAU);
-    ctx.fillStyle=n.parent?'#ffd d66':'#ff9d3a';
     ctx.fillStyle=n.parent?'#ffdd66':'#ff9d3a';ctx.fill();
     ctx.strokeStyle='#7a5a10';ctx.lineWidth=1.4;ctx.stroke();
   }

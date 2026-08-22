@@ -828,3 +828,153 @@ function drawBG(ctx,w,h,t){
  });
  ctx.restore();
 }
+
+// ==== 7. UI · 입력 ====
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var manual={}, dragging=null, meshOn=false, sliderEls={};
+var SDEFS=[['angleX','요 X',-30,30],['angleY','피치 Y',-20,20],['angleZ','롤 Z',-15,15],
+ ['blink','블링크',0,1],['eyeX','시선 X',-1,1],['eyeY','시선 Y',-1,1],['hairSway','머리결',-30,30]];
+function initUI(){
+ var eb=document.getElementById('exprs');
+ EXPRS.forEach(function(e,i){
+  var b=document.createElement('button'); b.textContent=e.name;
+  if(i===0)b.className='on';
+  b.onclick=function(){setExpr(i);
+   Array.prototype.forEach.call(eb.children,function(c,j){c.className=j===i?'on':''})};
+  eb.appendChild(b);
+ });
+ var sc=document.getElementById('sliders');
+ SDEFS.forEach(function(sd){
+  var row=document.createElement('div'); row.className='srow';
+  var lb=document.createElement('label'); lb.textContent=sd[1];
+  var inp=document.createElement('input'); inp.type='range';
+  inp.min=sd[2]; inp.max=sd[3]; inp.step=(sd[3]-sd[2])/200; inp.value=0;
+  var vs=document.createElement('span'); vs.textContent='0';
+  row.appendChild(lb); row.appendChild(inp); row.appendChild(vs);
+  sc.appendChild(row);
+  sliderEls[sd[0]]={inp:inp,vs:vs};
+  inp.addEventListener('pointerdown',function(){dragging=sd[0];manual[sd[0]]=parseFloat(inp.value)});
+  inp.addEventListener('input',function(){if(dragging===sd[0])manual[sd[0]]=parseFloat(inp.value)});
+ });
+ window.addEventListener('pointerup',function(){
+  if(dragging){manual[dragging]=null;dragging=null}
+ });
+ document.getElementById('meshChk').addEventListener('change',function(e){meshOn=e.target.checked});
+ window.addEventListener('pointermove',function(e){
+  if(e.target&&e.target.tagName==='INPUT')return;
+  anim.mouse.x=e.clientX/innerWidth; anim.mouse.y=e.clientY/innerHeight;
+  anim.mouse.has=true; anim.mouse.idle=0;
+ });
+}
+// ==== 라이브 루프 ====
+var dpr=1,vw=0,vh=0;
+function resize(){
+ dpr=Math.min(window.devicePixelRatio||1,2);
+ vw=innerWidth; vh=innerHeight;
+ cv.width=Math.round(vw*dpr); cv.height=Math.round(vh*dpr);
+ cv.style.width=vw+'px'; cv.style.height=vh+'px';
+}
+function liveView(){
+ var dw=cv.width,dh=cv.height,
+     s=Math.min(dh/900,dw/1060);
+ return {s:s,ox:dw/2-500*s,oy:dh/2-480*s};
+}
+var lastT=0;
+function frame(now){
+ var dt=clamp((now-lastT)/1000,0,.05); lastT=now;
+ anim.mouse.idle+=dt;
+ var P=stepAnim(dt,vw,vh,manual);
+ var view=liveView();
+ ctx.setTransform(1,0,0,1,0,0);
+ drawBG(ctx,cv.width,cv.height,anim.t);
+ drawWisps(ctx,anim.t,view,false);
+ renderScene(ctx,P,view,{mesh:meshOn});
+ drawWisps(ctx,anim.t,view,true);
+ // 슬라이더 표시 동기화
+ var vals={angleX:P.yaw,angleY:P.pitch,angleZ:P.roll,blink:P.blinkL,eyeX:P.eyeX,eyeY:P.eyeY,hairSway:P.sway};
+ SDEFS.forEach(function(sd){
+  var el=sliderEls[sd[0]]; if(!el)return;
+  if(dragging!==sd[0])el.inp.value=vals[sd[0]];
+  el.vs.textContent=(+vals[sd[0]]).toFixed(1);
+ });
+ requestAnimationFrame(frame);
+}
+
+// ==== 8. 몽타주 (?montage — 로드 즉시 동기 렌더, 결정론) ====
+function cellView(cx0,cy0,cw2,ch2,fx,fy,charH){
+ var s=ch2/charH;
+ return {s:s,ox:cx0+cw2/2-fx*s,oy:cy0+ch2/2-fy*s};
+}
+function exprP(i,extra){
+ var e=EXPRS[i],o={blinkL:clamp(e.lidL,-.15,1.15),blinkR:clamp(e.lidR,-.15,1.15),
+  browLift:{L:e.blL,R:e.blR},browTilt:{L:e.btL,R:e.btR},mouthA:e.m,mouthB:e.m},k;
+ if(extra)for(k in extra)o[k]=extra[k];
+ return defaultP(o);
+}
+function drawMontage(){
+ ['panel','hud','back'].forEach(function(id){document.getElementById(id).style.display='none'});
+ cv.width=1680; cv.height=1500; cv.style.width='1680px'; cv.style.height='1500px';
+ ctx.fillStyle='#0b0912'; ctx.fillRect(0,0,1680,1500);
+ var mt=7.7; // 고정 시각 (위스프 결정론)
+ function cell(x,y,w,h,label,P,fx,fy,charH,opts){
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+  var gr=ctx.createRadialGradient(x+w/2,y+h*.36,h*.06,x+w/2,y+h*.5,h*.9);
+  gr.addColorStop(0,'#241a38'); gr.addColorStop(1,'#100c1a');
+  ctx.fillStyle=gr; ctx.fillRect(x,y,w,h);
+  var v=cellView(x,y,w,h,fx,fy,charH);
+  if(opts&&opts.wisps)drawWisps(ctx,mt,v,false);
+  renderScene(ctx,P,v,opts);
+  if(opts&&opts.wisps)drawWisps(ctx,mt,v,true);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='rgba(10,8,16,.72)'; ctx.fillRect(x,y+h-24,w,24);
+  ctx.fillStyle='#f2eefc'; ctx.font='13px "Segoe UI","Malgun Gothic",sans-serif';
+  ctx.textAlign='center'; ctx.fillText(label,x+w/2,y+h-7);
+  ctx.restore();
+  ctx.strokeStyle='#2a2342'; ctx.lineWidth=1; ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+ }
+ var i,cw6=270,gap=8,x0=8;
+ // Row A: 고개/시선 6포즈 (시차 증명)
+ var yaws=[-30,-15,0,15,30];
+ for(i=0;i<5;i++){
+  var yv=yaws[i];
+  cell(x0+i*(cw6+gap),8,cw6,450,'요 '+(yv>0?'+':'')+yv+'°',
+   defaultP({yaw:yv,roll:yv*.2,eyeX:yv/30*.8,sway:yv*-.25}),500,430,640);
+ }
+ cell(x0+5*(cw6+gap),8,cw6,450,'피치 업 +18°',
+  defaultP({pitch:18,eyeY:-.55,sway:2}),500,430,640);
+ // Row B: 표정 5 + 블링크 중간
+ for(i=0;i<5;i++){
+  cell(x0+i*(cw6+gap),466,cw6,450,'표정 · '+EXPRS[i].name,
+   exprP(i,{yaw:i%2?-7:7,roll:i%2?-2:2}),500,430,640);
+ }
+ cell(x0+5*(cw6+gap),466,cw6,450,'블링크 0.55',
+  defaultP({blinkL:.55,blinkR:.55,yaw:4}),500,430,640);
+ // Row C: 뷰티샷 / 클로즈업 / 와이어프레임 / 극단 변형
+ var cw4=410;
+ cell(8,924,cw4,568,'버스트 뷰티샷',defaultP({yaw:8,roll:2.5,eyeX:.25,sway:5}),500,560,1080,{wisps:true});
+ cell(8+(cw4+gap),924,cw4,568,'얼굴 클로즈업 (머리 세로 530px)',
+  defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,398,378);
+ cell(8+2*(cw4+gap),924,cw4,568,'리깅: 삼각 메시 와이어프레임',
+  defaultP({yaw:12,sway:6}),500,430,640,{mesh:true});
+ cell(8+3*(cw4+gap),924,cw4,568,'극단 변형: 요+30 피치+16 롤+9 헤어스윙',
+  exprP(2,{yaw:30,pitch:16,roll:9,sway:26,swayTip:20,eyeX:.9}),500,420,620);
+ // 캡션
+ ctx.fillStyle='#8a76e8'; ctx.font='12px "Segoe UI","Malgun Gothic",sans-serif';
+ ctx.textAlign='left';
+ ctx.fillText('카이렌 — 메시 디포메이션(Live2D式) 몽타주 · 22레이어 · 격자 삼각 메시 변형',14,1497);
+}
+
+// ==== 9. 부트 ====
+var isMontage=/[?&]montage/.test(location.search);
+buildTextures();
+if(isMontage){
+ drawMontage();
+}else{
+ initUI(); resize();
+ window.addEventListener('resize',resize);
+ requestAnimationFrame(function(n){lastT=n;requestAnimationFrame(frame)});
+}
+</script>
+</body>
+</html>
