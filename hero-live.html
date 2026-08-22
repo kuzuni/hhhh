@@ -530,6 +530,7 @@ var LAYERS=[
  {n:'bangsC',   bb:[418,244,164,200], grid:[5,6], depth:1, headW:1, rollW:1, sway:20, paint:function(g){paintStrands(g,BANGS_C)}}
 ];
 var TS=2, PAD=14; // 텍스처 해상도 배율·패딩
+var EXPAND=/[?&]ex0/.test(location.search)?0:.65; // 삼각 팽창량 (실금 방지)
 var APCLIP=null;
 function buildTextures(){
  LAYERS.forEach(function(L){
@@ -640,7 +641,7 @@ function drawMesh(ctx,L,P,view,alpha,tex){
       u0=verts[t0].u,v0=verts[t0].v,u1=verts[t1].u,v1=verts[t1].v,u2=verts[t2].u,v2=verts[t2].v,
       den=u0*(v1-v2)+u1*(v2-v0)+u2*(v0-v1);
   if(den>-1e-6&&den<1e-6)continue;
-  var cx=(x0+x1+x2)/3,cy=(y0+y1+y2)/3,EX=.65,
+  var cx=(x0+x1+x2)/3,cy=(y0+y1+y2)/3,EX=EXPAND,
       e0x=x0+(x0>cx?EX:-EX),e0y=y0+(y0>cy?EX:-EX),
       e1x=x1+(x1>cx?EX:-EX),e1y=y1+(y1>cy?EX:-EX),
       e2x=x2+(x2>cx?EX:-EX),e2y=y2+(y2>cy?EX:-EX),
@@ -653,10 +654,13 @@ function drawMesh(ctx,L,P,view,alpha,tex){
   ctx.save();
   ctx.beginPath(); ctx.moveTo(e0x,e0y); ctx.lineTo(e1x,e1y); ctx.lineTo(e2x,e2y); ctx.closePath(); ctx.clip();
   ctx.setTransform(a,b,c,d,e,f);
-  var su=Math.max(0,Math.min(u0,u1,u2)-2), sv=Math.max(0,Math.min(v0,v1,v2)-2),
-      sw=Math.min(Math.max(u0,u1,u2)-su+4,tex.width-su),
-      sh=Math.min(Math.max(v0,v1,v2)-sv+4,tex.height-sv);
-  ctx.drawImage(tex,su,sv,sw,sh,su,sv,sw,sh);
+  if(FULLTEX){ctx.drawImage(tex,0,0)}
+  else{
+   var su=Math.max(0,Math.min(u0,u1,u2)-2), sv=Math.max(0,Math.min(v0,v1,v2)-2),
+       sw=Math.min(Math.max(u0,u1,u2)-su+4,tex.width-su),
+       sh=Math.min(Math.max(v0,v1,v2)-sv+4,tex.height-sv);
+   ctx.drawImage(tex,su,sv,sw,sh,su,sv,sw,sh);
+  }
   ctx.restore();
  }
  if(alpha!=null)ctx.globalAlpha=1;
@@ -923,9 +927,11 @@ function drawMontage(){
   gr.addColorStop(0,'#241a38'); gr.addColorStop(1,'#100c1a');
   ctx.fillStyle=gr; ctx.fillRect(x,y,w,h);
   var v=cellView(x,y,w,h,fx,fy,charH);
-  if(opts&&opts.wisps)drawWisps(ctx,mt,v,false);
-  renderScene(ctx,P,v,opts);
-  if(opts&&opts.wisps)drawWisps(ctx,mt,v,true);
+  if(!/[?&]bare/.test(location.search)){
+   if(opts&&opts.wisps)drawWisps(ctx,mt,v,false);
+   renderScene(ctx,P,v,opts);
+   if(opts&&opts.wisps)drawWisps(ctx,mt,v,true);
+  }
   ctx.setTransform(1,0,0,1,0,0);
   ctx.fillStyle='rgba(10,8,16,.72)'; ctx.fillRect(x,y+h-24,w,24);
   ctx.fillStyle='#f2eefc'; ctx.font='13px "Segoe UI","Malgun Gothic",sans-serif';
