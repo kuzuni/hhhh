@@ -186,58 +186,58 @@ function drawBodyShape(c,P,demon){
 }
 // ---- 이빨 그리드 -----------------------------------------------------------
 function drawJawTop(c,P,demon){ // 피벗 = 입 상단 중앙 (char 0,-212)
-  const teethW=demon?40:44,gap=demon?8:3,n=5;
+  const teethW=demon?33:45,gap=demon?15:3.5,n=5;
   const x0=-(n*teethW+(n-1)*gap)/2;
   if(!demon){ // 윗잇몸 바
-    rr(c,-126,-6,252,20,9);c.fillStyle=P.gum;c.fill();
+    rr(c,-128,-8,256,22,9);c.fillStyle=P.gum;c.fill();
     c.strokeStyle=P.out;c.lineWidth=4;c.stroke();
   }
   const vari=[2,-3,5,0,-2];
   for(let i=0;i<n;i++){
-    const tx=x0+i*(teethW+gap),h=56+vari[i];
-    rr(c,tx,6,teethW,h,7);
-    c.fillStyle=demon?P.tooth:P.tooth;c.fill();
+    const tx=x0+i*(teethW+gap),h=60+vari[i];
+    rr(c,tx,6,teethW,h,8);
+    c.fillStyle=P.tooth;c.fill();
     if(!demon){
-      // 이빨 아래쪽 음영 + 좌측 음영
-      c.save();rr(c,tx,6,teethW,h,7);c.clip();
-      c.fillStyle=P.toothSh;c.globalAlpha=.8;
-      c.fillRect(tx,6+h-13,teethW,13);
-      c.globalAlpha=.4;c.fillRect(tx,6,7,h);
-      c.globalAlpha=.65;c.fillStyle='#fffdf2';c.fillRect(tx+teethW-9,8,5,h-16);
+      // 이빨 아래쪽 음영 + 좌측 음영 (밝게 유지)
+      c.save();rr(c,tx,6,teethW,h,8);c.clip();
+      c.fillStyle=P.toothSh;c.globalAlpha=.6;
+      c.fillRect(tx,6+h-11,teethW,11);
+      c.globalAlpha=.25;c.fillRect(tx,6,6,h);
+      c.globalAlpha=.75;c.fillStyle='#fffdf2';c.fillRect(tx+teethW-10,8,6,h-16);
       c.restore();
     }
     c.strokeStyle=P.toothLine;c.lineWidth=demon?3:2.6;
-    rr(c,tx,6,teethW,h,7);c.stroke();
+    rr(c,tx,6,teethW,h,8);c.stroke();
   }
   if(!demon){ // 잇몸 라인 진하게
     c.strokeStyle=P.gumD;c.lineWidth=3;c.globalAlpha=.9;
-    c.beginPath();c.moveTo(-122,10);c.lineTo(122,10);c.stroke();c.globalAlpha=1;
+    c.beginPath();c.moveTo(-124,10);c.lineTo(124,10);c.stroke();c.globalAlpha=1;
   }
 }
 function drawJawBot(c,P,demon){ // 피벗 = 입 하단 중앙 (char 0,-88)
-  const teethW=demon?38:42,gap=demon?9:4,n=5;
-  const x0=-(n*teethW+(n-1)*gap)/2+12; // 반 피치 오프셋 → 위아래 맞물림
+  const teethW=demon?31:43,gap=demon?16:4,n=5;
+  const x0=-(n*teethW+(n-1)*gap)/2+13; // 반 피치 오프셋 → 위아래 맞물림
   const vari=[-2,3,-4,1,2];
   for(let i=0;i<n;i++){
     const tx=x0+i*(teethW+gap),h=58+vari[i];
-    rr(c,tx,-8-h,teethW,h,7);
+    rr(c,tx,-8-h,teethW,h,8);
     c.fillStyle=P.tooth;c.fill();
     if(!demon){
-      c.save();rr(c,tx,-8-h,teethW,h,7);c.clip();
-      c.fillStyle=P.toothSh;c.globalAlpha=.7;
-      c.fillRect(tx,-8-h,teethW,11);
-      c.globalAlpha=.4;c.fillRect(tx,-8-h,7,h);
-      c.globalAlpha=.6;c.fillStyle='#fffdf2';c.fillRect(tx+teethW-9,-8-h+9,5,h-17);
+      c.save();rr(c,tx,-8-h,teethW,h,8);c.clip();
+      c.fillStyle=P.toothSh;c.globalAlpha=.35;
+      c.fillRect(tx,-8-h,teethW,8);
+      c.globalAlpha=.25;c.fillRect(tx,-8-h,6,h);
+      c.globalAlpha=.7;c.fillStyle='#fffdf2';c.fillRect(tx+teethW-10,-8-h+8,6,h-16);
       c.restore();
     }
     c.strokeStyle=P.toothLine;c.lineWidth=demon?3:2.6;
-    rr(c,tx,-8-h,teethW,h,7);c.stroke();
+    rr(c,tx,-8-h,teethW,h,8);c.stroke();
   }
   if(!demon){ // 아랫잇몸 바
-    rr(c,-126,-12,252,22,9);c.fillStyle=P.gum;c.fill();
+    rr(c,-128,-14,256,24,9);c.fillStyle=P.gum;c.fill();
     c.strokeStyle=P.out;c.lineWidth=4;c.stroke();
     c.strokeStyle=P.gumD;c.lineWidth=3;c.globalAlpha=.9;
-    c.beginPath();c.moveTo(-122,-8);c.lineTo(122,-8);c.stroke();c.globalAlpha=1;
+    c.beginPath();c.moveTo(-124,-10);c.lineTo(124,-10);c.stroke();c.globalAlpha=1;
   }
 }
 // ---- 입 안 (기본: 어둠 / 악마: 화염 글로우) --------------------------------
@@ -251,9 +251,9 @@ function drawMouthIn(c,P,demon,green){ // 피벗 char (0,-150)
   }
   rr(c,-124,-68,248,136,30);
   if(!green){
-    const g=c.createRadialGradient(0,4,8,0,4,150);
-    g.addColorStop(0,'#fff2d8');g.addColorStop(.28,'#e0b0ff');
-    g.addColorStop(.62,P.glowA);g.addColorStop(1,'#4a2178');
+    const g=c.createRadialGradient(0,2,8,0,2,160);
+    g.addColorStop(0,'#fff8e8');g.addColorStop(.3,'#f0ccff');
+    g.addColorStop(.6,'#c88cff');g.addColorStop(1,'#8248c8');
     c.fillStyle=g;c.fill();
   }else{
     const g=c.createRadialGradient(-14,-6,6,-10,0,140);
@@ -263,20 +263,24 @@ function drawMouthIn(c,P,demon,green){ // 피벗 char (0,-150)
   }
 }
 // ---- 눈 --------------------------------------------------------------------
-function drawEyeBase(c,P,s){ // 아주 작은 점눈
-  ell(c,0,0,6.5,8.5);c.fillStyle=P.eye;c.fill();
-  ell(c,-1.8,-2.6,1.9,2.4);c.fillStyle='rgba(255,255,255,.85)';c.fill();
+function drawEyeBase(c,P,s){ // 작은 타원 점눈 (덩치 대비 포인트)
+  ell(c,0,0,8.5,11);c.fillStyle=P.eye;c.fill();
+  c.strokeStyle='rgba(58,30,14,.6)';c.lineWidth=2;c.stroke();
+  ell(c,-2.4,-3.6,2.6,3.2);c.fillStyle='rgba(255,255,255,.9)';c.fill();
+  ell(c,2.6,3.4,1.2,1.5);c.fillStyle='rgba(255,255,255,.5)';c.fill();
 }
 function drawEyeDemon(c,P,s){ // 조각된 삼각 화염눈 (s: 좌우 부호)
-  c.save();c.scale(s,1);
-  c.shadowColor=P.glowA;c.shadowBlur=14;
+  c.save();c.scale(s*1.55,1.55);
+  c.shadowColor=P.glowA;c.shadowBlur=16;
   c.beginPath();c.moveTo(-16,6);c.lineTo(13,3);c.lineTo(-9,-15);c.closePath();
   c.fillStyle=P.bodyDeep;c.fill();c.shadowBlur=0;
-  c.strokeStyle=P.rim;c.globalAlpha=.5;c.lineWidth=2;c.stroke();c.globalAlpha=1;
-  c.beginPath();c.moveTo(-12,3.6);c.lineTo(8.5,1.6);c.lineTo(-7,-11);c.closePath();
-  const g=c.createRadialGradient(-4,-2,1,-4,-2,15);
-  g.addColorStop(0,'#fff6e8');g.addColorStop(.45,P.glowA);g.addColorStop(1,'#6a3aa8');
+  c.strokeStyle=P.rim;c.globalAlpha=.6;c.lineWidth=2;c.stroke();c.globalAlpha=1;
+  c.beginPath();c.moveTo(-12.5,3.8);c.lineTo(9.5,1.6);c.lineTo(-7,-12);c.closePath();
+  const g=c.createRadialGradient(-4,-2,1,-4,-2,16);
+  g.addColorStop(0,'#fffaf0');g.addColorStop(.4,'#e0b8ff');
+  g.addColorStop(.8,P.glowA);g.addColorStop(1,'#8a50d0');
   c.fillStyle=g;c.fill();
+  ell(c,-5,-3,2.4,2.4);c.fillStyle='#fff';c.fill();
   c.restore();
 }
 // ---- 선인장 팔 -------------------------------------------------------------
@@ -311,13 +315,13 @@ function drawArm(c,P,s,demon){ // 피벗 = 어깨. s=-1 왼팔 / 1 오른팔
 }
 // ---- 발 --------------------------------------------------------------------
 function drawFoot(c,P){
-  rr(c,-24,0,48,30,10);c.fillStyle=P.foot;c.fill();
+  rr(c,-27,0,54,35,11);c.fillStyle=P.foot;c.fill();
   c.strokeStyle=P.out;c.lineWidth=5;c.stroke();
-  c.save();rr(c,-24,0,48,30,10);c.clip();
-  c.fillStyle=P.footHi;c.globalAlpha=.65;c.fillRect(-24,0,48,8);
+  c.save();rr(c,-27,0,54,35,11);c.clip();
+  c.fillStyle=P.footHi;c.globalAlpha=.65;c.fillRect(-27,0,54,9);
   c.globalAlpha=.5;c.strokeStyle=P.out2;c.lineWidth=2.5;
-  c.beginPath();c.moveTo(-7,16);c.lineTo(-7,30);c.stroke();
-  c.beginPath();c.moveTo(8,16);c.lineTo(8,30);c.stroke();
+  c.beginPath();c.moveTo(-8,19);c.lineTo(-8,35);c.stroke();
+  c.beginPath();c.moveTo(9,19);c.lineTo(9,35);c.stroke();
   c.restore();
 }
 // ---- 꼭지 덩굴 / 잎 / 진액 -------------------------------------------------
@@ -370,7 +374,7 @@ function drawGoo(c,P){ // 피벗 = 꼭지 주변 char (0,-278). 흘러내린 진
 }
 // ---- 뿔 (악마) -------------------------------------------------------------
 function drawHorn(c,P,s){ // 피벗 = 뿔 뿌리, s 부호
-  c.save();c.scale(s,1);
+  c.save();c.scale(s*1.3,1.3);
   c.beginPath();c.moveTo(-14,6);
   c.quadraticCurveTo(-8,-26,12,-44);c.quadraticCurveTo(24,-54,36,-54);
   c.quadraticCurveTo(24,-44,20,-30);c.quadraticCurveTo(15,-10,14,6);c.closePath();
@@ -394,40 +398,39 @@ function drawSeedShape(c,P,x,y,rot,sc){
   c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1.2;c.stroke();
   c.restore();
 }
-function drawWedge(c,P,R,demon){ // 피벗 = 무게중심. 위로 벌어진 호박 웨지
-  const a0=-Math.PI/2-0.9,a1=-Math.PI/2+0.9,ap=[0,R*0.62]; // 꼭짓점 아래
-  if(demon){c.shadowColor=P.glowA;c.shadowBlur=16;}
-  c.beginPath();c.moveTo(ap[0],ap[1]);
-  c.lineTo(Math.cos(a0)*R,ap[1]+Math.sin(a0)*R*1.12);
-  c.arc(0,ap[1],R*1.04,a0,a1);
-  c.closePath();
-  c.fillStyle=P.flesh;c.fill();c.shadowBlur=0;
+function drawWedge(c,P,R,demon){ // 피벗 = 무게중심. 위로 벌어진 호박 웨지 (단면 과육)
+  const spread=0.92,ax=0,ay=R*0.6,RR=R*1.15;
+  const a0=-Math.PI/2-spread,a1=-Math.PI/2+spread;
+  // 실루엣 (껍질 색)
+  if(demon){c.shadowColor=P.glowA;c.shadowBlur=18;}
+  c.beginPath();c.moveTo(ax,ay);c.arc(ax,ay,RR,a0,a1);c.closePath();
+  c.fillStyle=P.rind;c.fill();c.shadowBlur=0;
   c.strokeStyle=P.out;c.lineWidth=4.5;c.stroke();
-  // 겉껍질 (바깥 호)
-  c.beginPath();c.arc(0,ap[1],R*1.04,a0,a1);
-  c.strokeStyle=P.rind;c.lineWidth=13;c.stroke();
-  c.beginPath();c.arc(0,ap[1],R*1.1,a0+0.06,a1-0.06);
-  c.strokeStyle=P.rindD;c.lineWidth=4;c.stroke();
-  c.beginPath();c.arc(0,ap[1],R*1.04,a0,a1);
-  c.strokeStyle=P.out;c.lineWidth=3;c.globalAlpha=.9;c.stroke();c.globalAlpha=1;
+  // 껍질 어두운 띠
+  c.beginPath();c.arc(ax,ay,RR-4,a0+0.04,a1-0.04);
+  c.strokeStyle=P.rindD;c.lineWidth=5;c.stroke();
+  // 과육 단면
+  c.beginPath();c.moveTo(ax,ay);c.arc(ax,ay,RR-13,a0+0.07,a1-0.07);c.closePath();
+  c.fillStyle=P.flesh;c.fill();
+  c.strokeStyle=demon?'#b090d8':'#eab070';c.lineWidth=2.2;c.stroke();
   // 과육 결
-  c.strokeStyle=demon?'#c9aaf0':'#f2b96a';c.lineWidth=2.2;c.globalAlpha=.7;
-  for(const da of[-0.42,0,0.42]){
+  c.strokeStyle=demon?'#c9aaf0':'#f2b96a';c.lineWidth=2.4;c.globalAlpha=.75;
+  for(const da of[-0.5,0,0.5]){
     const a=-Math.PI/2+da;
-    c.beginPath();c.moveTo(ap[0]+Math.cos(a)*R*.2,ap[1]+Math.sin(a)*R*.2);
-    c.lineTo(ap[0]+Math.cos(a)*R*.82,ap[1]+Math.sin(a)*R*.82);c.stroke();
+    c.beginPath();c.moveTo(ax+Math.cos(a)*R*.22,ay+Math.sin(a)*R*.22);
+    c.lineTo(ax+Math.cos(a)*(RR-18),ay+Math.sin(a)*(RR-18));c.stroke();
   }
   c.globalAlpha=1;
-  // 과육 하이라이트
-  c.beginPath();c.arc(0,ap[1],R*.62,a0+0.24,a1-0.5);
-  c.strokeStyle=P.fleshHi;c.lineWidth=6;c.globalAlpha=.8;c.stroke();c.globalAlpha=1;
-  // 씨 2~3개
-  drawSeedShape(c,P,-R*.3,ap[1]-R*.34,-0.5,1);
-  drawSeedShape(c,P,R*.24,ap[1]-R*.42,0.4,0.92);
-  if(R>44)drawSeedShape(c,P,-R*.02,ap[1]-R*.12,0.1,0.85);
+  // 과육 하이라이트 호
+  c.beginPath();c.arc(ax,ay,RR*.6,a0+0.22,a1-0.45);
+  c.strokeStyle=P.fleshHi;c.lineWidth=7;c.globalAlpha=.85;c.stroke();c.globalAlpha=1;
+  // 씨 2~3개 (큼직하게)
+  drawSeedShape(c,P,-R*.34,ay-R*.5,-0.55,1.25);
+  drawSeedShape(c,P,R*.3,ay-R*.62,0.45,1.15);
+  if(R>40)drawSeedShape(c,P,-R*.02,ay-R*.94,0.08,1.1);
   // 껍질 윤기
-  c.beginPath();c.arc(0,ap[1],R*1.05,a0+0.14,a0+0.52);
-  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=3.6;c.stroke();
+  c.beginPath();c.arc(ax,ay,RR-6,a0+0.12,a0+0.5);
+  c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=4;c.stroke();
 }
 function drawSlice(c,P,R,demon){ // 둥근 슬라이스, 씨 별모양 배치
   if(demon){c.shadowColor=P.glowA;c.shadowBlur=16;}
@@ -479,27 +482,27 @@ function bakeAtlas(av){
   M('mouthIn',-130,-74,130,74,c=>drawMouthIn(c,P,demon,false));
   if(demon)M('mouthInG',-130,-74,130,74,c=>drawMouthIn(c,P,demon,true));
   if(!demon){
-    M('eyeL',-12,-14,12,14,c=>drawEyeBase(c,P,-1));
-    M('eyeR',-12,-14,12,14,c=>drawEyeBase(c,P,1));
+    M('eyeL',-14,-16,14,16,c=>drawEyeBase(c,P,-1));
+    M('eyeR',-14,-16,14,16,c=>drawEyeBase(c,P,1));
   }else{
-    M('eyeL',-26,-24,22,14,c=>drawEyeDemon(c,P,1));
-    M('eyeR',-22,-24,26,14,c=>drawEyeDemon(c,P,-1));
+    M('eyeL',-40,-38,32,20,c=>drawEyeDemon(c,P,1));
+    M('eyeR',-32,-38,40,20,c=>drawEyeDemon(c,P,-1));
   }
   M('armL',-118,-48,10,64,c=>drawArm(c,P,-1,demon));
   M('armR',-10,-48,118,64,c=>drawArm(c,P,1,demon));
-  M('footL',-30,-4,30,36,c=>drawFoot(c,P));
-  M('footR',-30,-4,30,36,c=>drawFoot(c,P));
+  M('footL',-32,-4,32,40,c=>drawFoot(c,P));
+  M('footR',-32,-4,32,40,c=>drawFoot(c,P));
   M('stem',-24,-64,50,14,c=>drawStem(c,P));
   M('leaf',-8,-24,56,16,c=>drawLeaf(c,P));
   M('goo',-66,-22,62,60,c=>drawGoo(c,P));
   if(demon){
-    M('hornL',-42,-62,20,14,c=>drawHorn(c,P,-1));
-    M('hornR',-20,-62,42,14,c=>drawHorn(c,P,1));
+    M('hornL',-56,-82,28,20,c=>drawHorn(c,P,-1));
+    M('hornR',-28,-82,56,20,c=>drawHorn(c,P,1));
   }
   // 죽음 조각 부품
-  M('wedgeA',-58,-64,58,52,c=>drawWedge(c,P,48,demon));
-  M('wedgeB',-52,-58,52,46,c=>drawWedge(c,P,42,demon));
-  M('wedgeC',-46,-52,46,42,c=>drawWedge(c,P,37,demon));
+  M('wedgeA',-64,-68,64,54,c=>drawWedge(c,P,48,demon));
+  M('wedgeB',-58,-62,58,48,c=>drawWedge(c,P,42,demon));
+  M('wedgeC',-50,-56,50,44,c=>drawWedge(c,P,37,demon));
   M('sliceA',-42,-42,42,42,c=>drawSlice(c,P,36,demon));
   M('sliceB',-34,-34,34,34,c=>drawSlice(c,P,29,demon));
   M('stemPc',-30,-42,44,22,c=>drawStemPc(c,P,demon));

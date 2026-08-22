@@ -178,7 +178,7 @@ function pose(anim,t,s){
     P.feet=FEET.map(F=>walkFoot(s,F));
     for(const F of FEET){ const f=(s/STRIDE+F.off)%1;
       if(f>0.40&&f<0.50)P.dust.push({x:F.fx,y:-3,age:(f-0.40)/0.10*0.55,r:7}); }
-    P.armL=Math.sin(c*PI)*0.5+0.06; P.armR=-Math.sin(c*PI)*0.5+0.06;
+    P.armL=Math.sin(c*PI)*0.4+0.06; P.armR=-Math.sin(c*PI)*0.4+0.06;
     P.stem1=Math.sin(c*PI-1.1)*0.3; P.stem2=Math.sin(c*PI-2.0)*0.42;
     P.grind=Math.sin(t*12)*0.8;
     P.blink=(t%3.1)<0.09?1:0;
@@ -253,7 +253,7 @@ function deathSim(T,av){
     const r1=R(),r2=R(),r3=R(),r4=R();
     const p={type:PIECE_TYPES[i],demon,seed:i,
       x:(i/(PIECE_TYPES.length-1)-0.5)*44, y:-104-r4*26,
-      vx:(i/(PIECE_TYPES.length-1)-0.5)*235+(r1-0.5)*55,
+      vx:(i/(PIECE_TYPES.length-1)-0.5)*215+(r1-0.5)*50,
       vy:-(245+r2*180)-(PIECE_TYPES[i]==='stem'?60:0),
       w:(r3-0.5)*11, rot:(r3-0.5)*1.6,
       imp:-9, impPow:0, settled:-1};
@@ -331,8 +331,8 @@ function teethClenched(g,M,C,grind,silhouette,gapGlow){
     const pad=silhouette?2.6:1.3;
     for(let i=0;i<TEETH_N;i++){
       const x0=-M.hw+i*cw+pad, d=(i%2?5:-4);
-      const y0=top?-126:mid+d+(silhouette?3.5:0);
-      const y1=top?mid+d-(silhouette?3.5:0):-18;
+      const y0=top?-126:mid+d+(silhouette?4.5:0);
+      const y1=top?mid+d-(silhouette?4.5:0):-18;
       rr(g,x0,y0,cw-pad*2,y1-y0,4);
       g.fillStyle=silhouette?C.teeth:(top?C.teeth:C.teethB); g.fill();
       if(!silhouette){ g.strokeStyle='rgba(60,30,12,.85)'; g.lineWidth=2.6; g.stroke();
@@ -359,8 +359,8 @@ function teethOpen(g,M,C,silhouette){
 }
 function flameGrad(g,y0,y1,t){
   const gr=g.createLinearGradient(0,y0,0,y1);
-  gr.addColorStop(0,'#8a4ce0');
-  gr.addColorStop(clamp(0.45+0.16*Math.sin(t*5.3),0.22,0.78),'#b06cff');
+  gr.addColorStop(0,'#9a5cf0');
+  gr.addColorStop(clamp(0.45+0.16*Math.sin(t*5.3),0.22,0.78),'#cf9aff');
   gr.addColorStop(1,'#7cff8a');
   return gr;
 }
@@ -431,6 +431,8 @@ function faceDemon(g,C,P,t){
   else teethClenched(g,M,C,P.grind,true,true);
   g.restore();
   mouthPathDemon(g,M); g.strokeStyle=C.line; g.lineWidth=5.5; g.stroke();
+  g.save(); g.globalAlpha=.45; g.strokeStyle='#cf9aff'; g.lineWidth=1.8;  // 네온 칼자국 림
+  mouthPathDemon(g,mouthGeom(open*0.92+0.02)); g.stroke(); g.restore();
   // 화염 눈 (성난 조각 삼각)
   for(const sgn of [-1,1]){
     const cx=sgn*25, cy=-124;
@@ -577,7 +579,7 @@ function drawPump(g,rig,C,demon,P,t,alpha){
   g.beginPath(); g.ellipse(0,-16,104,30,0,0,TAU); g.fill();
   g.globalAlpha=1;
   // 꼭지 주변 진액 (꿀렁 — 길이가 숨쉼, 방울이 아래로 처짐)
-  const drips=[{x:-42,l:16},{x:8,l:26},{x:46,l:12}];
+  const drips=[{x:-42,l:24},{x:8,l:34},{x:46,l:18}];
   for(let i=0;i<drips.length;i++){
     const d=drips[i], L=d.l+Math.sin(P.sap*2.6+i*2.1)*3, w=4.6-i*0.6, y0=-170;
     g.beginPath();
@@ -697,18 +699,18 @@ function drawPiece(g,p,t){
   g.restore();
   if(p.sparkle>0){                                         // 안착 후 반짝✨
     const tw=Math.sin(t*5+p.seed*2.4);
-    if(tw>0.2){
+    if(tw>0.1){
       g.save(); g.translate(p.x+(p.seed%3-1)*18,p.y-16-(p.seed%2)*10);
       g.fillStyle=p.demon?'rgba(216,180,255,'+(tw*0.95)+')':'rgba(255,250,210,'+(tw*0.95)+')';
-      star4(g,0,0,5+tw*2.5,t*0.6+p.seed); g.restore();
+      star4(g,0,0,6.5+tw*3,t*0.6+p.seed); g.restore();
     }
     if(!p.demon){                                          // 달콤한 향 김
       g.save(); g.translate(p.x,p.y-14);
-      g.strokeStyle='rgba(255,236,200,.5)'; g.lineWidth=2.6; g.lineCap='round';
+      g.strokeStyle='rgba(255,240,208,.8)'; g.lineWidth=3; g.lineCap='round';
       const ph=(t*0.5+p.seed*0.37)%1, a=Math.sin(ph*PI);
-      g.globalAlpha=a*0.65;
-      g.beginPath(); g.moveTo(0,-ph*22);
-      g.bezierCurveTo(-5,-ph*22-7,5,-ph*22-13,0,-ph*22-20); g.stroke();
+      g.globalAlpha=a*0.8;
+      g.beginPath(); g.moveTo(0,-ph*24);
+      g.bezierCurveTo(-6,-ph*24-8,6,-ph*24-15,0,-ph*24-23); g.stroke();
       g.restore();
     }
   }
@@ -1012,12 +1014,12 @@ if(IS_MONTAGE){
   const CW=280,CH=424,Y0=42;
   // Row A: 대기+걷기 — 앞3 기본 / 뒤3 악마
   const rowA=[
-    {av:'base', anim:'idle',t:1.30,s:0,          lb:'대기 · 기본 (부득부득)'},
-    {av:'base', anim:'walk',t:0.30,s:0,          lb:'걷기 0/6 · 기본'},
-    {av:'base', anim:'walk',t:0.60,s:STRIDE/3,   lb:'걷기 2/6 · 기본'},
-    {av:'demon',anim:'idle',t:0.85,s:0,          lb:'대기 · 악마 호박'},
-    {av:'demon',anim:'walk',t:0.90,s:STRIDE/2,   lb:'걷기 3/6 · 악마'},
-    {av:'demon',anim:'walk',t:1.20,s:STRIDE*5/6, lb:'걷기 5/6 · 악마'},
+    {av:'base', anim:'idle',t:1.30,s:0,           lb:'대기 · 기본 (부득부득)'},
+    {av:'base', anim:'walk',t:0.30,s:STRIDE*0.20, lb:'걷기 · 기본 (왼발 스윙)'},
+    {av:'base', anim:'walk',t:0.60,s:STRIDE*0.52, lb:'걷기 · 기본 (뒤뚱 롤 최대)'},
+    {av:'demon',anim:'idle',t:0.85,s:0,           lb:'대기 · 악마 호박'},
+    {av:'demon',anim:'walk',t:0.90,s:STRIDE*0.70, lb:'걷기 · 악마 (오른발 스윙)'},
+    {av:'demon',anim:'walk',t:1.20,s:STRIDE*0.87, lb:'걷기 · 악마 (착지 스쿼시)'},
   ];
   rowA.forEach((c,i)=>cell(i*CW,Y0,CW,CH,c.lb,(w,h)=>
     drawScene({g,w,h,anim:c.anim,t:c.t,s:c.s,av:c.av,zoom:0.60})));
