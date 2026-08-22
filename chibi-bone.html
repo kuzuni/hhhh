@@ -1128,7 +1128,235 @@ function drawBones(g,J,P){
   g.restore();
 }
 
-//<<PART4>>
+// ==== 5. UI / 라이브 루프 ====
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var IS_MONTAGE=/[?&]montage/.test(location.search);
+var ANIM='idle',AV=PIRATE,SHOWBONES=false,SPEED=1;
+var phase=0,absT=2,lastTS=0;
+var PUFF=[]; // 아바타 전환 뿅! 파티클 (라이브 전용, 캐릭터 로컬 좌표)
+
+function spawnPuff(){
+  for(var i=0;i<14;i++){
+    var a=TAU*i/14+hash(i)*0.5,sp=30+50*hash(i+20);
+    PUFF.push({x:Math.cos(a)*10,y:-55+Math.sin(a)*14,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*0.7-18,
+      r:5+5*hash(i+3),age:0,life:0.55+0.3*hash(i+8),kind:i%4===0?'sparkle':'puff'});
+  }
+}
+function ambientFX(P,time){
+  if(AV.key==='mage'){
+    for(var i=0;i<5;i++){
+      var ph=frac(time*0.55+i*0.37),sd2=Math.floor(time*0.55+i*0.37);
+      P.fx.push({type:'sparkle',x:(hash(sd2*5+i*3)-0.5)*95,y:-20-78*hash(sd2*7+i)-6*Math.sin(time*2+i),
+        r:(1-ph*0.5)*4.2,rot:ph*2,al:Math.sin(Math.PI*ph)*0.8});
+    }
+  }
+}
+function liveFrame(ts){
+  var dt=clamp((ts-lastTS)/1000,0,0.05);lastTS=ts;
+  phase+=dt*SPEED/PERIODS[ANIM];
+  absT+=dt*SPEED;
+  var dpr=window.devicePixelRatio||1;
+  var w=window.innerWidth,h=window.innerHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){
+    cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+    cv.style.width=w+'px';cv.style.height=h+'px';
+  }
+  var g=ctx;
+  g.setTransform(dpr,0,0,dpr,0,0);
+  var groundY=h*0.76;
+  drawBG(g,w,h,absT,groundY);
+  var SC=Math.min(h*0.0043,w/300);
+  g.save();
+  g.translate(w*0.5,groundY);g.scale(SC,SC);
+  var P=pose(ANIM,phase,absT);
+  ambientFX(P,absT);
+  renderChar(g,P,AV,{bones:SHOWBONES,alpha:SHOWBONES?0.5:1});
+  // 뿅 파티클
+  for(var i=PUFF.length-1;i>=0;i--){
+    var q=PUFF[i];q.age+=dt;
+    if(q.age>q.life){PUFF.splice(i,1);continue;}
+    q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy-=25*dt;q.vx*=(1-1.8*dt);
+    var u=q.age/q.life;
+    drawFX(g,[{type:q.kind,x:q.x,y:q.y,r:q.r*(1-u*0.5),rot:u*3,al:(1-u)*0.9}]);
+  }
+  g.restore();
+  if(SHOWBONES){
+    g.fillStyle='rgba(20,40,70,0.75)';
+    g.fillRect(12,h-118,235,64);
+    g.fillStyle='#9be8ff';g.font='12px "Segoe UI","Malgun Gothic",sans-serif';g.textAlign='left';
+    g.fillText('스쿼시 sx '+(P.sx*P.spinSx).toFixed(2)+' · sy '+P.sy.toFixed(2),22,h-98);
+    g.fillText('접지 락: L '+(P.lFoot.planted?'●':'○')+'  R '+(P.rFoot.planted?'●':'○'),22,h-80);
+    g.fillText('본 15 · 2본 IK ×4 (다리2·팔2)',22,h-62);
+  }
+  requestAnimationFrame(liveFrame);
+}
+function setupUI(){
+  var btns=document.querySelectorAll('#ui button[data-anim]');
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      btns.forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      ANIM=b.getAttribute('data-anim');phase=0;
+    });
+  });
+  document.getElementById('avbtn').addEventListener('click',function(){
+    AV=(AV===PIRATE)?MAGE:PIRATE;   // 리그·애니는 그대로, 드로잉 세트만 스왑
+    spawnPuff();
+    this.textContent='아바타: '+(AV===PIRATE?'해적':'마법사')+' ⇄ '+(AV===PIRATE?'마법사':'해적');
+  });
+  document.getElementById('bonebtn').addEventListener('click',function(){
+    SHOWBONES=!SHOWBONES;this.classList.toggle('on',SHOWBONES);
+  });
+  document.getElementById('spd').addEventListener('input',function(){SPEED=parseFloat(this.value);});
+}
+
+// ==== 6. 몽타주 (?montage — 로드 즉시 동기 렌더) ====
+function montage(){
+  document.body.classList.add('montage');
+  cv.width=1680;cv.height=1500;
+  cv.style.width='1680px';cv.style.height='1500px';
+  var g=ctx;
+  g.fillStyle='#161b28';g.fillRect(0,0,1680,1500);
+  g.textAlign='center';
+
+  function cellBG(x,y,w,h,seed){
+    var sky=g.createLinearGradient(0,y,0,y+h);
+    sky.addColorStop(0,'#6fc5f2');sky.addColorStop(0.75,'#d9f2ff');
+    g.fillStyle=sky;g.fillRect(x,y,w,h);
+    g.fillStyle='rgba(255,255,255,0.9)';
+    for(var c=0;c<2;c++){
+      var cx=x+w*(0.2+0.6*hash(seed*3+c)),cy2=y+h*(0.1+0.16*hash(seed*7+c));
+      g.beginPath();
+      g.ellipse(cx,cy2,w*0.13,w*0.045,0,0,TAU);
+      g.ellipse(cx-w*0.07,cy2+3,w*0.06,w*0.032,0,0,TAU);
+      g.ellipse(cx+w*0.07,cy2+2,w*0.07,w*0.035,0,0,TAU);
+      g.fill();
+    }
+    var gy=y+h*0.865;
+    g.fillStyle='#a8dd7c';
+    g.beginPath();g.moveTo(x,gy);
+    g.quadraticCurveTo(x+w*0.3,gy-h*0.05,x+w*0.55,gy);
+    g.quadraticCurveTo(x+w*0.8,gy-h*0.04,x+w,gy);
+    g.lineTo(x+w,gy+2);g.lineTo(x,gy+2);g.closePath();g.fill();
+    g.fillStyle='#7ecb5a';g.fillRect(x,gy,w,y+h-gy);
+    return gy;
+  }
+  function cell(x,y,w,h,label,drawFn){
+    g.strokeStyle='rgba(255,255,255,0.12)';g.lineWidth=1;
+    g.strokeRect(x+0.5,y+0.5,w-1,h-1);
+    g.save();
+    g.beginPath();g.rect(x+3,y+3,w-6,h-32);g.clip();
+    drawFn(x+3,y+3,w-6,h-35);
+    g.restore();
+    g.fillStyle='#fff';g.font='bold 15px "Segoe UI","Malgun Gothic",sans-serif';g.textAlign='center';
+    g.fillText(label,x+w/2,y+h-11);
+  }
+  function charCell(x,y,w,h,P,av,sc,opt){
+    opt=opt||{};
+    var gy=cellBG(x,y,w,h,Math.round(x+y));
+    g.save();
+    g.translate(x+w*(opt.cx||0.5),gy);g.scale(sc,sc);
+    renderChar(g,P,av,opt);
+    g.restore();
+  }
+  // Row A: 총총 걷기 6위상 — 앞 3칸 해적, 뒤 3칸 마법사 (같은 리그 증명)
+  var AW=280,AH=440,y0=10;
+  for(var i=0;i<6;i++){
+    (function(i){
+      var t=i/6,av=i<3?PIRATE:MAGE;
+      var P=pose('walk',t,2.0+t*PERIODS.walk);
+      P.blink=0;
+      if(av.key==='mage'){
+        for(var s2=0;s2<4;s2++)P.fx.push({type:'sparkle',
+          x:(hash(s2*5+i)-0.5)*90,y:-25-70*hash(s2*7+i+1),r:3.8,rot:s2,al:0.7});
+      }
+      cell(i*AW,y0,AW,AH,'총총 걷기 '+(i+1)+'/6 · '+av.name+' (같은 리그)',function(cx2,cy2,cw2,ch2){
+        charCell(cx2,cy2,cw2,ch2,P,av,2.55);
+      });
+    })(i);
+  }
+  // Row B: 대검 풀스윙 6키 (해적)
+  var keys=[[0.10,'① 재기 (예비동작)'],[0.27,'② 깊은 비틀림'],[0.365,'③ 풀스윙 + 스미어'],
+            [0.44,'④ 임팩트 홀드'],[0.63,'⑤ 관성 회전'],[0.90,'⑥ 헤헤 복귀']];
+  for(var k2=0;k2<6;k2++){
+    (function(k2){
+      var t=keys[k2][0];
+      var P=pose('swing',t,5.0+t*PERIODS.swing);
+      P.blink=0;
+      cell(k2*AW,y0+AH,AW,AH,keys[k2][1],function(cx2,cy2,cw2,ch2){
+        charCell(cx2,cy2,cw2,ch2,P,PIRATE,2.0,{cx:0.44});
+      });
+    })(k2);
+  }
+  // Row C
+  var CW=420,CH2=1500-(y0+AH*2)-10,cy0=y0+AH*2;
+  (function(){ // ① 뷰티샷 · 해적
+    var P=pose('idle',0.22,2.0);P.blink=0;P.mouth='cat';P.eyeLX=0.5;
+    cell(0,cy0,CW,CH2,'① 뷰티샷 · 해적 (커틀러스)',function(cx2,cy2,cw2,ch2){
+      charCell(cx2,cy2,cw2,ch2,P,PIRATE,3.55);
+    });
+  })();
+  (function(){ // ② 뷰티샷 · 마법사
+    var P=pose('idle',0.55,4.4);P.blink=0;P.mouth='smile';P.eyeLX=-0.5;
+    for(var s3=0;s3<6;s3++)P.fx.push({type:'sparkle',
+      x:(hash(s3*5+2)-0.5)*100,y:-20-80*hash(s3*7+3),r:3+2.5*hash(s3),rot:s3,al:0.8});
+    cell(CW,cy0,CW,CH2,'② 뷰티샷 · 마법사 (별 지팡이)',function(cx2,cy2,cw2,ch2){
+      charCell(cx2,cy2,cw2,ch2,P,MAGE,3.55);
+    });
+  })();
+  (function(){ // ③ 얼굴 클로즈업 (머리 세로 ≥450px)
+    cell(CW*2,cy0,CW,CH2,'③ 얼굴 클로즈업 (450px+)',function(cx2,cy2,cw2,ch2){
+      var rg2=g.createRadialGradient(cx2+cw2/2,cy2+ch2/2,20,cx2+cw2/2,cy2+ch2/2,cw2*0.7);
+      rg2.addColorStop(0,'#fff3e2');rg2.addColorStop(1,'#ffd9a8');
+      g.fillStyle=rg2;g.fillRect(cx2,cy2,cw2,ch2);
+      for(var s4=0;s4<7;s4++){
+        drawFX(g,[{type:'sparkle',x:cx2+cw2*hash(s4*3+1),y:cy2+ch2*hash(s4*5+2),r:6+5*hash(s4),rot:s4,al:0.5}]);
+      }
+      var P2=pose('idle',0.28,2.0);
+      P2.blink=0;P2.mouth='cat';P2.eyeLX=0;P2.earWig=0.15;P2.fx=[];
+      var J0=solve(P2);
+      var sc=9.3;
+      g.save();
+      g.translate(cx2+cw2/2-J0.head.x*sc,cy2+ch2*0.54-J0.head.y*sc);
+      g.scale(sc,sc);
+      renderChar(g,P2,PIRATE,{});
+      g.restore();
+    });
+  })();
+  (function(){ // ④ 리깅 오버레이 (착지 스쿼시 순간)
+    var P=pose('jump',0.795,3.0);
+    P.fx=[];P.blink=0;
+    cell(CW*3,cy0,CW,CH2,'④ 리깅 오버레이 · 본 15 · 2본 IK · 스쿼시 채널',function(cx2,cy2,cw2,ch2){
+      g.fillStyle='#1d2436';g.fillRect(cx2,cy2,cw2,ch2);
+      g.strokeStyle='rgba(255,255,255,0.06)';g.lineWidth=1;
+      for(var gx2=cx2;gx2<cx2+cw2;gx2+=30){g.beginPath();g.moveTo(gx2,cy2);g.lineTo(gx2,cy2+ch2);g.stroke();}
+      for(var gy2=cy2;gy2<cy2+ch2;gy2+=30){g.beginPath();g.moveTo(cx2,gy2);g.lineTo(cx2+cw2,gy2);g.stroke();}
+      g.save();
+      g.translate(cx2+cw2/2,cy2+ch2*0.8);g.scale(3.3,3.3);
+      renderChar(g,P,PIRATE,{bones:true,alpha:0.42});
+      g.restore();
+      g.fillStyle='#ffe14d';g.font='13px "Segoe UI","Malgun Gothic",sans-serif';g.textAlign='left';
+      g.fillText('착지 스쿼시: sx '+(P.sx).toFixed(2)+' / sy '+(P.sy).toFixed(2),cx2+14,cy2+26);
+      g.fillStyle='#9be8ff';
+      g.fillText('― 본 체인   ● 관절   ✕ IK 타깃',cx2+14,cy2+46);
+      g.fillStyle='#4dff6d';
+      g.fillText('▢ 접지 락 (발 미끄러짐 0)',cx2+14,cy2+66);
+      g.fillStyle='#ffb020';
+      g.fillText('○ 무기 그립 IK',cx2+14,cy2+86);
+      g.textAlign='center';
+    });
+  })();
+  g.fillStyle='rgba(255,255,255,0.55)';g.font='11px "Segoe UI","Malgun Gothic",sans-serif';
+  g.textAlign='right';
+  g.fillText('리코 ver.A — 절차적 스켈레톤 · 2본 IK · 스쿼시&스트레치 · 아바타(드로잉 세트) 스왑',1672,1494);
+}
+
+if(IS_MONTAGE){
+  montage();
+}else{
+  setupUI();
+  requestAnimationFrame(function(ts){lastTS=ts;requestAnimationFrame(liveFrame);});
+}
 
 
 

@@ -87,8 +87,8 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
 const PAL = {
   base:{ line:'#241c17', body:'#54463e', belly:'#6b5a50', shade:'#3c322c', top:'#665649',
     mane:'#b89a5a', maneSh:'#8a7340', earIn:'#c08a80', eye:'#e8c03c', lid:'#463a32',
-    snout:'#9a7a72', snoutHi:'#b3948a', nostril:'#382923', hoof:'#2a211c', tusk:'#f6f2e4',
-    leg:'#4a3d35', legFar:'#392f29' },
+    snout:'#9a7a72', snoutHi:'#b3948a', nostril:'#382923', hoof:'#2f2620', tusk:'#f6f2e4',
+    leg:'#5a4b42', legFar:'#443831' },
   fire:{ line:'#1c1512', body:'#2e2624', belly:'#3b2f2a', shade:'#1f1815', top:'#413630',
     mane:'#e84c2c', maneSh:'#b93a20', earIn:'#ff8a4c', eye:'#ffb03c', lid:'#241b16',
     snout:'#6e5049', snoutHi:'#8a675c', nostril:'#241813', hoof:'#171210', tusk:'#f6f2e4',
@@ -176,7 +176,11 @@ function drawFace(c,P,blink,fire){
       if(s<0){ c.moveTo(ex-14,-6); c.lineTo(ex+13,2);} else { c.moveTo(ex+14,-6); c.lineTo(ex-13,2);}
       c.stroke();
     }
-    // 눈썹 능선
+    // 눈썹 능선 (불속성은 밑에 잉걸빛 림)
+    if(fire){ c.strokeStyle='#c85a20'; c.globalAlpha=0.7; c.lineWidth=3; c.beginPath();
+      if(s<0){ c.moveTo(ex-19,-17); c.quadraticCurveTo(ex,-18,ex+15,-9);}
+      else   { c.moveTo(ex+19,-17); c.quadraticCurveTo(ex,-18,ex-15,-9);}
+      c.stroke(); c.globalAlpha=1; }
     c.strokeStyle=P.line; c.lineWidth=6.5; c.beginPath();
     if(s<0){ c.moveTo(ex-20,-21); c.quadraticCurveTo(ex,-22,ex+15,-13);}
     else   { c.moveTo(ex+20,-21); c.quadraticCurveTo(ex,-22,ex-15,-13);}
@@ -641,8 +645,8 @@ function drawField(ctx,w,h,gy,scroll){
   for(let i=0;i<26;i++){
     const px=((i*197+41 - scroll) % (w+60) + (w+60)) % (w+60) - 30;
     const py=gy+10+((i*89)%Math.max(20,(h-gy-18)));
-    const s=0.7+((i*31)%10)/14;
-    ctx.strokeStyle='rgba(56,118,36,.75)'; ctx.lineWidth=2.4*s; ctx.lineCap='round';
+    const s=0.55+((i*31)%10)/18;
+    ctx.strokeStyle='rgba(58,122,38,.5)'; ctx.lineWidth=1.9*s; ctx.lineCap='round';
     ctx.beginPath();
     ctx.moveTo(px,py); ctx.quadraticCurveTo(px-3*s,py-8*s,px-6*s,py-13*s);
     ctx.moveTo(px,py); ctx.lineTo(px+1*s,py-14*s);
@@ -795,10 +799,10 @@ if(IS_MONTAGE){
       if(opts.bones) drawBones(ctx,LAST_WORLDS);
     } finally { ctx.restore(); }
   }
-  function deathCell(w,h,av,dT){
+  function deathCell(w,h,av,dT,zoom){
     const gy=h*0.60;
     drawField(ctx,w,h,gy,0);
-    const s=Math.min((h-64)/330,(w-20)/460);
+    const s=Math.min((h-64)/330,(w-20)/460)*(zoom||1);
     ctx.save();
     try{
       ctx.translate(w/2, gy+(h-gy)*0.62); ctx.scale(s,s);
@@ -819,12 +823,12 @@ if(IS_MONTAGE){
   // Row B — 죽음 시퀀스 6키
   const by=444, bh=428;
   const rowB=[
-    ['① 피격 경직',            ()=>deathCell(aw,bh,'base',0.17)],
-    ['② 뿅! (연기 팝)',        ()=>deathCell(aw,bh,'base',0.46)],
-    ['③ 조각 튀어오름',        ()=>deathCell(aw,bh,'base',0.72)],
-    ['④ 통통 바운스',          ()=>deathCell(aw,bh,'base',1.12)],
-    ['⑤ 안착',                 ()=>deathCell(aw,bh,'base',2.05)],
-    ['⑥ 반짝 ✨ 맛있게',       ()=>deathCell(aw,bh,'base',3.05)],
+    ['① 피격 경직',            ()=>deathCell(aw,bh,'base',0.17,1.42)],
+    ['② 뿅! (연기 팝)',        ()=>deathCell(aw,bh,'base',0.46,1.3)],
+    ['③ 조각 튀어오름',        ()=>deathCell(aw,bh,'base',0.72,1.22)],
+    ['④ 통통 바운스',          ()=>deathCell(aw,bh,'base',1.12,1.12)],
+    ['⑤ 안착',                 ()=>deathCell(aw,bh,'base',2.05,1.12)],
+    ['⑥ 반짝 ✨ 맛있게',       ()=>deathCell(aw,bh,'base',3.05,1.12)],
   ];
   rowB.forEach(([lb,fn],i)=>cell(2+ag+i*(aw+ag),by,aw,bh,lb,fn));
   // Row C — 뷰티샷 ×2 / 조각 클로즈업 / 부품 분해
@@ -961,8 +965,6 @@ if(IS_MONTAGE){
       S.animT+=dt; S.fadeT=Math.min(1,S.fadeT+dt*4);
       const phase=S.animT/A.dur;
       if(S.anim==='walk'){ S.scroll+=104*dt;
-        const ph=((phase%1)+1)%1;
-        cue('w1_'+Math.floor(phase*2),ph<0.5?0.13:0.63,ph<0.5?0.13:0.63,()=>{}); // noop keep
         if(S.avatar==='fire'){ if(Math.random()<dt*8) emberAt((Math.random()<0.5?-84:82),-6,1); }
       }
       if(S.anim==='charge'){

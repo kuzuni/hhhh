@@ -68,19 +68,20 @@ var PAL={
   mane:'#b89a5a',maneSh:'#8a7340',maneHi:'#d4b878',
   snout:'#9a7a72',snoutHi:'#b6968c',snoutSh:'#7c5f58',nostril:'#43302c',
   eye:'#e8c03c',eyeSh:'#b8912a',pupil:'#1c1410',tusk:'#f6f0dd',tuskSh:'#d5cbae',
-  earIn:'#c88f8b',hoof:'#2c231e',brow:'#2e241d'},
+  earIn:'#c88f8b',hoof:'#2c231e',brow:'#2e241d',legFar:'#2e2620',legRim:'#93796a',bounce:'#7f6b5c'},
  fire:{body:'#2e2624',belly:'#3d332e',shade:'#1c1614',top:'#4a3d35',line:'#120d0a',
   crack:'#ff7a3c',crackHot:'#ffb066',
   flameR:'#e84c2c',flameO:'#ff8f3c',flameY:'#ffd54a',
   snout:'#6d554e',snoutHi:'#836a62',snoutSh:'#503c36',nostril:'#241a18',
   eye:'#ffa03c',eyeSh:'#d97722',pupil:'#3a1404',glow:'#ff8a3c',
-  tusk:'#f6f0dd',tuskSh:'#d5cbae',earIn:'#9c5a48',hoof:'#171110',brow:'#171110'}
+  tusk:'#f6f0dd',tuskSh:'#d5cbae',earIn:'#9c5a48',hoof:'#171110',brow:'#171110',
+  legFar:'#120d0b',legRim:'#6a544a',bounce:'#4c3d34'}
 };
 var FOOD={
  line:'#5a2a1e',
  hamBody:'#ec9070',hamBodyHi:'#f8b48f',hamFace:'#f9cab8',hamFaceIn:'#f19b95',
  bone:'#fdf6e2',boneSh:'#d9c8a2',
- steak:'#d6524a',steakIn:'#c23f3a',steakSide:'#a03430',fat:'#f7e9cf',fatSh:'#e6d2ac',
+ steak:'#e8917f',steakIn:'#df7e6c',steakSide:'#b5714b',steakRim:'#a35c33',fat:'#f9ead0',fatSh:'#e6d2ac',
  saus:'#c06044',sausHi:'#dd8862',sausTie:'#8a4630',
  gBody:'#a96a3e',gBodyHi:'#c98d58',gFace:'#c78e57',gFaceIn:'#b0703e',
  gDark:'#7c4a28',gMark:'#54301a',gSteak:'#93502e',gSteakIn:'#7c3f22',gFat:'#dfc08e',
@@ -197,15 +198,16 @@ function poseWalk(t){
    p.feet[k]={x:f.x,y:f.y,planted:f.planted};
    if(f.land>0.4&&f.planted)p.aux.dust.push({x:f.x,y:0,a:f.land*0.5,r:7});
  }
- // 몸 뒤뚱: 좌우 롤 + 2박자 바운스 + 무게 이동
+ // 몸 뒤뚱: 좌우 롤(±8°) + 컨택트 스쿼시/패싱 상승 — 정지컷에서도 읽히게 과장
  var roll=Math.sin(t*TAU);
- p.body.rot=0.105*roll;
- p.body.x=5*roll;
- var bob=Math.abs(Math.cos(t*TAU));
- p.body.y=-108-7*bob;
- p.body.sy=1+0.045*Math.cos(t*TAU*2+0.6);
- p.body.sx=1-0.03*Math.cos(t*TAU*2+0.6);
- p.snout.rot=0.06*roll; p.snout.y=2+1.5*bob;
+ p.body.rot=0.145*roll;
+ p.body.x=7*roll;
+ var pass=0.5-0.5*Math.cos((t-0.02)*TAU*2); // 패싱(t≈0.27/0.77)에서 1
+ var land=Math.pow(1-pass,5);               // 컨택트(t≈0.02/0.52) 착지 펄스
+ p.body.sy=1-0.06*land+0.05*pass;           // 착지 스쿼시 / 패싱 스트레치
+ p.body.sx=1+0.055*land-0.035*pass;
+ p.body.y=-108-12*pass+90*(1-p.body.sy);    // 패싱 +12px 상승, 바닥 접지 보정
+ p.snout.rot=0.07*roll; p.snout.y=2+2.2*land;
  p.earN.rot=-0.16*Math.sin(t*TAU-1.0); p.earF.rot=0.14*Math.sin(t*TAU-1.4);
  p.jaw.rot=0.03*roll;
  for(var i=0;i<MANE_N;i++){ // 갈기 오버랩: 몸 롤을 지연해 따라옴
@@ -314,7 +316,7 @@ function simPiece(p,t){ // t: 스폰 이후 경과. 절차 물리: 중력+바운
      else{landed=true;landAt=time;vy=0;vx=0;}
    }
  }
- var pop=0.35+0.65*eO(clamp(t/0.22,0,1)); // 스폰 직후 뿅 스케일-인
+ var pop=0.12+0.88*eO(clamp((t-0.06)/0.26,0,1)); // 연기 속에서 뿅 스케일-인(초반엔 연기가 가림)
  if(landed){
    var st=Math.min(t,3.2)-landAt+Math.max(0,t-3.2);
    var nr=rot%TAU; if(nr>PI)nr-=TAU; if(nr<-PI)nr+=TAU;
@@ -383,9 +385,11 @@ function drawHam(g,gr){ // 둥근 분홍 단면 + 중앙 흰 뼈 원 (만화 햄
  ell(g,-13,0,6.5,7.2);g.fillStyle=FOOD.bone;g.fill();
  g.strokeStyle=FOOD.boneSh;g.lineWidth=2;g.stroke();
  ell(g,-13,1.5,2.6,2.9);g.fillStyle=FOOD.boneSh;g.fill();
- // 윤기
+ // 윤기 + ✦ 스파클
  g.fillStyle='rgba(255,255,255,0.75)';
  ell(g,-19,-11,3.4,4.5);g.fill();
+ g.fillStyle='rgba(255,255,255,0.92)';
+ star4(g,-21,-13,5.5,0.3);
 }
 function drawSteak(g,gr){ // 붉은 살 + 크림 지방 마블링 단면 슬라이스
  var top=gr?FOOD.gSteak:FOOD.steak, tin=gr?FOOD.gSteakIn:FOOD.steakIn;
@@ -399,25 +403,31 @@ function drawSteak(g,gr){ // 붉은 살 + 크림 지방 마블링 단면 슬라�
    g.bezierCurveTo(-27,10+yo,-31,2+yo,-30,-8+yo);
    g.closePath();
  }
- slab(8);g.fillStyle=side;g.fill();outl(g,3.4);g.stroke(); // 두께면
- slab(0);g.fillStyle=top;g.fill();outl(g,3.4);g.stroke();  // 윗면
+ slab(8);g.fillStyle=side;g.fill();outl(g,3.4);g.stroke(); // 두께면(밝은 갈색)
+ slab(0);g.fillStyle=top;g.fill();outl(g,4.4);g.stroke();  // 윗면 — 두꺼운 외곽
  g.save();slab(0);g.clip();
+ // 밝은 갈색 시어링 테두리 (식품 일러스트 톤)
+ g.strokeStyle=gr?FOOD.gDark:FOOD.steakRim;g.globalAlpha=0.9;g.lineWidth=8;
+ slab(0);g.stroke();g.globalAlpha=1;
  g.fillStyle=tin;
- g.beginPath();g.ellipse(0,-3,22,10,-0.1,0,TAU);g.fill();
- // 지방 테두리(위쪽 가장자리 fat cap)
- g.strokeStyle=fat;g.lineWidth=5;g.lineCap='round';
+ g.beginPath();g.ellipse(0,-3,20,9,-0.1,0,TAU);g.fill();
+ // 지방 테두리(위쪽 가장자리 fat cap) — 굵고 장식적으로
+ g.strokeStyle=fat;g.lineWidth=7;g.lineCap='round';
  g.beginPath();g.moveTo(-28,-9);g.bezierCurveTo(-10,-20,10,-20,27,-11);g.stroke();
- // 마블링
- g.strokeStyle=fat;g.lineWidth=2.2;
+ // 마블링 — 굵은 크림색 장식 곡선
+ g.strokeStyle=fat;g.lineWidth=3.4;
  g.beginPath();g.moveTo(-18,-4);g.bezierCurveTo(-10,-9,-2,-1,6,-6);g.stroke();
  g.beginPath();g.moveTo(-8,4);g.bezierCurveTo(0,0,8,6,16,1);g.stroke();
  g.beginPath();g.moveTo(-22,2);g.bezierCurveTo(-18,6,-12,7,-8,8);g.stroke();
+ g.lineWidth=2.4;
+ g.beginPath();g.moveTo(6,-11);g.bezierCurveTo(12,-13,18,-9,22,-4);g.stroke();
  if(gr){g.strokeStyle=FOOD.gMark;g.lineWidth=3.4;
    g.beginPath();g.moveTo(-20,-16);g.lineTo(-6,12);g.moveTo(-4,-18);g.lineTo(10,11);
    g.moveTo(12,-16);g.lineTo(24,6);g.stroke();}
  g.restore();
- g.fillStyle='rgba(255,255,255,0.6)';
- ell(g,-16,-12,4,2.2);g.fill();
+ // ✦ 윤기 스파클
+ g.fillStyle='rgba(255,255,255,0.92)';
+ star4(g,-16,-12,6,0.4);
 }
 function drawSausage(g,gr){ // 통통 소시지 + 양끝 매듭
  var body=gr?FOOD.gSaus:FOOD.saus, hi=gr?FOOD.gSausHi:FOOD.sausHi;
@@ -441,6 +451,8 @@ function drawSausage(g,gr){ // 통통 소시지 + 양끝 매듭
    g.moveTo(10,-10);g.lineTo(16,7);g.stroke();}
  g.fillStyle='rgba(255,255,255,0.6)';
  ell(g,-14,-6,4.5,2);g.fill();
+ g.fillStyle='rgba(255,255,255,0.92)';
+ star4(g,-13,-7,4.5,0.5);
 }
 var PIECE_DRAW={ham:drawHam,steak:drawSteak,sausage:drawSausage};
 function drawPiece(g,kind,gr,x,y,rot,sx,sy,s){
@@ -470,6 +482,10 @@ function drawBody(g,pal,time,fire){
  g.beginPath();g.ellipse(-58,52,86,58,-0.25,0,TAU);g.fill();
  g.globalAlpha=0.55;
  g.beginPath();g.ellipse(0,86,120,26,0,0,TAU);g.fill();g.globalAlpha=1;
+ // 몸통 하단 밝은 셀셰이딩 경계선(바운스 라이트) — 덩어리 구조 강조
+ g.strokeStyle=pal.bounce;g.globalAlpha=0.6;g.lineWidth=5;g.lineCap='round';
+ g.beginPath();g.ellipse(2,52,104,36,0.02,PI*0.22,PI*0.80);g.stroke();
+ g.globalAlpha=1;
  // 톱라이트
  g.fillStyle=pal.top;g.globalAlpha=0.9;
  g.beginPath();g.ellipse(6,-74,84,30,0.06,0,TAU);g.fill();g.globalAlpha=1;
@@ -539,7 +555,7 @@ function drawManeSpike(g,pal,i,time,fire){
 }
 function drawLeg(g,leg,pal,near,fire){
  var w=near?27:24;
- var col=near?pal.body:pal.shade;
+ var col=near?pal.body:pal.legFar; // 뒷다리(원측)는 한 단계 더 어둡게 — 실루엣 분리
  g.save();
  g.translate(leg.hip[0],leg.hip[1]);g.rotate(leg.ang-PI/2);
  var L=leg.len;
@@ -551,6 +567,11 @@ function drawLeg(g,leg,pal,near,fire){
  g.lineTo(w/2,-6);
  g.closePath();g.fill();
  g.strokeStyle=pal.line;g.lineWidth=near?5:4.4;g.lineJoin='round';g.stroke();
+ if(near){ // 근측 다리 앞모서리 밝은 rim 하이라이트 — 앞뒤 다리 구분
+   g.strokeStyle=pal.legRim;g.globalAlpha=0.8;g.lineWidth=3;g.lineCap='round';
+   g.beginPath();g.moveTo(w/2-3.5,2);g.lineTo(w/2*0.92-3.5,L-9);g.stroke();
+   g.globalAlpha=1;
+ }
  // 발굽
  g.fillStyle=pal.hoof;
  g.beginPath();
@@ -912,10 +933,12 @@ function drawScene(g,w,h,st){
    }
    var fire=st.avatar==='fire';
    ds.pieces.forEach(function(q,i){
-     // 조각 그림자
-     g.fillStyle='rgba(30,60,22,0.25)';
-     var hgt=clamp((-q.y-PIECES[i].rest)/120,0,1);
-     ell(g,q.x,3,26*PIECES[i].s*(1-hgt*0.4)*q.pop,6*(1-hgt*0.4));g.fill();
+     // 조각 접지 그림자 — 높이에 반비례하는 크기/투명도 (낙하 물리 강조)
+     var hgt=clamp((-q.y-PIECES[i].rest)/150,0,1);
+     g.globalAlpha=(0.36*(1-hgt*0.6)+0.05)*q.pop;
+     g.fillStyle='#14320e';
+     ell(g,q.x,3,26*PIECES[i].s*(1-hgt*0.45)*q.pop,6.5*(1-hgt*0.45));g.fill();
+     g.globalAlpha=1;
      drawPiece(g,PIECES[i].kind,fire,q.x,q.y,q.rot,q.sqx,q.sqy,PIECES[i].s*q.pop);
      if(q.landed&&q.settleT>0.25){
        if(fire)drawSteam(g,q.x,q.y-PIECES[i].rest,st.time||dt2,i);
@@ -930,9 +953,32 @@ function drawScene(g,w,h,st){
  }else if(st.anim==='revive'){
    var rs=simRevive(st.t);
    var fire2=st.avatar==='fire';
-   rs.pieces.forEach(function(q){
+   var ru=clamp(st.t/REV_D,0,1), rtm=st.time||st.t;
+   if(ru<0.78){ // 부활 글로우 링 + 상승 파티클 (반짝✨키의 의도를 크게 명시)
+     var cg=g.createRadialGradient(0,-72,12,0,-72,130);
+     cg.addColorStop(0,'rgba(255,240,180,0.38)');cg.addColorStop(1,'rgba(255,240,180,0)');
+     g.fillStyle=cg;ell(g,0,-72,130,118);g.fill();
+     g.strokeStyle='rgba(255,235,160,'+(0.55+0.3*Math.sin(rtm*9)).toFixed(2)+')';
+     g.lineWidth=3.5;
+     g.beginPath();g.ellipse(0,-72,58+34*Math.sin(ru*PI),50+30*Math.sin(ru*PI),0,0,TAU);g.stroke();
+     for(var ri=0;ri<7;ri++){
+       var rp=(st.t*1.4+rnd(ri*5.3))%1;
+       g.globalAlpha=Math.sin(rp*PI)*0.85;
+       g.fillStyle=ri%2?'#ffe9a8':'#fffbe0';
+       ell(g,(rnd(ri*3.1)-0.5)*180,-8-rp*135,2.8,2.8);g.fill();
+     }
+     g.globalAlpha=1;
+   }
+   rs.pieces.forEach(function(q,j){
      var P=PIECES[q.kind];
      drawPiece(g,P.kind,fire2,q.x,q.y,q.rot,1,1,P.s*q.scale);
+     // 조각 대비 큰 4각 별 글린트 (조각 직경의 60%+)
+     var tw=0.65+0.35*Math.sin(rtm*7+j*2.1);
+     g.globalAlpha=0.92*tw;g.fillStyle='#fffbe0';
+     star4(g,q.x+17,q.y-15,15+6*tw,rtm*2+j);
+     if(j%2){g.globalAlpha=0.7*tw;g.fillStyle='#ffe9a8';
+       star4(g,q.x-15,q.y+9,9.5,rtm*1.6+j*1.3);}
+     g.globalAlpha=1;
    });
    if(rs.bodyScale>0){
      var p3=poseIdle(0);
@@ -1073,6 +1119,7 @@ if(!isMontage){
 if(isMontage){
  document.getElementById('ui').style.display='none';
  document.getElementById('ttl').style.display='none';
+ document.getElementById('back').style.display='none'; // 네비가 A-1 프레임을 침범하지 않게
  var MW=1680,MH=1500;
  cv.width=MW;cv.height=MH;
  cv.style.width=MW+'px';cv.style.height=MH+'px';
@@ -1091,15 +1138,15 @@ if(isMontage){
    g.restore();
  }
  function mScene(w,h,st){st.time=st.time||1.3;drawScene(g,w,h,st);}
- // Row A: 대기+걷기 6위상 — 앞 3칸 기본 / 뒤 3칸 불속성
+ // Row A: 대기+걷기 — 걷기는 실루엣 차가 큰 컨택트(착지 스쿼시) vs 패싱(최고점) 키
  var cwA=(MW-pad*7)/6, hA=396;
  var rowA=[
   {l:'대기 · 기본',st:{anim:'idle',t:0.55,avatar:'base'}},
-  {l:'걷기 0/4 · 기본',st:{anim:'walk',t:0,avatar:'base',groundOff:0}},
-  {l:'걷기 2/4 · 기본',st:{anim:'walk',t:0.5,avatar:'base',groundOff:0.5*STRIDE/DUTY}},
+  {l:'걷기 컨택트(착지 스쿼시) · 기본',st:{anim:'walk',t:0.02,avatar:'base',groundOff:0.02*STRIDE/DUTY}},
+  {l:'걷기 패싱(최고점 +12px) · 기본',st:{anim:'walk',t:0.27,avatar:'base',groundOff:0.27*STRIDE/DUTY}},
   {l:'대기 · 불속성',st:{anim:'idle',t:0.55,avatar:'fire',time:0.7}},
-  {l:'걷기 1/4 · 불속성',st:{anim:'walk',t:0.25,avatar:'fire',groundOff:0.25*STRIDE/DUTY,time:1.9}},
-  {l:'걷기 3/4 · 불속성',st:{anim:'walk',t:0.75,avatar:'fire',groundOff:0.75*STRIDE/DUTY,time:2.6}}
+  {l:'걷기 컨택트 · 불속성',st:{anim:'walk',t:0.52,avatar:'fire',groundOff:0.52*STRIDE/DUTY,time:1.9}},
+  {l:'걷기 패싱 · 불속성',st:{anim:'walk',t:0.77,avatar:'fire',groundOff:0.77*STRIDE/DUTY,time:2.6}}
  ];
  rowA.forEach(function(c,i){
    cell(pad+(cwA+pad)*i,pad,cwA,hA,c.l,function(w,h){

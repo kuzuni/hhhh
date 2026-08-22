@@ -251,9 +251,9 @@ function drawMouthIn(c,P,demon,green){ // 피벗 char (0,-150)
   }
   rr(c,-124,-68,248,136,30);
   if(!green){
-    const g=c.createRadialGradient(0,2,8,0,2,160);
-    g.addColorStop(0,'#fff8e8');g.addColorStop(.3,'#f0ccff');
-    g.addColorStop(.6,'#c88cff');g.addColorStop(1,'#8248c8');
+    const g=c.createRadialGradient(0,6,8,0,4,158);
+    g.addColorStop(0,'#ffeed0');g.addColorStop(.28,'#eabcff');
+    g.addColorStop(.6,'#bc7cf8');g.addColorStop(1,'#7a40c0');
     c.fillStyle=g;c.fill();
   }else{
     const g=c.createRadialGradient(-14,-6,6,-10,0,140);
@@ -264,10 +264,10 @@ function drawMouthIn(c,P,demon,green){ // 피벗 char (0,-150)
 }
 // ---- 눈 --------------------------------------------------------------------
 function drawEyeBase(c,P,s){ // 작은 타원 점눈 (덩치 대비 포인트)
-  ell(c,0,0,8.5,11);c.fillStyle=P.eye;c.fill();
-  c.strokeStyle='rgba(58,30,14,.6)';c.lineWidth=2;c.stroke();
-  ell(c,-2.4,-3.6,2.6,3.2);c.fillStyle='rgba(255,255,255,.9)';c.fill();
-  ell(c,2.6,3.4,1.2,1.5);c.fillStyle='rgba(255,255,255,.5)';c.fill();
+  ell(c,0,0,10.5,13.5);c.fillStyle=P.eye;c.fill();
+  c.strokeStyle='rgba(20,9,3,.85)';c.lineWidth=2.4;c.stroke();
+  ell(c,-3,-4.6,3.4,4.2);c.fillStyle='rgba(255,255,255,.95)';c.fill();
+  ell(c,3.2,4.4,1.6,2);c.fillStyle='rgba(255,255,255,.55)';c.fill();
 }
 function drawEyeDemon(c,P,s){ // 조각된 삼각 화염눈 (s: 좌우 부호)
   c.save();c.scale(s*1.55,1.55);
@@ -349,27 +349,27 @@ function drawLeaf(c,P){ // 피벗 = 잎자루
   c.beginPath();c.moveTo(16,-3);c.lineTo(20,-10);c.stroke();
   c.beginPath();c.moveTo(26,-5);c.lineTo(31,-11);c.stroke();c.globalAlpha=1;
 }
-function drawGoo(c,P){ // 피벗 = 꼭지 주변 char (0,-278). 흘러내린 진액
+function drawGoo(c,P){ // 피벗 = 꼭지 주변. 흘러내린 진액 (콤팩트)
   c.beginPath();
-  c.moveTo(-56,4);
-  c.quadraticCurveTo(-58,16,-48,18);c.quadraticCurveTo(-40,19,-38,10);
-  c.lineTo(-36,30);c.quadraticCurveTo(-35,40,-27,39);c.quadraticCurveTo(-20,38,-21,26);
-  c.lineTo(-20,12);c.quadraticCurveTo(-12,20,-4,14);
-  c.lineTo(-2,42);c.quadraticCurveTo(0,52,8,50);c.quadraticCurveTo(15,48,13,36);
-  c.lineTo(13,12);c.quadraticCurveTo(22,18,30,12);
-  c.lineTo(33,24);c.quadraticCurveTo(36,33,43,30);c.quadraticCurveTo(49,27,46,17);
-  c.lineTo(46,6);
-  c.quadraticCurveTo(56,2,54,-6);c.quadraticCurveTo(30,-16,0,-15);
-  c.quadraticCurveTo(-32,-16,-54,-6);c.quadraticCurveTo(-60,-2,-56,4);
+  c.moveTo(-44,2);
+  c.quadraticCurveTo(-46,12,-38,13);c.quadraticCurveTo(-31,13,-30,6);
+  c.lineTo(-27,20);c.quadraticCurveTo(-26,28,-19,27);c.quadraticCurveTo(-13,26,-14,17);
+  c.lineTo(-13,8);c.quadraticCurveTo(-7,13,-1,9);
+  c.lineTo(1,28);c.quadraticCurveTo(3,36,10,34);c.quadraticCurveTo(16,32,14,23);
+  c.lineTo(14,7);c.quadraticCurveTo(21,11,27,7);
+  c.lineTo(30,15);c.quadraticCurveTo(33,22,39,19);c.quadraticCurveTo(44,16,41,9);
+  c.lineTo(41,2);
+  c.quadraticCurveTo(49,-1,47,-8);c.quadraticCurveTo(26,-15,0,-14);
+  c.quadraticCurveTo(-28,-15,-45,-8);c.quadraticCurveTo(-50,-4,-44,2);
   c.closePath();
   c.fillStyle=P.goo;c.fill();
-  c.strokeStyle=P.out;c.lineWidth=3.6;c.stroke();
+  c.strokeStyle=P.out;c.lineWidth=3.4;c.stroke();
   // 윤기 하이라이트
-  c.strokeStyle=P.gooHi;c.lineWidth=3;c.globalAlpha=.85;c.lineCap='round';
-  c.beginPath();c.moveTo(-31,14);c.quadraticCurveTo(-32,26,-28,32);c.stroke();
-  c.beginPath();c.moveTo(3,20);c.quadraticCurveTo(3,34,6,42);c.stroke();
-  c.beginPath();c.moveTo(38,14);c.quadraticCurveTo(40,20,41,24);c.stroke();
-  c.beginPath();c.moveTo(-44,-8);c.quadraticCurveTo(-16,-12,16,-11);c.stroke();
+  c.strokeStyle=P.gooHi;c.lineWidth=2.6;c.globalAlpha=.85;c.lineCap='round';
+  c.beginPath();c.moveTo(-22,12);c.quadraticCurveTo(-23,19,-21,23);c.stroke();
+  c.beginPath();c.moveTo(5,14);c.quadraticCurveTo(5,23,7,28);c.stroke();
+  c.beginPath();c.moveTo(34,10);c.quadraticCurveTo(35,13,36,16);c.stroke();
+  c.beginPath();c.moveTo(-36,-7);c.quadraticCurveTo(-12,-11,14,-10);c.stroke();
   c.globalAlpha=1;
 }
 // ---- 뿔 (악마) -------------------------------------------------------------
@@ -393,7 +393,7 @@ function drawSeedShape(c,P,x,y,rot,sc){
   c.quadraticCurveTo(5.5,-2,4.5,3.5);c.quadraticCurveTo(3.5,7,0,7);
   c.quadraticCurveTo(-3.5,7,-4.5,3.5);c.quadraticCurveTo(-5.5,-2,0,-6);
   c.closePath();c.fillStyle=P.seed;c.fill();
-  c.strokeStyle=P.seedD;c.lineWidth=1.8;c.stroke();
+  c.strokeStyle=P.seedD;c.lineWidth=2.2;c.stroke();
   c.beginPath();c.moveTo(-1.5,-2);c.quadraticCurveTo(-2.5,2,-1,4.5);
   c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1.2;c.stroke();
   c.restore();
@@ -482,8 +482,8 @@ function bakeAtlas(av){
   M('mouthIn',-130,-74,130,74,c=>drawMouthIn(c,P,demon,false));
   if(demon)M('mouthInG',-130,-74,130,74,c=>drawMouthIn(c,P,demon,true));
   if(!demon){
-    M('eyeL',-14,-16,14,16,c=>drawEyeBase(c,P,-1));
-    M('eyeR',-14,-16,14,16,c=>drawEyeBase(c,P,1));
+    M('eyeL',-16,-18,16,18,c=>drawEyeBase(c,P,-1));
+    M('eyeR',-16,-18,16,18,c=>drawEyeBase(c,P,1));
   }else{
     M('eyeL',-40,-38,32,20,c=>drawEyeDemon(c,P,1));
     M('eyeR',-32,-38,40,20,c=>drawEyeDemon(c,P,-1));
@@ -494,7 +494,7 @@ function bakeAtlas(av){
   M('footR',-32,-4,32,40,c=>drawFoot(c,P));
   M('stem',-24,-64,50,14,c=>drawStem(c,P));
   M('leaf',-8,-24,56,16,c=>drawLeaf(c,P));
-  M('goo',-66,-22,62,60,c=>drawGoo(c,P));
+  M('goo',-54,-20,53,42,c=>drawGoo(c,P));
   if(demon){
     M('hornL',-56,-82,28,20,c=>drawHorn(c,P,-1));
     M('hornR',-28,-82,56,20,c=>drawHorn(c,P,1));
@@ -523,7 +523,7 @@ const NODE_DEFS=[
  ['hornR','body',90,-232,8,'hornR'],
  ['stem','body',0,-262,9,'stem'],
  ['leaf','stem',26,-46,13,'leaf'],
- ['goo','body',0,-252,12,'goo'],
+ ['goo','body',0,-258,12,'goo'],
  ['mouthIn','body',0,-124,14,'mouthIn'],
  ['mouthInG','body',0,-124,15,'mouthInG'],
  ['jawBot','body',0,-62,16,'jawBot'],
@@ -956,11 +956,11 @@ function drawDeathScene(c,av,t,liveT){
   }
   // 안착 후: 반짝 + 김 모락모락
   if(st.sparkle>0){
-    for(let i=0;i<6;i++){
-      const tr=TRAJ[i];
-      const tw=0.4+0.6*Math.abs(Math.sin(t*4.2+i*2.2));
-      spark4(c,tr.xEnd+(rnd(i*9+1)-0.5)*46,tr.grd-PIECE_DEFS[i].hh-6-rnd(i*9+2)*22,
-        7+rnd(i*9+3)*5,st.sparkle*tw,av==='demon'?'#e2c8ff':'#fff3c8');
+    for(let i=0;i<8;i++){
+      const tr=TRAJ[i%6];
+      const tw=0.5+0.5*Math.abs(Math.sin(t*4.2+i*2.2));
+      spark4(c,tr.xEnd+(rnd(i*9+1)-0.5)*56,tr.grd-PIECE_DEFS[i%6].hh-8-rnd(i*9+2)*30,
+        9+rnd(i*9+3)*8,st.sparkle*tw,av==='demon'?'#e2c8ff':'#fff3c8');
     }
   }
   if(st.steam>0){
@@ -968,11 +968,11 @@ function drawDeathScene(c,av,t,liveT){
     for(let i=0;i<3;i++){
       const tr=TRAJ[i*2];
       const cyc=1.7,u=((t*0.6+i*0.4)%cyc)/cyc;
-      const sx=tr.xEnd+Math.sin(u*7+i*2)*7,sy=tr.grd-PIECE_DEFS[i*2].hh-12-u*54;
-      c.globalAlpha=st.steam*(1-u)*0.4;
-      c.strokeStyle='#fff8ec';c.lineWidth=5+u*3;c.lineCap='round';
-      c.beginPath();c.moveTo(sx,sy+16);
-      c.quadraticCurveTo(sx+6,sy+8,sx-2,sy);c.quadraticCurveTo(sx-8,sy-7,sx+2,sy-13);
+      const sx=tr.xEnd+Math.sin(u*7+i*2)*8,sy=tr.grd-PIECE_DEFS[i*2].hh-14-u*64;
+      c.globalAlpha=st.steam*(1-u)*0.55;
+      c.strokeStyle='#fff8ec';c.lineWidth=6.5+u*4;c.lineCap='round';
+      c.beginPath();c.moveTo(sx,sy+20);
+      c.quadraticCurveTo(sx+8,sy+10,sx-3,sy);c.quadraticCurveTo(sx-10,sy-9,sx+3,sy-16);
       c.stroke();
     }
     c.restore();

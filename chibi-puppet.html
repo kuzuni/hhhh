@@ -702,6 +702,130 @@ makePart('m_staff',-52,-300,52,52,2,c=>{
   c.closePath();c.fillStyle=PAL.pink;c.fill();
   c.lineWidth=3;c.strokeStyle=PAL.outline;c.stroke();
 });
+// ==== 3. 리그 (행렬 씬그래프) ===============================================
+// 노드: 부모 좌표계의 부착점(x,y) + rot/px/py/sx/sy. 매 프레임 리지드 변환만.
+const NODES=[],NMAP={};
+function node(name,parent,x,y,z,slot){
+  const n={name,parent:parent?NMAP[parent]:null,x,y,z,slot:slot||null,
+    rot:0,px:0,py:0,sx:1,sy:1,m:null};
+  NODES.push(n);NMAP[name]=n;return n;
+}
+// 트리 (root=골반, y+ 아래. 지면 y=+128)
+node('root',null,0,0,0);
+node('torso','root',0,0,60,'torso');
+node('scarf1','torso',14,-108,4,'back1');      // 목 뒤
+node('scarf2','scarf1',-58,46,2,'back2');
+node('head','torso',0,-112,200);
+node('hairBack','head',0,0,150,'hairBack');
+node('tailL1','head',-98,-72,120,'tailL1');
+node('tailL2','tailL1',-4,84,118,'tailL2');
+node('tailR1','head',98,-72,120,'tailR1');
+node('tailR2','tailR1',4,84,118,'tailR2');
+node('earL','head',-99,-92,205,'earL');
+node('earR','head',99,-92,205,'earR');
+node('faceParts','head',0,0,210);              // 눈/입 그룹 (부품은 동적)
+node('hairFront','head',0,0,220,'hairFront');
+node('headgear','head',0,0,230,'headgear');
+node('ahoge','head',2,-206,235,'ahoge');
+node('legU_L','root',-26,6,40,'legU');
+node('legL_L','legU_L',0,54,42,'legL');
+node('legU_R','root',26,6,44,'legU2');
+node('legL_R','legU_R',0,54,46,'legL2');
+node('armU_L','torso',-52,-96,30,'armU');      // 먼팔 (몸 뒤)
+node('armL_L','armU_L',0,52,32,'armL');
+node('hand_L','armL_L',0,46,34,'hand');
+node('armU_R','torso',52,-96,300,'armU');      // 가까운 팔 (몸 앞)
+node('armL_R','armU_R',0,52,302,'armL');
+node('weapon','armL_R',0,46,298,'weapon');     // 손목에 부착, 손이 그립을 덮음
+node('hand_R','armL_R',0,46,304,'hand');
+node('capeB','torso',0,-100,2,'cape');          // 마법사 케이프 (맨 뒤)
+
+// 아바타 → 슬롯별 부품 이름 ('none'=숨김)
+const SKINS={
+  pirate:{torso:'p_torso',armU:'armU',armL:'armL',hand:'hand',
+    armU2:'armU',armL2:'armL',legU:'p_legU',legL:'p_legL',legU2:'p_legU',legL2:'p_legL',
+    headgear:'p_band',back1:'p_scarf1',back2:'p_scarf2',weapon:'p_sword',
+    ahoge:'ahoge',cape:'none',
+    hairBack:'hairBack',hairFront:'hairFront',earL:'earL',earR:'earR',
+    tailL1:'tailL1',tailL2:'tailL2',tailR1:'tailR1',tailR2:'tailR2'},
+  mage:{torso:'m_torso',armU:'m_armU',armL:'m_armL',hand:'hand',
+    armU2:'m_armU',armL2:'m_armL',legU:'m_legU',legL:'m_legL',legU2:'m_legU',legL2:'m_legL',
+    headgear:'m_hat',back1:'none',back2:'none',weapon:'m_staff',
+    ahoge:'none',cape:'m_cape1',
+    hairBack:'hairBack',hairFront:'hairFront',earL:'earL',earR:'earR',
+    tailL1:'tailL1',tailL2:'tailL2',tailR1:'tailR1',tailR2:'tailR2'}
+};
+// 왼쪽 다리/왼발은 미러 (발끝 방향)
+NMAP.legL_L.mirror=true;
+
+// 월드 행렬 계산 (root부터 순서대로 — NODES는 부모-우선 순서로 선언됨)
+function computeRig(rootX,rootY,rootRot,rootSx,rootSy){
+  for(const n of NODES){
+    let px,py,r,sx,sy;
+    if(!n.parent){px=rootX+n.px;py=rootY+n.py;r=rootRot+n.rot;sx=rootSx*n.sx;sy=rootSy*n.sy;}
+    else{px=n.x+n.px;py=n.y+n.py;r=n.rot;sx=n.sx*(n.mirror?-1:1);sy=n.sy;}
+    const cos=Math.cos(r),sin=Math.sin(r);
+    const a=cos*sx,b=sin*sx,cc=-sin*sy,d=cos*sy;
+    const p=n.parent?n.parent.m:[1,0,0,1,0,0];
+    n.m=[p[0]*a+p[2]*b, p[1]*a+p[3]*b, p[0]*cc+p[2]*d, p[1]*cc+p[3]*d,
+         p[0]*px+p[2]*py+p[4], p[1]*px+p[3]*py+p[5]];
+  }
+}
+const ZS=NODES.slice().sort((a,b)=>a.z-b.z);
+// 표정 상태 (렌더 시점에 결정)
+const FACE={eye:'',mouth:'m_smile',blushX:0};
+function partFor(n,skin){
+  if(!n.slot)return null;
+  const nm=SKINS[skin][n.slot];
+  return nm&&nm!=='none'?PARTS[nm]:null;
+}
+// 리그 전체 드로잉 (base=캔버스 기본 변환을 적용한 ctx)
+function drawRig(c,skin){
+  for(const n of ZS){
+    const p=partFor(n,skin);
+    if(!p)continue;
+    const m=n.m;
+    c.save();
+    c.transform(m[0],m[1],m[2],m[3],m[4],m[5]);
+    c.scale(1/p.bs,1/p.bs);
+    c.drawImage(p.cv,p.ox,p.oy);
+    c.restore();
+  }
+  // 표정 (head 좌표계에 직접)
+  const hm=NMAP.faceParts.m;
+  c.save();
+  c.transform(hm[0],hm[1],hm[2],hm[3],hm[4],hm[5]);
+  const eye=FACE.eye||'';
+  const drawP=(nm,x,y)=>{const p=PARTS[nm];if(!p)return;
+    c.save();c.translate(x,y);c.scale(1/p.bs,1/p.bs);c.drawImage(p.cv,p.ox,p.oy);c.restore();};
+  drawP('eyeL'+eye,-52,-88);drawP('eyeR'+eye,52,-88);
+  drawP('browL',-54,-146);drawP('browR',54,-146);
+  drawP(FACE.mouth,0,-34);
+  if(FACE.blushX>0){ // 부끄 추가 블러시
+    c.globalAlpha=FACE.blushX;
+    c.fillStyle='rgba(255,90,90,.55)';
+    ell(c,-62,-52,20,12,.08);c.fill();ell(c,62,-52,20,12,-.08);c.fill();
+    c.globalAlpha=1;
+  }
+  c.restore();
+}
+// 뼈대 오버레이
+function drawBones(c){
+  c.save();
+  c.lineWidth=2.2;c.strokeStyle='rgba(120,255,190,.9)';
+  for(const n of NODES){
+    if(!n.parent)continue;
+    const m=n.m,pm=n.parent.m;
+    c.beginPath();c.moveTo(pm[4],pm[5]);c.lineTo(m[4],m[5]);c.stroke();
+  }
+  for(const n of NODES){
+    const m=n.m;
+    c.beginPath();c.arc(m[4],m[5],4.4,0,TAU);
+    c.fillStyle='rgba(20,40,30,.85)';c.fill();
+    c.lineWidth=1.8;c.strokeStyle='#7dffbe';c.stroke();
+  }
+  c.restore();
+}
 /*__NEXT__*/
 </script>
 </body>
