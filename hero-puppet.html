@@ -115,7 +115,7 @@ function makePart(name,x0,y0,x1,y1,bs,fn){
 makePart('head',-46,-112,52,6,5,c=>{
   // 두상: 계란형 + V라인 턱
   path(c,[-38,-52, [-44,-84,-30,-104,0,-104], [26,-104,42,-88,43,-60],
-    [43,-36,31,-13,11,-4], [0,0,-14,-11,-25,-28], [-33,-38,-38,-44,-38,-52]]);
+    [43,-36,31,-15,10,-7], [-1,-4,-15,-13,-26,-30], [-33,-39,-38,-44,-38,-52]]);
   c.closePath();
   c.fillStyle=PAL.skin;c.fill();
   c.lineWidth=1.6;c.strokeStyle=PAL.outline;c.stroke();
@@ -125,7 +125,7 @@ makePart('head',-46,-112,52,6,5,c=>{
   path(c,[-40,-52,[-42,-48,-39,-44,-38,-46]]);c.lineWidth=.8;c.strokeStyle=PAL.skinSh;c.stroke();
   // 셀셰이딩: 턱밑 그림자 + 이마 왼쪽 음영
   c.fillStyle='rgba(214,160,125,.45)';
-  path(c,[11,-4,[0,0,-14,-11,-25,-28],[-16,-20,-4,-13,2,-11],[7,-8,10,-6,11,-4]]);
+  path(c,[10,-7,[-1,-4,-15,-13,-26,-30],[-16,-22,-4,-15,2,-13],[6,-10,9,-8,10,-7]]);
   c.closePath();c.fill();
   // 혈색: 뺨/코끝
   c.fillStyle=PAL.blush;
@@ -166,7 +166,7 @@ function bakeEye(name,dir,ew,state){
     ell(c,ix,iy+.5,2.3,3,0);c.fillStyle='#31200c';c.fill();          // 동공
     c.fillStyle='rgba(60,38,14,.4)';                                  // 눈꺼풀이 드리운 그림자
     c.fillRect(ix-7,lidY-1.5,14,state==='half'?3.6:2.8);
-    ell(c,ix-2.1,iy-2.9,2.2,2.2,0);c.fillStyle='#fff';c.fill();      // 상단 큰 하이라이트
+    ell(c,ix-2,iy-2.9,1.9,1.9,0);c.fillStyle='#fff';c.fill();        // 상단 큰 하이라이트
     ell(c,ix+2.4,iy+3.4,1.1,1.1,0);c.fillStyle='rgba(255,233,192,.92)';c.fill(); // 하단 반사광
     c.restore();
     // 위 눈꺼풀: 굵은 라인 + 눈꼬리 속눈썹 뭉침
@@ -306,11 +306,11 @@ makePart('hairSideR',-10,-10,14,62,5,c=>{
 // ---- 2h. 몸통 (피벗 = 허리 root(0,-40), 어깨선 y=-168, 목은 여기에 구움) ----
 makePart('torso',-72,-206,72,20,4,c=>{
   // 목 (가늘게)
-  path(c,[-9,-160,[-8,-178,-6,-192,-2,-198],[6,-198,12,-192,13,-178],[14,-168,13,-162,12,-158]]);
-  c.lineTo(-9,-158);c.closePath();
+  path(c,[-7,-160,[-6,-178,-5,-192,-1,-198],[5,-198,10,-192,11,-178],[12,-168,11,-162,10,-158]]);
+  c.lineTo(-7,-158);c.closePath();
   c.fillStyle=PAL.skin;c.fill();c.lineWidth=1.4;c.strokeStyle=PAL.outline;c.stroke();
-  c.fillStyle='rgba(214,160,125,.55)';        // 턱밑 목 그림자
-  c.fillRect(-8,-198,20,14);
+  c.fillStyle='rgba(200,145,110,.6)';         // 턱밑 목 그림자
+  c.fillRect(-7,-198,18,22);
   // 재킷 본체: 어깨 → 잘록한 허리
   path(c,[-66,-160, [-70,-168,-60,-172,-46,-172],[-20,-176,24,-176,48,-172],
     [60,-172,68,-166,64,-156],   // 오른어깨
@@ -571,7 +571,7 @@ N('eyeL','head',-14,-47,20,'eyeL',0,'왼눈');
 N('eyeR','head',26,-47,20,'eyeR',0,'오른눈');
 N('browL','head',-14,-65,20,'browL',0,'눈썹 L');
 N('browR','head',26,-67,20,'browR',0,'눈썹 R');
-N('mouth','head',12,-21,20,'m_smile',0,'입');
+N('mouth','head',10,-22,20,'m_smile',0,'입');
 N('hairSideL','head',-35,-62,22,'hairSideL',0.02,'옆머리 L');
 N('hairSideR','head',41,-64,22,'hairSideR',-0.02,'옆머리 R');
 N('hairFront','head',2,-96,23,'hairFront',0,'앞머리');
@@ -839,29 +839,35 @@ function mixOver(a,b,k){ // 크로스페이드 (a→b, k=0..1)
 }
 
 // ==== 5. 렌더 / 이펙트 ======================================================
-function drawTrailMontage(ctx,k){ // 찌르기 스미어: 검 잔상 + 스피드라인
+function drawTrailMontage(ctx,k){ // 찌르기 스미어: 회전 팬 잔상 + 검신 글로우 + 궤적 아크
   const rp=RIGM.rapier,ws=rp.ws,p=PARTS.rapier;
+  // 검이 휘둘러져 올라온 궤적: 피벗 기준 아래쪽으로 회전시킨 고스트 팬
   for(let i=1;i<=4;i++){
-    ctx.save();ctx.globalAlpha=k*(.45-i*.09);
-    ctx.translate(rp.wx-i*46*k*ws,rp.wy);ctx.rotate(rp.wr);ctx.scale(ws/p.bs,ws/p.bs);
+    ctx.save();ctx.globalAlpha=k*(.4-i*.08);
+    ctx.translate(rp.wx,rp.wy);ctx.rotate(rp.wr+i*.22*k);ctx.scale(ws/p.bs,ws/p.bs);
     ctx.drawImage(p.cv,p.ox,p.oy);ctx.restore();
   }
   const[tx,ty]=nodeWorldPoint(rp,0,-224);
-  const[bx,by]=nodeWorldPoint(rp,0,-30);
-  // 찌르기 궤적 웨지 (밝은 스미어)
-  ctx.save();ctx.globalAlpha=k*.5;
-  const gr=ctx.createLinearGradient(tx-320*ws*k,ty,tx,ty);
-  gr.addColorStop(0,'rgba(255,236,170,0)');gr.addColorStop(1,'rgba(255,247,214,.9)');
+  const[bx,by]=nodeWorldPoint(rp,0,-40);
+  // 팬 영역을 채우는 반투명 스미어
+  ctx.save();ctx.globalAlpha=k*.35;
+  const ang0=Math.atan2(ty-rp.wy,tx-rp.wx),R=Math.hypot(tx-rp.wx,ty-rp.wy);
+  const gr=ctx.createRadialGradient(rp.wx,rp.wy,R*.2,rp.wx,rp.wy,R);
+  gr.addColorStop(0,'rgba(255,236,170,0)');gr.addColorStop(1,'rgba(255,247,214,.85)');
   ctx.fillStyle=gr;
-  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(bx,by);
-  ctx.lineTo(bx-330*ws*k,by+10*ws);ctx.lineTo(tx-330*ws*k,ty-6*ws);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(rp.wx,rp.wy);
+  ctx.arc(rp.wx,rp.wy,R,ang0,ang0+.95*k);ctx.closePath();ctx.fill();
   ctx.restore();
-  ctx.save();ctx.globalAlpha=k*.85;ctx.strokeStyle='#fff3c9';ctx.lineCap='round';
-  for(let i=0;i<4;i++){
-    ctx.lineWidth=(3-i*.5)*ws;
-    ctx.beginPath();ctx.moveTo(tx-(50+i*46)*ws*k,ty+(i-1.5)*30*ws);
-    ctx.lineTo(tx-(210+i*66)*ws*k,ty+(i-1.5)*32*ws);ctx.stroke();
-  }
+  // 검신 자체 글로우
+  ctx.save();ctx.globalAlpha=k*.9;ctx.lineCap='round';
+  ctx.strokeStyle='rgba(255,250,225,.95)';ctx.lineWidth=3.2*ws;
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(tx,ty);ctx.stroke();
+  ctx.strokeStyle='rgba(255,236,170,.5)';ctx.lineWidth=7*ws;
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(tx,ty);ctx.stroke();
+  // 검끝 임팩트 플레어
+  const fg=ctx.createRadialGradient(tx,ty,0,tx,ty,26*ws);
+  fg.addColorStop(0,'rgba(255,255,255,.95)');fg.addColorStop(.4,'rgba(255,240,190,.55)');fg.addColorStop(1,'rgba(255,240,190,0)');
+  ctx.fillStyle=fg;ctx.beginPath();ctx.arc(tx,ty,26*ws,0,TAU);ctx.fill();
   ctx.restore();
 }
 function drawSparkles(ctx,k,time){ // 승리: 검끝 금빛 반짝이

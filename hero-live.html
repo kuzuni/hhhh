@@ -267,130 +267,144 @@ function paintMouth(g,idx){
  g.strokeStyle='rgba(196,168,164,.4)'; g.lineWidth=1.8; g.stroke();
 }
 // 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스
+// 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스 (source-atop 셰이딩)
 function paintBackHair(g){
  g.beginPath();
- g.moveTo(500,208);
- g.bezierCurveTo(408,210,352,268,346,352);
- g.bezierCurveTo(342,420,352,470,340,540);
- g.bezierCurveTo(330,610,300,660,282,726);   // 좌측 흘러내림
- g.quadraticCurveTo(304,712,318,688);
- g.quadraticCurveTo(320,748,306,800);
- g.quadraticCurveTo(336,776,352,730);
- g.quadraticCurveTo(362,800,352,862);        // 좌 최장 타래
- g.quadraticCurveTo(386,824,396,760);
- g.quadraticCurveTo(414,800,412,850);
- g.quadraticCurveTo(438,806,440,720);
- g.bezierCurveTo(446,640,436,600,444,560);
- g.lineTo(556,560);
- g.bezierCurveTo(564,600,554,640,560,720);   // 우측 대칭 흘러내림
- g.quadraticCurveTo(562,806,588,850);
- g.quadraticCurveTo(586,800,604,760);
- g.quadraticCurveTo(614,824,648,862);
- g.quadraticCurveTo(638,800,648,730);
- g.quadraticCurveTo(664,776,694,800);
- g.quadraticCurveTo(680,748,682,688);
- g.quadraticCurveTo(696,712,718,726);
- g.bezierCurveTo(700,660,670,610,660,540);
- g.bezierCurveTo(648,470,658,420,654,352);
- g.bezierCurveTo(648,268,592,210,500,208);
+ g.moveTo(500,206);
+ g.bezierCurveTo(400,208,344,266,338,352);
+ g.bezierCurveTo(332,420,344,470,332,540);
+ g.bezierCurveTo(322,610,294,660,276,726);   // 좌측 흘러내림
+ g.quadraticCurveTo(298,712,312,688);
+ g.quadraticCurveTo(314,748,300,800);
+ g.quadraticCurveTo(330,776,346,730);
+ g.quadraticCurveTo(356,800,346,862);        // 좌 최장 타래
+ g.quadraticCurveTo(382,824,392,760);
+ g.quadraticCurveTo(410,800,408,850);
+ g.quadraticCurveTo(434,806,436,720);
+ g.bezierCurveTo(442,640,432,600,440,560);
+ g.lineTo(560,560);
+ g.bezierCurveTo(568,600,558,640,564,720);   // 우측 대칭
+ g.quadraticCurveTo(566,806,592,850);
+ g.quadraticCurveTo(590,800,608,760);
+ g.quadraticCurveTo(618,824,654,862);
+ g.quadraticCurveTo(644,800,654,730);
+ g.quadraticCurveTo(670,776,700,800);
+ g.quadraticCurveTo(686,748,688,688);
+ g.quadraticCurveTo(702,712,724,726);
+ g.bezierCurveTo(706,660,678,610,668,540);
+ g.bezierCurveTo(656,470,668,420,662,352);
+ g.bezierCurveTo(656,266,600,208,500,206);
  g.closePath();
  g.fillStyle=C.hair; g.fill();
  g.strokeStyle=C.line; g.lineWidth=3; g.lineJoin='round'; g.stroke();
- // 안쪽 그림자 (목덜미 뒤)
- g.save(); g.clip();
- g.fillStyle=C.hairSh;
- g.beginPath(); g.moveTo(360,340); g.bezierCurveTo(360,560,320,660,290,760);
- g.lineTo(460,900); g.bezierCurveTo(430,640,440,470,446,380); g.closePath(); g.globalAlpha=.85; g.fill();
- g.beginPath(); g.moveTo(640,340); g.bezierCurveTo(640,560,680,660,710,760);
- g.lineTo(540,900); g.bezierCurveTo(570,640,560,470,554,380); g.closePath(); g.fill();
- g.globalAlpha=1;
  // 흐름 스트로크
- g.strokeStyle='rgba(20,16,25,.8)'; g.lineWidth=2;
- [[368,300,352,470,318,660],[398,280,384,470,352,700],[632,300,648,470,682,660],[602,280,616,470,648,700]].forEach(function(p){
+ g.save(); g.globalCompositeOperation='source-atop';
+ g.strokeStyle='rgba(16,12,20,.75)'; g.lineWidth=2.2; g.lineCap='round';
+ [[364,290,344,470,308,668],[392,272,378,470,346,710],[420,300,414,500,400,700],
+  [636,290,656,470,692,668],[608,272,622,470,654,710],[580,300,586,500,600,700]].forEach(function(p){
   g.beginPath(); g.moveTo(p[0],p[1]); g.quadraticCurveTo(p[2],p[3],p[4],p[5]); g.stroke();});
- // 보라 림
- g.strokeStyle='rgba(138,118,232,.35)'; g.lineWidth=3;
- g.beginPath(); g.moveTo(354,330); g.quadraticCurveTo(344,430,332,540); g.stroke();
- g.beginPath(); g.moveTo(646,330); g.quadraticCurveTo(656,430,668,540); g.stroke();
+ // 안쪽(목덜미) 어둡게 + 하단 어둡게
+ var gr=g.createLinearGradient(0,340,0,880);
+ gr.addColorStop(0,'rgba(20,16,25,0)'); gr.addColorStop(1,'rgba(12,9,16,.85)');
+ g.fillStyle=gr; g.fillRect(230,200,540,700);
+ var gc=g.createRadialGradient(500,430,120,500,470,300);
+ gc.addColorStop(0,'rgba(12,9,16,.8)'); gc.addColorStop(1,'rgba(12,9,16,0)');
+ g.fillStyle=gc; g.fillRect(330,330,340,420);
+ // 보라 림 시어(양측)
+ g.strokeStyle='rgba(138,118,232,.5)'; g.lineWidth=5;
+ g.beginPath(); g.moveTo(348,320); g.quadraticCurveTo(334,430,322,540); g.stroke();
+ g.beginPath(); g.moveTo(652,320); g.quadraticCurveTo(666,430,678,540); g.stroke();
+ g.strokeStyle='rgba(179,166,240,.28)'; g.lineWidth=2.4;
+ g.beginPath(); g.moveTo(356,330); g.quadraticCurveTo(343,430,332,530); g.stroke();
+ g.beginPath(); g.moveTo(644,330); g.quadraticCurveTo(657,430,668,530); g.stroke();
  g.restore();
 }
-// 정수리 + 지그재그 림라이트 밴드
+// 정수리 돔 + 안쪽 지그재그 림라이트 밴드
 function paintHairTop(g){
- g.beginPath();
- g.moveTo(388,368);
- g.bezierCurveTo(378,300,414,238,500,232);
- g.bezierCurveTo(586,238,622,300,612,368);
- g.bezierCurveTo(600,330,560,306,544,312);   // 안쪽 물결
- g.quadraticCurveTo(560,330,552,352);
- g.bezierCurveTo(530,318,492,306,470,314);
- g.quadraticCurveTo(482,332,474,352);
- g.bezierCurveTo(452,322,416,322,404,336);
- g.quadraticCurveTo(410,352,402,372);
- g.closePath();
- g.fillStyle=C.hairF; g.fill();
+ function dome(){
+  g.beginPath();
+  g.moveTo(390,372);
+  g.bezierCurveTo(378,296,416,234,500,228);
+  g.bezierCurveTo(584,234,622,296,610,372);
+  g.bezierCurveTo(596,336,566,318,544,320);
+  g.quadraticCurveTo(552,334,546,352);
+  g.bezierCurveTo(528,322,492,312,470,318);
+  g.quadraticCurveTo(478,334,472,352);
+  g.bezierCurveTo(452,326,418,326,406,340);
+  g.quadraticCurveTo(410,354,402,372);
+  g.closePath();
+ }
+ dome(); g.fillStyle=C.hairF; g.fill();
  g.strokeStyle=C.line; g.lineWidth=2.6; g.stroke();
- // 톱니 활 모양 림라이트 밴드
- g.save(); g.beginPath();
+ g.save(); g.globalCompositeOperation='source-atop';
+ // 하단 어둡게
+ var gr=g.createLinearGradient(0,240,0,372);
+ gr.addColorStop(0,'rgba(20,16,25,0)'); gr.addColorStop(1,'rgba(20,16,25,.5)');
+ g.fillStyle=gr; g.fillRect(370,220,260,160);
+ // 톱니 활 림라이트 밴드 (돔 안쪽, 활 모양으로 휨)
  var i,x,y,zig=[];
- for(i=0;i<=14;i++){x=404+i*(192/14);
-  y=286-38*Math.sin(Math.PI*i/14)+(i%2?9:-6);
+ for(i=0;i<=16;i++){x=408+i*(184/16);
+  y=298-34*Math.sin(Math.PI*i/16)+(i%2?7:-5);
   zig.push([x,y]);}
- g.moveTo(zig[0][0],zig[0][1]);
- for(i=1;i<=14;i++)g.lineTo(zig[i][0],zig[i][1]);
- for(i=14;i>=0;i--)g.lineTo(zig[i][0],zig[i][1]-(i%2?7:13));
- g.closePath();
- g.fillStyle=C.hairRim; g.globalAlpha=.75; g.fill();
- g.globalAlpha=.5; g.fillStyle=C.hairHi;
- g.beginPath();
- for(i=0;i<=14;i++){x=zig[i][0];y=zig[i][1];if(i===0)g.moveTo(x,y-2);else g.lineTo(x,y-2)}
- for(i=14;i>=0;i--)g.lineTo(zig[i][0],zig[i][1]-(i%2?4:7));
- g.closePath(); g.fill();
+ g.beginPath(); g.moveTo(zig[0][0],zig[0][1]);
+ for(i=1;i<=16;i++)g.lineTo(zig[i][0],zig[i][1]);
+ for(i=16;i>=0;i--)g.lineTo(zig[i][0],zig[i][1]-(i%2?6:11));
+ g.closePath(); g.fillStyle=C.hairRim; g.globalAlpha=.8; g.fill();
+ g.beginPath(); g.moveTo(zig[0][0],zig[0][1]-2);
+ for(i=1;i<=16;i++)g.lineTo(zig[i][0],zig[i][1]-2);
+ for(i=16;i>=0;i--)g.lineTo(zig[i][0],zig[i][1]-(i%2?4:6));
+ g.closePath(); g.fillStyle=C.hairHi; g.globalAlpha=.55; g.fill();
  g.restore();
 }
-// 앞머리 그룹: 가닥 배열을 받아 그림
+// 앞머리 그룹 렌더 + 뿌리 그림자 (source-atop)
 function paintStrands(g,arr,base){
  g.lineJoin='round';
  arr.forEach(function(sd){
   g.save(); if(sd.a!=null)g.globalAlpha=sd.a;
-  strandPath(g,sd.p,sd.w,sd.w1!=null?sd.w1:1.1,.72);
+  strandPath(g,sd.p,sd.w,sd.w1!=null?sd.w1:1.2,.68);
   g.fillStyle=base||C.hairF; g.fill();
-  g.strokeStyle=C.line; g.lineWidth=2.1; g.stroke();
-  // 가닥 하이라이트 획 (스파인 위쪽 1/3)
-  var p=sd.p, hx0=lerp(p[0],p[2],.25), hy0=lerp(p[1],p[3],.25),
-      hx1=lerp(p[2],p[4],.55), hy1=lerp(p[3],p[5],.55);
-  g.beginPath(); g.moveTo(lerp(p[0],p[2],.1),lerp(p[1],p[3],.1));
+  g.strokeStyle=C.line; g.lineWidth=2.2; g.stroke();
+  var p=sd.p, hx0=lerp(p[0],p[2],.3), hy0=lerp(p[1],p[3],.3),
+      hx1=lerp(p[2],p[4],.6), hy1=lerp(p[3],p[5],.6);
+  g.beginPath(); g.moveTo(lerp(p[0],p[2],.12),lerp(p[1],p[3],.12));
   g.quadraticCurveTo(hx0,hy0,hx1,hy1);
-  g.strokeStyle='rgba(179,166,240,.4)'; g.lineWidth=1.6; g.lineCap='round'; g.stroke();
+  g.strokeStyle='rgba(179,166,240,.42)'; g.lineWidth=2; g.lineCap='round'; g.stroke();
   g.restore();
  });
+ g.save(); g.globalCompositeOperation='source-atop';
+ var gr=g.createLinearGradient(0,238,0,340);
+ gr.addColorStop(0,'rgba(18,14,22,.6)'); gr.addColorStop(1,'rgba(18,14,22,0)');
+ g.fillStyle=gr; g.fillRect(340,220,340,260);
+ g.restore();
 }
-// 앞머리 가닥 정의 (뿌리 정수리 → 눈썹/눈 덮는 테이퍼)
-var BANGS_C=[ // 중앙: 오른가르마에서 좌하로 스윕, 2가닥은 반투명으로 눈 위
- {p:[534,258, 470,320, 432,412],w:15},
- {p:[540,262, 508,330, 486,428],w:13,a:.85},   // 좌눈 위 반투명
- {p:[546,262, 540,330, 528,432],w:12},
- {p:[552,260, 566,330, 566,424],w:12,a:.85},   // 우눈 위 반투명
- {p:[542,256, 486,316, 458,400],w:9},
- {p:[550,258, 528,340, 508,398],w:7}
+// 앞머리 가닥 (총 13가닥, 2가닥은 alpha .88로 눈이 비침)
+var BANGS_C=[
+ {p:[536,248, 466,300, 430,394],w:27,w1:1.6},
+ {p:[541,250, 500,312, 477,416],w:23,a:.88},
+ {p:[546,250, 540,318, 527,420],w:21},
+ {p:[551,248, 576,312, 580,410],w:19,a:.88},
+ {p:[543,246, 500,290, 462,352],w:11},
+ {p:[549,246, 560,320, 552,382],w:9},
+ {p:[538,248, 476,330, 452,398],w:9}
 ];
 var BANGS_L=[
- {p:[470,260, 420,310, 398,404],w:14},
- {p:[452,266, 408,330, 386,442],w:11},
- {p:[478,262, 438,320, 422,378],w:7}
+ {p:[470,252, 420,300, 396,398],w:22,w1:1.4},
+ {p:[452,258, 408,330, 384,436],w:14},
+ {p:[482,250, 446,320, 428,392],w:12}
 ];
 var BANGS_R=[
- {p:[560,256, 606,308, 610,400],w:14},
- {p:[572,262, 622,330, 620,446],w:11},
- {p:[556,258, 588,316, 590,372],w:7}
+ {p:[556,246, 606,300, 612,392],w:20,w1:1.4},
+ {p:[572,252, 624,330, 622,428],w:13},
+ {p:[550,248, 584,320, 590,388],w:10}
 ];
 function paintSideHair(g,s){ // 얼굴 옆 긴 타래 (물리 스윙)
- var x=500+s*112;
- strandPath(g,[x-s*6,318, x+s*26,470, x+s*4,668],13,1.4,.6);
+ var x=500+s*118;
+ strandPath(g,[x-s*8,316, x+s*22,470, x+s*2,664],11,1.4,.58);
  g.fillStyle=C.hairF; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.4; g.lineJoin='round'; g.stroke();
- strandPath(g,[x+s*4,330, x+s*34,480, x+s*26,620],7,1,.6);
+ strandPath(g,[x+s*2,330, x+s*30,480, x+s*22,616],6,1,.58);
  g.fillStyle=C.hair; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
- g.beginPath(); g.moveTo(x+s*2,360); g.quadraticCurveTo(x+s*22,470,x+s*8,600);
- g.strokeStyle='rgba(179,166,240,.35)'; g.lineWidth=1.8; g.lineCap='round'; g.stroke();
+ g.beginPath(); g.moveTo(x-s*2,360); g.quadraticCurveTo(x+s*18,470,x+s*6,596);
+ g.strokeStyle='rgba(179,166,240,.4)'; g.lineWidth=2; g.lineCap='round'; g.stroke();
 }
 // 목: 가늘게 + 턱밑 캐스트 섀도
 function paintNeck(g){
@@ -408,6 +422,11 @@ function paintNeck(g){
  g.strokeStyle=C.line; g.lineWidth=2.6;
  g.beginPath(); g.moveTo(473,536); g.bezierCurveTo(474,590,470,620,458,648); g.stroke();
  g.beginPath(); g.moveTo(527,536); g.bezierCurveTo(526,590,530,620,542,648); g.stroke();
+ // 초커 + 은 링
+ g.beginPath(); g.moveTo(471,568); g.quadraticCurveTo(500,578,529,568);
+ g.lineTo(529,580); g.quadraticCurveTo(500,590,471,580); g.closePath();
+ g.fillStyle='#1a1424'; g.fill(); g.strokeStyle=C.line; g.lineWidth=1.6; g.stroke();
+ g.beginPath(); g.arc(500,581,3.4,0,TAU); g.strokeStyle=C.silver; g.lineWidth=1.8; g.stroke();
 }
 // 하이칼라 (진홍 안감 + 은 트림)
 function paintCollar(g){
@@ -477,7 +496,7 @@ function paintBody(g){
 }
 // 어깨 너머 검자루 (뷰어 좌측 위)
 function paintSword(g){
- g.save(); g.translate(300,560); g.rotate(-1.05);
+ g.save(); g.translate(292,608); g.rotate(-.92);
  // 자루 랩
  g.beginPath(); g.rect(-9,-160,18,150); g.fillStyle='#241a2e'; g.fill();
  g.strokeStyle=C.line; g.lineWidth=2.6; g.stroke();
@@ -510,28 +529,28 @@ function paintEarring(g){
 // ==== 3. 레이어 · 메시 리그 ====
 // depth: 요/피치 시차 계수(음수=뒤). headW: 머리 추종 가중. sway: 헤어 스윙 진폭.
 var LAYERS=[
- {n:'backHair', bb:[240,190,520,700], grid:[7,8], depth:-.42, headW:1, rollW:.75, sway:26, paint:paintBackHair},
- {n:'sword',    bb:[196,380,150,230], grid:[3,5], depth:0, headW:0, rollW:.04, breathW:.8, breathTaper:1, paint:paintSword},
+ {n:'backHair', bb:[220,186,560,700], grid:[7,8], depth:-.42, headW:1, rollW:.75, sway:26, paint:paintBackHair},
+ {n:'sword',    bb:[128,450,215,215], grid:[4,4], depth:0, headW:0, rollW:.04, breathW:.8, breathTaper:1, paint:paintSword},
  {n:'body',     bb:[240,600,520,552], grid:[7,6], depth:.05, headW:.12, rollW:.08, breathW:1, breathTaper:1, paint:paintBody},
  {n:'neck',     bb:[440,520,120,140], grid:[3,4], depth:.42, headW:1, taperV:1, rollW:.5, paint:paintNeck},
  {n:'collar',   bb:[390,540,220,140], grid:[6,4], depth:.1, headW:.16, rollW:.12, breathW:.9, paint:paintCollar},
  {n:'face',     bb:[368,248,264,330], grid:[6,7], depth:.52, headW:1, rollW:1, paint:paintFace},
- {n:'eyeWL',    bb:[396,394,92,44], grid:[4,3], depth:.62, headW:1, rollW:1, kind:'eyew', side:'L', paint:function(g){paintEyeWhite(g,-1)}},
- {n:'eyeWR',    bb:[512,394,92,44], grid:[4,3], depth:.62, headW:1, rollW:1, kind:'eyew', side:'R', paint:function(g){paintEyeWhite(g,1)}},
- {n:'irisL',    bb:[414,398,56,48], grid:[3,3], depth:.68, headW:1, rollW:1, kind:'iris', side:'L', clip:'L', paint:function(g){paintIris(g,-1)}},
- {n:'irisR',    bb:[530,398,56,48], grid:[3,3], depth:.68, headW:1, rollW:1, kind:'iris', side:'R', clip:'R', paint:function(g){paintIris(g,1)}},
- {n:'lashL',    bb:[392,384,102,52], grid:[5,2], depth:.64, headW:1, rollW:1, kind:'lash', side:'L', paint:function(g){paintLash(g,-1)}},
- {n:'lashR',    bb:[506,384,102,52], grid:[5,2], depth:.64, headW:1, rollW:1, kind:'lash', side:'R', paint:function(g){paintLash(g,1)}},
- {n:'browL',    bb:[420,368,86,34], grid:[3,2], depth:.7, headW:1, rollW:1, kind:'brow', side:'L', innerU:1, paint:function(g){paintBrow(g,-1)}},
- {n:'browR',    bb:[494,368,86,34], grid:[3,2], depth:.7, headW:1, rollW:1, kind:'brow', side:'R', innerU:0, paint:function(g){paintBrow(g,1)}},
+ {n:'eyeWL',    bb:[398,390,90,50], grid:[4,3], depth:.62, headW:1, rollW:1, kind:'eyew', side:'L', paint:function(g){paintEyeWhite(g,-1)}},
+ {n:'eyeWR',    bb:[512,390,90,50], grid:[4,3], depth:.62, headW:1, rollW:1, kind:'eyew', side:'R', paint:function(g){paintEyeWhite(g,1)}},
+ {n:'irisL',    bb:[420,392,44,50], grid:[3,3], depth:.68, headW:1, rollW:1, kind:'iris', side:'L', clip:'L', paint:function(g){paintIris(g,-1)}},
+ {n:'irisR',    bb:[536,392,44,50], grid:[3,3], depth:.68, headW:1, rollW:1, kind:'iris', side:'R', clip:'R', paint:function(g){paintIris(g,1)}},
+ {n:'lashL',    bb:[386,378,104,60], grid:[5,2], depth:.64, headW:1, rollW:1, kind:'lash', side:'L', paint:function(g){paintLash(g,-1)}},
+ {n:'lashR',    bb:[510,378,104,60], grid:[5,2], depth:.64, headW:1, rollW:1, kind:'lash', side:'R', paint:function(g){paintLash(g,1)}},
+ {n:'browL',    bb:[382,360,112,42], grid:[3,2], depth:.7, headW:1, rollW:1, kind:'brow', side:'L', innerU:1, paint:function(g){paintBrow(g,-1)}},
+ {n:'browR',    bb:[506,360,112,42], grid:[3,2], depth:.7, headW:1, rollW:1, kind:'brow', side:'R', innerU:0, paint:function(g){paintBrow(g,1)}},
  {n:'mouth',    bb:[452,478,96,66], grid:[3,3], depth:.6, headW:1, rollW:1, kind:'mouth', paint:function(g){paintMouth(g,0)}},
  {n:'earring',  bb:[596,446,42,52], grid:[2,3], depth:.5, headW:1, rollW:1, kind:'ear', paint:paintEarring},
- {n:'sideL',    bb:[360,300,90,390], grid:[3,8], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,-1)}},
- {n:'sideR',    bb:[550,300,90,390], grid:[3,8], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,1)}},
- {n:'hairTop',  bb:[370,222,260,160], grid:[6,3], depth:.8, headW:1, rollW:1, sway:6, paint:paintHairTop},
- {n:'bangsL',   bb:[372,244,120,210], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_L)}},
- {n:'bangsR',   bb:[542,244,96,214], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_R)}},
- {n:'bangsC',   bb:[418,244,164,200], grid:[5,6], depth:1, headW:1, rollW:1, sway:20, paint:function(g){paintStrands(g,BANGS_C)}}
+ {n:'sideL',    bb:[344,300,104,384], grid:[3,8], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,-1)}},
+ {n:'sideR',    bb:[552,300,104,384], grid:[3,8], depth:.78, headW:1, rollW:.9, sway:34, paint:function(g){paintSideHair(g,1)}},
+ {n:'hairTop',  bb:[368,216,264,168], grid:[6,3], depth:.8, headW:1, rollW:1, sway:6, paint:paintHairTop},
+ {n:'bangsL',   bb:[364,236,132,224], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_L)}},
+ {n:'bangsR',   bb:[532,236,116,224], grid:[4,6], depth:.9, headW:1, rollW:1, sway:16, paint:function(g){paintStrands(g,BANGS_R)}},
+ {n:'bangsC',   bb:[404,236,196,214], grid:[5,6], depth:1, headW:1, rollW:1, sway:20, paint:function(g){paintStrands(g,BANGS_C)}}
 ];
 var TS=2, PAD=14; // 텍스처 해상도 배율·패딩
 var EXPAND=/[?&]ex0/.test(location.search)?0:2.6; // 삼각 팽창량 px (실금 방지)
@@ -576,7 +595,7 @@ function buildTextures(){
 }
 
 // ==== 4. 디포머: 파라미터 P -> 정점 (순수함수, 실시간/몽타주 공용) ====
-var APH=30; // 눈 개구부 높이
+var APH=35; // 눈 개구부 높이
 function deformVertex(L,x0,y0,nu,nv,P){
  var x=x0,y=y0,side=L.side,hf;
  hf=(L.headW==null?1:L.headW); if(L.taperV)hf*=(1-nv*.85);
