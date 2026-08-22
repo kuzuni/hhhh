@@ -844,7 +844,7 @@ function drawTrailMontage(ctx,k){ // 찌르기 스미어: 회전 팬 잔상 + �
   // 검이 휘둘러져 올라온 궤적: 피벗 기준 아래쪽으로 회전시킨 고스트 팬
   for(let i=1;i<=4;i++){
     ctx.save();ctx.globalAlpha=k*(.55-i*.11);
-    ctx.translate(rp.wx,rp.wy);ctx.rotate(rp.wr+i*.24*k);ctx.scale(ws/p.bs,ws/p.bs);
+    ctx.translate(rp.wx,rp.wy);ctx.rotate(rp.wr+i*.17*k);ctx.scale(ws/p.bs,ws/p.bs);
     ctx.drawImage(p.cv,p.ox,p.oy);ctx.restore();
   }
   const[tx,ty]=nodeWorldPoint(rp,0,-224);
@@ -856,7 +856,7 @@ function drawTrailMontage(ctx,k){ // 찌르기 스미어: 회전 팬 잔상 + �
   gr.addColorStop(0,'rgba(255,236,170,0)');gr.addColorStop(1,'rgba(255,247,214,.85)');
   ctx.fillStyle=gr;
   ctx.beginPath();ctx.moveTo(rp.wx,rp.wy);
-  ctx.arc(rp.wx,rp.wy,R,ang0,ang0+.95*k);ctx.closePath();ctx.fill();
+  ctx.arc(rp.wx,rp.wy,R,ang0,ang0+.7*k);ctx.closePath();ctx.fill();
   ctx.restore();
   // 검신 자체 글로우
   ctx.save();ctx.globalAlpha=k*.9;ctx.lineCap='round';
@@ -1154,6 +1154,13 @@ function montage(){
       drawFloorShadow(ctx,px+((po.over.root&&po.over.root.x)||0)*ps,py,ps,(po.over.root&&po.over.root.y)||0);
       renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:opt.fx===false?{}:po.fx,
         bones:opt.bones,explode:opt.explode||0,time:t});
+      if(location.search.indexOf('marks')>=0&&anim==='lunge'){
+        const rp=RIGM.rapier,[tx2,ty2]=nodeWorldPoint(rp,0,-224);
+        ctx.fillStyle='red';ctx.beginPath();ctx.arc(tx2,ty2,5,0,TAU);ctx.fill();
+        ctx.fillStyle='blue';ctx.beginPath();ctx.arc(rp.wx,rp.wy,5,0,TAU);ctx.fill();
+        ctx.fillStyle='#0f0';ctx.font='11px sans-serif';
+        ctx.fillText('wr='+rp.wr.toFixed(2)+' ws='+rp.ws.toFixed(2),cx+6,cy+14);
+      }
     });
   }
   const m=8,aw=(MW-m*7)/6,ah=444;
@@ -1164,7 +1171,7 @@ function montage(){
   // Row B: 런지 6키
   const rowB=[['런지 ① 준비','lunge',.14],['런지 ② 재기','lunge',.5],['런지 ③ 발사','lunge',.63],
     ['런지 ④ 극점','lunge',.72],['런지 ⑤ 홀드','lunge',1.0],['런지 ⑥ 복귀','lunge',1.9]];
-  rowB.forEach((r,i)=>charCell(m+i*(aw+m),m*2+ah,aw,ah,r[0],r[1],r[2],{ps:.46,dx:-12}));
+  rowB.forEach((r,i)=>charCell(m+i*(aw+m),m*2+ah,aw,ah,r[0],r[1],r[2],{ps:.42,dx:-24}));
   // Row C: 뷰티샷 / 얼굴 클로즈업 / 리깅 오버레이 / 부품 분해도
   const cy0=m*3+ah*2,chh=MH-cy0-m,cwidth=(MW-m*5)/4;
   charCell(m,cy0,cwidth,chh,'① 뷰티샷 (승리)','victory',1.05,{ps:.5});
