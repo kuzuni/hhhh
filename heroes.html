@@ -44,6 +44,11 @@
     background:radial-gradient(ellipse at 50% 0%,var(--glow) 0%,transparent 62%)}
   a.card:hover::before{opacity:.28}
   .c-blade{--glow:var(--blade)} .c-puppet{--glow:var(--gold)} .c-live{--glow:var(--viol)}
+  .c-cbone{--glow:#ff8aa0} .c-cpuppet{--glow:#ffb36a}
+  .c-cbone:hover{border-color:rgba(255,138,160,.55);box-shadow:0 18px 44px -14px rgba(255,138,160,.35)}
+  .c-cpuppet:hover{border-color:rgba(255,179,106,.55);box-shadow:0 18px 44px -14px rgba(255,179,106,.35)}
+  .wip{display:inline-block;font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:999px;
+    background:rgba(255,179,106,.14);border:1px solid rgba(255,179,106,.4);color:#ffd9ae;margin-left:8px;vertical-align:middle}
   .c-blade:hover{border-color:rgba(127,167,232,.55);box-shadow:0 18px 44px -14px rgba(127,167,232,.35)}
   .c-puppet:hover{border-color:rgba(232,196,106,.55);box-shadow:0 18px 44px -14px rgba(232,196,106,.35)}
   .c-live:hover{border-color:rgba(138,118,232,.6);box-shadow:0 18px 44px -14px rgba(138,118,232,.4)}
@@ -75,8 +80,8 @@
   <header>
     <div class="eyebrow">2D Rigging Trilogy</div>
     <h1>⚔ 용사 전시관 ⚔</h1>
-    <p class="sub">두 명의 미소년 용사, 두 가지 2D 리깅 기법.<br>
-      절차적 스켈레톤 · 컷아웃 퍼펫 — 각 캐릭터가 하나의 기법을 살아 움직이며 증명합니다.</p>
+    <p class="sub">미소년 용사와 치비 모험가 — 2D 리깅 기법별 캐릭터 쇼케이스.<br>
+      절차적 스켈레톤 · 컷아웃 퍼펫, 그리고 하나의 리그가 여러 아바타를 입는 마법.</p>
     <div class="rule"></div>
   </header>
 
@@ -117,6 +122,56 @@
     </a>
 
   </div>
+
+  <section style="margin-top:72px">
+    <header>
+      <div class="eyebrow">Chibi Adventurer</div>
+      <h1 style="font-size:clamp(22px,3.6vw,34px)">🍓 신입 모험가 리코 🍓</h1>
+      <p class="sub">치비 여캐 한 명, 리깅 두 벌, 아바타 두 벌.<br>
+        같은 리그가 <b>해적</b>도 되고 <b>마법사</b>도 됩니다 — 2 리깅 × 2 아바타 = 4가지 조합.</p>
+      <div class="rule"></div>
+    </header>
+    <div class="grid">
+      <a class="card c-cbone" href="chibi-bone.html">
+        <svg class="emblem" viewBox="0 0 96 96" aria-hidden="true">
+          <path d="M30 70 62 26l8 6-30 46z" fill="#cfd6de"/>
+          <path d="M26 80l8-12 6 5-10 9z" fill="#8a5a32"/>
+          <g stroke="#ff8aa0" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".95">
+            <path d="M52 40v14M52 54l-9 12M52 54l9 12M52 46l-10 6M52 46l10 6"/>
+          </g>
+          <circle cx="52" cy="32" r="9" fill="#ffd9e2"/>
+          <g fill="#ff8aa0"><circle cx="52" cy="46" r="2.6"/><circle cx="52" cy="54" r="2.6"/>
+            <circle cx="43" cy="66" r="2.6"/><circle cx="61" cy="66" r="2.6"/>
+            <circle cx="42" cy="52" r="2.4"/><circle cx="62" cy="52" r="2.4"/></g>
+        </svg>
+        <span class="badge">절차적 스켈레톤 · 아바타 ×2</span>
+        <h2>리코 <span class="wip">ver.A</span></h2>
+        <div class="epithet">홍련의 꼬마 모험가</div>
+        <p class="desc">치비 뼈대를 매 프레임 계산 + IK 접지 + 스쿼시&스트레치 바운스.
+          해적 ↔ 마법사 아바타를 갈아입어도 리그는 하나.</p>
+        <span class="enter">관람하기 →</span>
+      </a>
+      <a class="card c-cpuppet" href="chibi-puppet.html">
+        <svg class="emblem" viewBox="0 0 96 96" aria-hidden="true">
+          <g stroke="#c9a05a" stroke-width="3" stroke-linecap="round"><path d="M28 22h40M48 12v20"/></g>
+          <g stroke="rgba(255,179,106,.5)" stroke-width="1.2"><path d="M32 24v14M64 24v14M48 24v10"/></g>
+          <circle cx="48" cy="44" r="11" fill="#ffd9b0"/>
+          <rect x="40" y="56" width="16" height="16" rx="6" fill="#ffb36a"/>
+          <rect x="28" y="56" width="10" height="7" rx="3.5" fill="#ffd9b0" transform="rotate(18 28 56)"/>
+          <rect x="58" y="54" width="10" height="7" rx="3.5" fill="#ffd9b0" transform="rotate(-18 68 54)"/>
+          <rect x="40" y="74" width="7" height="10" rx="3.5" fill="#c07848"/>
+          <rect x="49" y="74" width="7" height="10" rx="3.5" fill="#c07848"/>
+          <g fill="#ff8aa0"><circle cx="48" cy="56" r="2.2"/><circle cx="38" cy="58" r="2.2"/><circle cx="58" cy="56" r="2.2"/></g>
+        </svg>
+        <span class="badge">컷아웃 퍼펫 · 아바타 ×2</span>
+        <h2>리코 <span class="wip">ver.B</span></h2>
+        <div class="epithet">홍련의 꼬마 모험가</div>
+        <p class="desc">한 번 구운 부품을 피벗으로 움직이는 치비 퍼펫.
+          아바타 = 부품 아틀라스 교체 — 해적/마법사 세트가 같은 뼈를 공유.</p>
+        <span class="enter">관람하기 →</span>
+      </a>
+    </div>
+  </section>
 
   <footer>
     <div class="foot-rule"></div>
