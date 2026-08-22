@@ -139,3 +139,175 @@ var MAGE={
   boot:'#3a2a6e',bootDk:'#2b1f52',
   staff:'#8a5a34',gem:'#7ef0e8',gemDk:'#38b8ae'
 };
+
+// ==== 2. 리그 (뼈대 상수 · 2본 IK · solve) ====
+// 캐릭터 로컬 좌표: 지면 y=0, 위가 -y. 전신 약 128 유닛, 머리(얼굴)만 ~52 (2.5등신).
+var CH={
+  torso:18, neckLen:8, headLen:26,        // pelvis→chest, chest→neck, neck→머리중심
+  shX:12, thigh:18.5, shin:18.5,
+  upperArm:13.5, foreArm:13.5,
+  hipX:7, ankleH:3.5
+};
+// 2본 해석 IK: root→target, 길이 l1/l2, bend=±1 굽힘 방향. 중간관절 반환.
+function ik2(ax,ay,tx,ty,l1,l2,bend){
+  var dx=tx-ax,dy=ty-ay,d=Math.hypot(dx,dy);
+  d=clamp(d,Math.abs(l1-l2)+0.01,l1+l2-0.01);
+  var a1=Math.acos(clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1));
+  var base=Math.atan2(dy,dx);
+  var ang=base+bend*a1;
+  return {x:ax+Math.cos(ang)*l1,y:ay+Math.sin(ang)*l1};
+}
+function rotv(dx,dy,a){var c=Math.cos(a),s=Math.sin(a);return {x:dx*c-dy*s,y:dx*s+dy*c};}
+
+// pose → 관절 좌표(J) 계산. 순수함수.
+function solve(P){
+  var J={};
+  var px=P.px,py=P.py,lean=P.lean;
+  J.pelvis={x:px,y:py};
+  var r1=rotv(0,-CH.torso,lean);
+  J.chest={x:px+r1.x,y:py+r1.y};
+  var r2=rotv(0,-CH.neckLen,lean*1.15);
+  J.neck={x:J.chest.x+r2.x,y:J.chest.y+r2.y};
+  var hA=lean*1.25+P.headAng;
+  var r3=rotv(P.headDX,-CH.headLen+P.headDY,hA);
+  J.head={x:J.neck.x+r3.x,y:J.neck.y+r3.y,ang:hA};
+  var sL=rotv(-CH.shX,1,lean),sR=rotv(CH.shX,1,lean);
+  J.shL={x:J.chest.x+sL.x,y:J.chest.y+sL.y};
+  J.shR={x:J.chest.x+sR.x,y:J.chest.y+sR.y};
+  J.hipL={x:px-CH.hipX,y:py+2};
+  J.hipR={x:px+CH.hipX,y:py+2};
+  // 다리 IK (발 접지)
+  function legIK(hip,f){
+    var ank={x:f.x,y:f.y-CH.ankleH};
+    var knee=ik2(hip.x,hip.y,ank.x,ank.y,CH.thigh,CH.shin,P.kneeBend);
+    return {knee:knee,ank:ank};
+  }
+  var lg=legIK(J.hipL,P.lFoot);J.kneeL=lg.knee;J.ankL=lg.ank;
+  var rg=legIK(J.hipR,P.rFoot);J.kneeR=rg.knee;J.ankR=rg.ank;
+  // 손 IK (무기 그립 or 자유)
+  var hl=P.lHand,hr;
+  var d=dirv(P.grip.ang);
+  hr={x:P.grip.x+d.x*2.5,y:P.grip.y+d.y*2.5};
+  if(P.grip.both) hl={x:P.grip.x-d.x*5,y:P.grip.y-d.y*5};
+  J.handL=hl;J.handR=hr;
+  J.elbL=ik2(J.shL.x,J.shL.y,hl.x,hl.y,CH.upperArm,CH.foreArm,P.elbBendL);
+  J.elbR=ik2(J.shR.x,J.shR.y,hr.x,hr.y,CH.upperArm,CH.foreArm,P.elbBendR);
+  J.weapon={x:P.grip.x,y:P.grip.y,ang:P.grip.ang};
+  return J;
+}
+
+// ==== 3. 애니 (pose 순수함수) ====
+var PERIODS={idle:3.0,walk:0.62,swing:2.1,jump:1.55,joy:0.9};
+function blinkAt(time){
+  var iv=3.3,segN=Math.floor(time/iv),r=hash(segN);
+  var start=segN*iv+0.6+r*2.2,b=0,dd=time-start;
+  if(dd>0&&dd<0.13)b=Math.sin(Math.PI*dd/0.13);
+  if(hash(segN+7)>0.72){var d2=time-start-0.19;if(d2>0&&d2<0.13)b=Math.max(b,Math.sin(Math.PI*d2/0.13));}
+  return b;
+}
+function basePose(time){
+  return {
+    px:0,py:-44,lean:0,headAng:0,headDX:0,headDY:0,
+    sx:1,sy:1,pivotY:0,headSx:1,headSy:1,spinSx:1,
+    earWig:0,tailD1:0,tailD2:0,tailD3:0,tailSpread:0,
+    blink:blinkAt(time),eyes:'open',eyeLX:0,eyeLY:0,
+    mouth:'smile',browUp:0,browAng:0,blushX:1,wink:false,
+    lFoot:{x:-7,y:0,ang:0,planted:true},rFoot:{x:7,y:0,ang:0,planted:true},
+    lHand:{x:-13.5,y:-45},
+    grip:{x:16,y:-38,ang:-1.35,both:false,layer:'back'},
+    kneeBend:1,elbBendL:-1,elbBendR:1,
+    fx:[]
+  };
+}
+function poseIdle(t,time,P){
+  var w=Math.sin(TAU*t);
+  P.py=-44+1.4*w;P.sy=1+0.02*w;P.sx=1-0.014*w;
+  P.lean=0.03*Math.sin(TAU*t+1.3);
+  P.headAng=0.045*Math.sin(TAU*t+2.1);
+  P.tailD1=0.12*Math.sin(TAU*t-0.9);
+  P.tailD2=0.17*Math.sin(TAU*t-1.6);
+  P.tailD3=0.22*Math.sin(TAU*t-2.3);
+  P.earWig=0.25*Math.sin(time*11)*Math.pow(Math.max(0,Math.sin(time*0.83)),6);
+  P.eyeLX=2.2*Math.tanh(2*Math.sin(time*0.4+1.7)*Math.sin(time*0.9));
+  if(hash(Math.floor(time/4.1))>0.55)P.mouth='cat';
+  P.lHand={x:-13.5+0.3*w,y:-45+1.2*w};
+  P.grip={x:16,y:-38+1.3*w,ang:-1.35+0.03*w,both:false,layer:'back'};
+}
+function poseWalk(t,time,P){
+  var S=10.5;
+  function foot(ph,x0,side){
+    ph=((ph%1)+1)%1;
+    var st=0.58;
+    if(ph<st){var u=ph/st;return {x:x0+lerp(S,-S,u),y:0,ang:0,planted:true};}
+    var u2=(ph-st)/(1-st),e=ease(u2);
+    return {x:x0+lerp(-S,S,e),y:-9*Math.sin(Math.PI*u2),ang:-0.45*Math.sin(Math.PI*u2),planted:false};
+  }
+  P.lFoot=foot(t,-5,-1);P.rFoot=foot(t+0.5,5,1);
+  var b=Math.cos(TAU*2*t+0.6);
+  P.py=-44+2.3*b;P.sy=1+0.05*b;P.sx=1-0.035*b;
+  P.lean=0.13+0.02*b;
+  P.headAng=-0.05+0.03*b;
+  P.eyeLX=2.6;P.mouth='open';
+  P.tailD1=0.15+0.30*Math.sin(TAU*2*t-1.1);
+  P.tailD2=0.20+0.42*Math.sin(TAU*2*t-1.9);
+  P.tailD3=0.22+0.55*Math.sin(TAU*2*t-2.6);
+  P.earWig=0.15*Math.sin(TAU*2*t);
+  P.lHand={x:-15+2.5*Math.sin(TAU*t+Math.PI),y:-53+2*b};
+  P.grip={x:14+1.5*Math.sin(TAU*t),y:-40+1.8*b,ang:-2.35+0.08*b,both:false,layer:'back'};
+}
+function poseSwing(t,time,P){
+  P.browAng=0.4;P.browUp=-0.5;P.mouth='grit';
+  P.lFoot={x:-11,y:0,ang:0,planted:true};
+  P.rFoot={x:11,y:0,ang:0,planted:true};
+  var th,off,r=17,both=true,layer='front';
+  if(t<0.18){var u=easeOut(seg01(t,0,0.18));
+    th=lerp(0.9,-2.45,u);off=lerp(-0.1,-0.6,u);r=lerp(16,15,u);
+    P.lean=lerp(0,-0.30,u);P.py=lerp(-44,-41,u);
+    P.sy=lerp(1,0.93,u);P.sx=lerp(1,1.05,u);
+    P.tailD1=0.5*u;P.tailD2=0.7*u;P.tailD3=0.9*u;
+    both=t>0.045;
+  }else if(t<0.30){var u2=ease(seg01(t,0.18,0.30));
+    th=lerp(-2.45,-2.75,u2);off=lerp(-0.6,-0.75,u2);r=15;
+    P.lean=lerp(-0.30,-0.42,u2);P.py=lerp(-41,-40,u2);
+    P.sy=lerp(0.93,0.90,u2);P.sx=lerp(1.05,1.07,u2);
+    P.tailD1=0.5+0.25*u2;P.tailD2=0.7+0.3*u2;P.tailD3=0.9+0.35*u2;
+    P.eyes='grit';
+  }else if(t<0.40){var u3=easeIn(seg01(t,0.30,0.40));
+    th=lerp(-2.75,0.35,u3);off=lerp(-0.75,0.30,u3);r=lerp(15,22,u3);
+    P.lean=lerp(-0.42,0.30,u3);P.py=lerp(-40,-44,u3);
+    P.sy=lerp(0.90,1.04,u3);P.sx=lerp(1.07,0.98,u3);
+    P.px=lerp(0,4,u3);
+    P.tailD1=lerp(0.75,-0.9,u3);P.tailD2=lerp(1.0,-1.2,u3);P.tailD3=lerp(1.25,-1.5,u3);
+    var wa0=th+off;
+    P.fx.push({type:'smear',x:P.px,y:P.py-17,r0:55,r1:108,a0:-3.5,a1:wa0,al:0.5*u3+0.2});
+    for(var i=0;i<4;i++){var aa=lerp(-3.3,wa0,(i+1)/5);
+      P.fx.push({type:'star',x:P.px+Math.cos(aa)*95,y:P.py-17+Math.sin(aa)*95,r:5+2*hash(i),rot:aa,col:'#fff2a0',al:0.9*u3});}
+  }else if(t<0.52){var u4=seg01(t,0.40,0.52);var sh=Math.sin(u4*40)*Math.exp(-6*u4);
+    th=0.35+0.02*sh;off=lerp(0.30,0.12,u4);r=22;
+    P.lean=0.30+0.03*sh;P.py=-43;P.px=5;
+    P.sy=0.97;P.sx=1.02;
+    P.tailD1=-0.9+0.3*u4;P.tailD2=-1.2+0.4*u4;P.tailD3=-1.5+0.5*u4;
+    var tip={x:P.px+Math.cos(th)*r+Math.cos(th+off)*92,y:P.py-17+Math.sin(th)*r+Math.sin(th+off)*92};
+    if(u4<0.65){
+      P.fx.push({type:'burst',x:tip.x,y:tip.y,r:20+26*u4,al:1-u4*1.3});
+      P.fx.push({type:'ring',x:tip.x,y:tip.y,r:14+50*u4,al:0.9-u4});
+    }
+    for(var k=0;k<3;k++)P.fx.push({type:'star',x:tip.x+(hash(k+9)-0.5)*46,y:tip.y+(hash(k+3)-0.5)*46,r:4+3*hash(k+5),rot:k,col:'#ffe066',al:(1-u4)*0.9});
+  }else if(t<0.78){var u5=ease(seg01(t,0.52,0.78));var thS=u5*TAU;
+    P.spinSx=Math.cos(thS)>=0?Math.max(0.12,Math.cos(thS)):Math.min(-0.12,Math.cos(thS));
+    th=0.35+thS;off=-0.6;r=19;
+    P.lean=0.1*Math.sin(thS*2);P.py=-43+1.5*Math.sin(thS);
+    P.px=lerp(5,1,u5);
+    P.eyes='dizzy';P.mouth='oh';P.browAng=0;P.browUp=0.4;
+    P.lFoot={x:-9+3*Math.sin(thS+1),y:-2*Math.abs(Math.sin(thS*2)),ang:0,planted:false};
+    P.rFoot={x:9+3*Math.sin(thS+2.5),y:-2*Math.abs(Math.sin(thS*2+1)),ang:0,planted:false};
+    P.tailSpread=0.8;
+    P.tailD1=0.8*Math.sin(thS-0.5);P.tailD2=1.0*Math.sin(thS-1.0);P.tailD3=1.2*Math.sin(thS-1.5);
+    for(var m=0;m<3;m++){var oa=thS*2+m*TAU/3;
+      P.fx.push({type:'star',x:P.px+Math.cos(oa)*26,y:-104+Math.sin(oa)*9,r:4.5,rot:oa,col:'#ffe066',al:0.9});}
+    P.fx.push({type:'ring',x:P.px,y:-60,r:40+18*Math.sin(thS),al:0.25});
+  }else{var u6=seg01(t,0.78,1);var e=Math.exp(-4*u6),w=Math.cos(11*u6);
+    th=lerp(0.35,0.9,ease(u6));off=lerp(-0.6,-0.1,u6);r=lerp(19,16,u6);
+    P.lean=0.25*e*w;P.py=-44+2.5*e*Math.cos(11*u6+0.8);P.px=lerp(2,0,u6);
+    P.sy=1+0.06*e*w;P.sx=1-0.05*e*w;
+    P.eyes='happy';P.mouth='open
