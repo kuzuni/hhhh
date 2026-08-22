@@ -194,7 +194,7 @@ for(const[st,sf]of[['open',''],['half','_h'],['closed','_c']]){
 function bakeBrow(name,dir){
   makePart(name,-17,-6,17,6,5,c=>{
     // 얇고 긴 곡선 1획 — 머리색보다 한 톤 어두운 브라운
-    c.strokeStyle='#b98f52';c.lineWidth=1.1;c.lineCap='round';
+    c.strokeStyle='#a3793d';c.lineWidth=1.45;c.lineCap='round';
     c.beginPath();c.moveTo(-dir*14,1.5);
     c.quadraticCurveTo(0,-3.4,dir*14.5,-.3);c.stroke();
   });
@@ -303,13 +303,23 @@ makePart('hairSideL',-14,-10,12,80,5,c=>{
   lockShape(c,-2,-4,-8,34,-3,70,13);c.fillStyle=PAL.hair;c.fill();
   c.lineWidth=1.3;c.strokeStyle=PAL.hairLine;c.stroke();
   lockShape(c,2,-2,6,28,3,52,7);c.fillStyle=PAL.hairSh;c.fill();c.stroke();
-  c.strokeStyle='rgba(169,130,58,.6)';c.lineWidth=1.1;
-  c.beginPath();c.moveTo(-3,4);c.quadraticCurveTo(-7,32,-3,60);c.stroke();
+  // 내부 가닥선 (플랫 슬라브 방지)
+  c.strokeStyle='rgba(169,130,58,.55)';c.lineWidth=1;
+  c.beginPath();c.moveTo(-4,4);c.quadraticCurveTo(-8,32,-4,62);c.stroke();
+  c.beginPath();c.moveTo(-1,6);c.quadraticCurveTo(-4,34,-1,58);c.stroke();
+  c.beginPath();c.moveTo(2,8);c.quadraticCurveTo(0,30,1,48);c.stroke();
+  c.fillStyle='rgba(255,243,201,.3)';                       // 세로 림
+  lockShape(c,-5,0,-9,26,-5,50,3);c.fill();
 });
 makePart('hairSideR',-10,-10,14,62,5,c=>{
   lockShape(c,2,-4,8,24,3,54,12);c.fillStyle=PAL.hair;c.fill();
   c.lineWidth=1.3;c.strokeStyle=PAL.hairLine;c.stroke();
   lockShape(c,-2,-2,-5,20,-2,40,6);c.fillStyle=PAL.hairSh;c.fill();c.stroke();
+  c.strokeStyle='rgba(169,130,58,.55)';c.lineWidth=1;
+  c.beginPath();c.moveTo(4,4);c.quadraticCurveTo(8,24,4,48);c.stroke();
+  c.beginPath();c.moveTo(1,6);c.quadraticCurveTo(3,22,1,42);c.stroke();
+  c.fillStyle='rgba(255,243,201,.3)';
+  lockShape(c,6,0,9,20,5,40,2.6);c.fill();
 });
 
 // ---- 2h. 몸통 (피벗 = 골반 상단 근처 root(0,-14), 어깨선, 목은 여기에 구움) ----
@@ -510,12 +520,13 @@ function bakeCape(name,w0,w1,h,f0,f1,last){
     const sg=c.createLinearGradient(-w1/2,0,w1*.1,0);
     sg.addColorStop(0,'rgba(74,20,32,.35)');sg.addColorStop(1,'rgba(74,20,32,0)');
     c.save();c.clip();c.fillStyle=sg;c.fillRect(-w1/2-8,-12,w1,h+22);
-    // 세로 방향 흐르는 주름 (파트 경계를 가로질러 이어지는 위치)
+    // 세로 방향 흐르는 주름 (파트 경계를 가로질러 이어지는 위치) — 작은 스케일에서도 읽히게
     for(const fx of[-.30,-.08,.14,.34]){
-      c.strokeStyle='rgba(74,20,32,.42)';c.lineWidth=2.6;
+      const fw=fx===-.08||fx===.34?4.5:3.2;
+      c.strokeStyle='rgba(74,20,32,.55)';c.lineWidth=fw;
       c.beginPath();c.moveTo(w0*fx,-12);c.quadraticCurveTo(w1*fx*1.06,h*.5,w1*fx,h+8);c.stroke();
-      c.strokeStyle='rgba(255,214,200,.10)';c.lineWidth=1.6;
-      c.beginPath();c.moveTo(w0*fx+3,-12);c.quadraticCurveTo(w1*fx*1.06+3,h*.5,w1*fx+3,h+8);c.stroke();
+      c.strokeStyle='rgba(255,220,205,.16)';c.lineWidth=2;
+      c.beginPath();c.moveTo(w0*fx+4,-12);c.quadraticCurveTo(w1*fx*1.06+4,h*.5,w1*fx+4,h+8);c.stroke();
     }
     c.restore();
     if(last){ // 금 헴 + 아래 실루엣 마감
@@ -740,9 +751,9 @@ function drawBones(ctx){
   // 주요 본 라벨
   ctx.font='11px "Segoe UI","Malgun Gothic",sans-serif';
   ctx.textAlign='left';ctx.textBaseline='middle';
-  const LBL={root:[10,10],torso:[10,-4],head:[12,-6],pelvis:[10,8],
-    upArmR:[10,-8],foreArmR:[10,0],handR:[10,8],upArmL:[-64,-8],
-    thighR:[10,4],shinR:[10,4],thighL:[-72,4],capeA:[-70,-6],rapier:[8,-12]};
+  const LBL={root:[12,12],torso:[16,-46],head:[14,-8],pelvis:[-56,14],
+    upArmR:[12,-10],foreArmR:[12,2],handR:[12,10],upArmL:[-66,-26],
+    thighR:[16,26],shinR:[12,6],thighL:[-76,26],capeA:[-30,34],rapier:[14,28]};
   for(const k in LBL){
     const n=RIGM[k];if(!n)continue;
     const tx=n.wx+LBL[k][0],ty=n.wy+LBL[k][1];
@@ -776,11 +787,11 @@ idle:{dur:4,loop:true,tracks:{
   torso:{r:[[0,.05],[1.3,-.055],[2.2,.02],[2.7,-.035],[4,.05]],
          y:[[0,2],[1.3,-8],[2.2,2],[3.1,-4],[4,2]]},
   pelvis:{r:[[0,.02],[1.3,-.02],[2.7,.03],[4,.02]],x:[[0,2],[1.3,0],[2.7,-4],[4,2]]},
-  head:{r:[[0,-.06],[1.3,.07],[2.2,.02],[2.45,.2],[3.1,.2],[3.6,0],[4,-.06]]},
-  upArmR:{r:[[0,.07],[1.3,-.11],[2.2,.02],[2.7,.05],[4,.07]]},
-  upArmL:{r:[[0,-.07],[1.3,.11],[2.2,-.02],[2.7,-.05],[4,-.07]]},
-  foreArmR:{r:[[0,.04],[1.3,-.07],[2.7,.03],[4,.04]]},
-  foreArmL:{r:[[0,-.04],[1.3,.07],[2.7,-.03],[4,-.04]]},
+  head:{r:[[0,-.08],[1.3,.09],[2.2,.02],[2.45,.22],[3.1,.22],[3.6,0],[4,-.08]]},
+  upArmR:{r:[[0,.09],[1.3,-.14],[2.2,.02],[2.7,.06],[4,.09]]},
+  upArmL:{r:[[0,-.09],[1.3,.14],[2.2,-.02],[2.7,.45],[3.4,.05],[4,-.09]]},  // 윙크 컷: 왼손을 가슴에 — 실루엣 차별화
+  foreArmR:{r:[[0,.05],[1.3,-.09],[2.7,-.3],[3.4,.02],[4,.05]]},
+  foreArmL:{r:[[0,-.05],[1.3,.09],[2.7,-1.75],[3.4,-.1],[4,-.05]]},
   capeA:{r:[[0,.02],[1.3,.11],[2.2,.01],[3,-.03],[4,.02]]},
   capeB:{r:[[0,-.01],[1.5,.08],[2.4,-.03],[3.3,-.05],[4,-.01]]},
   capeC:{r:[[0,-.03],[1.7,.08],[2.6,-.04],[3.6,-.06],[4,-.03]]},
@@ -996,9 +1007,11 @@ function drawGround(ctx,px,py,ps,over,band){
   computeWorld(over||{},px,py,ps);
   const gy=py+FLOOR*ps;
   ctx.save();
-  if(band){ // 바닥 밴드 + 바닥선 (몽타주 셀)
-    ctx.fillStyle='rgba(70,50,26,.38)';ctx.fillRect(px-4000,gy,8000,4000);
-    ctx.strokeStyle='rgba(212,175,90,.30)';ctx.lineWidth=1.5;
+  if(band){ // 바닥 밴드(밝은 웜톤 — 그림자가 보이도록) + 바닥선 (몽타주 셀)
+    const bg2=ctx.createLinearGradient(0,gy,0,gy+46);
+    bg2.addColorStop(0,'rgba(150,108,58,.50)');bg2.addColorStop(1,'rgba(96,68,36,.35)');
+    ctx.fillStyle=bg2;ctx.fillRect(px-4000,gy,8000,4000);
+    ctx.strokeStyle='rgba(232,196,120,.55)';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(px-4000,gy);ctx.lineTo(px+4000,gy);ctx.stroke();
   }
   let cx=0,wsum=0;
@@ -1007,19 +1020,19 @@ function drawGround(ctx,px,py,ps,over,band){
     const lift=Math.max(0,(gy-fy)/ps);
     const k=clamp(1-lift/150,.3,1);   // 발이 뜨면 옅고 작게
     cx+=fx*k;wsum+=k;
-    const r=58*ps*(.55+.45*k);
-    const g=ctx.createRadialGradient(fx,gy+3*ps,0,fx,gy+3*ps,r);
-    g.addColorStop(0,'rgba(0,0,0,'+(.4*k).toFixed(3)+')');
-    g.addColorStop(.65,'rgba(0,0,0,'+(.2*k).toFixed(3)+')');
-    g.addColorStop(1,'rgba(0,0,0,0)');
+    const r=70*ps*(.55+.45*k);
+    const g=ctx.createRadialGradient(fx,gy+4*ps,0,fx,gy+4*ps,r);
+    g.addColorStop(0,'rgba(12,5,0,'+(.72*k).toFixed(3)+')');
+    g.addColorStop(.6,'rgba(12,5,0,'+(.38*k).toFixed(3)+')');
+    g.addColorStop(1,'rgba(12,5,0,0)');
     ctx.fillStyle=g;
-    ctx.save();ctx.translate(fx,gy+3*ps);ctx.scale(1,.24);
+    ctx.save();ctx.translate(fx,gy+4*ps);ctx.scale(1,.28);
     ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.fill();ctx.restore();
   }
   // 체중 중심 앰비언트 섀도
   const ax=wsum?cx/wsum:px, ar=125*ps;
   const ag=ctx.createRadialGradient(ax,gy+3*ps,0,ax,gy+3*ps,ar);
-  ag.addColorStop(0,'rgba(0,0,0,.18)');ag.addColorStop(1,'rgba(0,0,0,0)');
+  ag.addColorStop(0,'rgba(10,4,0,.25)');ag.addColorStop(1,'rgba(10,4,0,0)');
   ctx.fillStyle=ag;
   ctx.save();ctx.translate(ax,gy+3*ps);ctx.scale(1,.22);
   ctx.beginPath();ctx.arc(0,0,ar,0,TAU);ctx.fill();ctx.restore();
@@ -1276,7 +1289,7 @@ function montage(){
       const po=pose(anim,t);
       const ps=opt.ps||Math.min(ch*.85/730,cw/430);
       const px=cx+cw/2-((po.over.root&&po.over.root.x)||0)*ps+(opt.dx||0);
-      const py=cy+ch-34-FLOOR*ps+(opt.dy||0);
+      const py=cy+ch-56-FLOOR*ps+(opt.dy||0);   // 발밑 바닥 밴드가 라벨에 덮이지 않게 여유 확보
       drawGround(ctx,px,py,ps,po.over,true);
       renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:opt.fx===false?{}:po.fx,
         bones:opt.bones,explode:opt.explode||0,rich:opt.rich,time:t});
@@ -1293,20 +1306,20 @@ function montage(){
   // Row A: 대기 3위상(이완/호흡 최고점/윙크+체중이동) + 인사 3키
   const rowA=[['대기 ① 이완 t=0.0s','idle',0],['대기 ② 호흡 최고점 t=1.3s','idle',1.3],['대기 ③ 윙크+체중이동 t=2.7s','idle',2.7],
     ['인사 ① 팔 스윕','greet',.42],['인사 ② 보우','greet',1.1],['인사 ③ 홀드 (시선 카메라)','greet',1.8]];
-  rowA.forEach((r,i)=>charCell(m+i*(aw+m),m,aw,ah,r[0],r[1],r[2],r[1]==='greet'&&r[2]<.5?{ps:.46}:undefined));
+  rowA.forEach((r,i)=>charCell(m+i*(aw+m),m,aw,ah,r[0],r[1],r[2],r[1]==='greet'&&r[2]<.5?{ps:.45}:undefined));
   // Row B: 런지 6키 (①은 앙가르드 앤티시페이션)
   const rowB=[['런지 ① 준비 (앙가르드)','lunge',.06],['런지 ② 재기','lunge',.5],['런지 ③ 발사','lunge',.63],
     ['런지 ④ 극점','lunge',.72],['런지 ⑤ 홀드','lunge',1.0],['런지 ⑥ 복귀','lunge',1.9]];
   rowB.forEach((r,i)=>charCell(m+i*(aw+m),m*2+ah,aw,ah,r[0],r[1],r[2],{ps:.42,dx:-24}));
   // Row C: 뷰티샷 / 얼굴 클로즈업 / 리깅 오버레이 / 부품 분해도
   const cy0=m*3+ah*2,chh=MH-cy0-m,cwidth=(MW-m*5)/4;
-  charCell(m,cy0,cwidth,chh,'① 뷰티샷 (승리)','victory',1.05,{ps:.57,dx:-18,rich:true});
+  charCell(m,cy0,cwidth,chh,'① 뷰티샷 (승리)','victory',1.05,{ps:.545,dx:-18,rich:true});
   cell(m*2+cwidth,cy0,cwidth,chh,'② 얼굴 클로즈업 (두상 452px)',(cx,cy,cw,ch)=>{
     // 턱선까지로 크롭 — 목/칼라 스텁이 프레임에 들어오지 않게 턱 끝을 하단에 정렬 (2-pass 프레이밍)
     const po=pose('idle',2.2),ps=4.08;
     computeWorld(po.over,0,0,ps);
     const[chx,chy]=nodeWorldPoint(RIGM.head,4,6);   // 턱 끝 (head-local)
-    const px=cx+cw/2-chx, py=cy+ch-28-chy;
+    const px=cx+cw/2-chx, py=cy+ch-22-chy;
     renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:{},time:2.2});
   });
   charCell(m*3+cwidth*2,cy0,cwidth,chh,'③ 리깅 오버레이 (본 계층/피벗)','idle',0,{bones:true,ps:.70});

@@ -1034,10 +1034,122 @@ function cellView(cx0,cy0,cw2,ch2,fx,fy,charH){
  return {s:s,ox:cx0+cw2/2-fx*s,oy:cy0+ch2/2-fy*s};
 }
 function exprP(i,extra){
- var e=EXPRS[i],o={blinkL:clamp(e.lidL,-.15,1.15),blinkR:clamp(e.lidR,-.15,1.15),
+ var e=EXPRS[i],o={blinkL:clamp(e.lidL,-.6,1.15),blinkR:clamp(e.lidR,-.6,1.15),irisS:e.irs,
   browLift:{L:e.blL,R:e.blR},browTilt:{L:e.btL,R:e.btR},mouthA:e.m,mouthB:e.m},k;
  if(extra)for(k in extra)o[k]=extra[k];
  return defaultP(o);
+}
+// ---- Row B 액션 FX 헬퍼 (몽타주 전용 오버레이: 검·팔·스미어·임팩트·흑염) ----
+function withView(c2,v,fn){c2.save();c2.translate(v.ox,v.oy);c2.scale(v.s,v.s);fn();c2.restore()}
+function fxArm(c2,v,p,w0,w1){ // 코트 소매 팔 (테이퍼 스트랜드)
+ withView(c2,v,function(){
+  strandPath(c2,p,w0||30,w1||16,.25);
+  c2.fillStyle=C.coat; c2.fill();
+  c2.strokeStyle=C.line; c2.lineWidth=2.6; c2.lineJoin='round'; c2.stroke();
+  var e=strandEnd(p);
+  c2.beginPath(); c2.moveTo(lerp(p[0],p[2],.2),lerp(p[1],p[3],.2));
+  c2.quadraticCurveTo(p[2],p[3],lerp(p[2],e[0],.7),lerp(p[3],e[1],.7));
+  c2.strokeStyle='rgba(138,118,232,.35)'; c2.lineWidth=2.4; c2.lineCap='round'; c2.stroke();
+ });
+}
+function fxBlade(c2,v,cx,cy,ang,len,o){ // 손에 쥔 마검: 칼날·가드·자루·장갑 손
+ o=o||{};
+ withView(c2,v,function(){
+  c2.translate(cx,cy); c2.rotate(ang);
+  if(o.a!=null)c2.globalAlpha=o.a;
+  c2.lineJoin='round'; c2.lineCap='round';
+  var bw=8;
+  c2.beginPath();
+  c2.moveTo(-bw,-4); c2.lineTo(-bw*.55,-len); c2.lineTo(0,-len-16);
+  c2.lineTo(bw*.55,-len); c2.lineTo(bw,-4); c2.closePath();
+  var bg=c2.createLinearGradient(-bw,0,bw,0);
+  bg.addColorStop(0,'#938fae'); bg.addColorStop(.48,'#3d3752'); bg.addColorStop(.52,'#2a2440'); bg.addColorStop(1,'#191527');
+  c2.fillStyle=bg; c2.fill(); c2.strokeStyle=C.line; c2.lineWidth=2; c2.stroke();
+  c2.beginPath(); c2.moveTo(0,-8); c2.lineTo(0,-len-4);
+  c2.strokeStyle='rgba(222,217,242,.5)'; c2.lineWidth=1.2; c2.stroke(); // 중앙 릿지
+  c2.save(); c2.globalCompositeOperation='lighter';   // 보라 엣지 글로우
+  c2.beginPath(); c2.moveTo(-bw+.5,-4); c2.lineTo(-bw*.55+.5,-len); c2.lineTo(0,-len-16);
+  c2.strokeStyle='rgba(140,100,255,'+(o.glow!=null?o.glow:.7)+')'; c2.lineWidth=3.4; c2.stroke();
+  c2.restore();
+  var gr=c2.createLinearGradient(-26,0,26,0);
+  gr.addColorStop(0,C.silverDk); gr.addColorStop(.45,'#eef0f4'); gr.addColorStop(1,C.silverDk);
+  c2.beginPath();
+  c2.moveTo(-27,2); c2.quadraticCurveTo(-10,-4,0,-3.5); c2.quadraticCurveTo(10,-4,27,2);
+  c2.quadraticCurveTo(10,8,0,7.5); c2.quadraticCurveTo(-10,8,-27,2); c2.closePath();
+  c2.fillStyle=gr; c2.fill(); c2.strokeStyle=C.line; c2.lineWidth=2; c2.stroke();
+  c2.beginPath(); c2.rect(-6,7,12,50); c2.fillStyle='#2c2240'; c2.fill();
+  c2.strokeStyle=C.line; c2.lineWidth=2; c2.stroke();
+  var i; c2.strokeStyle='rgba(138,118,232,.6)'; c2.lineWidth=1.6;
+  for(i=0;i<4;i++){c2.beginPath(); c2.moveTo(-6,12+i*11); c2.lineTo(6,17+i*11); c2.stroke();}
+  c2.beginPath(); c2.arc(0,64,7.5,0,TAU); c2.fillStyle=gr; c2.fill(); c2.strokeStyle=C.line; c2.stroke();
+  c2.beginPath(); c2.arc(0,64,3,0,TAU); c2.fillStyle=C.ember; c2.fill();
+  // 장갑 손 (그립을 감싼 주먹 + 손가락 라인)
+  c2.beginPath(); c2.ellipse(0,32,11.5,16,0,0,TAU); c2.fillStyle='#211a30'; c2.fill();
+  c2.strokeStyle=C.line; c2.lineWidth=2; c2.stroke();
+  for(i=0;i<3;i++){c2.beginPath(); c2.moveTo(-9,24+i*8); c2.quadraticCurveTo(0,21+i*8,9,24+i*8);
+   c2.strokeStyle='rgba(10,8,16,.8)'; c2.lineWidth=1.4; c2.stroke();}
+  c2.beginPath(); c2.moveTo(-11,26); c2.quadraticCurveTo(-13,34,-10,40);
+  c2.strokeStyle='rgba(150,140,200,.4)'; c2.lineWidth=1.4; c2.stroke();
+  c2.globalAlpha=1;
+ });
+}
+function fxSmear(c2,v,cx,cy,r0,r1,a0,a1,al){ // 스윙 스미어 (호 웨지 + 잔상 엣지)
+ withView(c2,v,function(){
+  c2.globalCompositeOperation='lighter';
+  var gr=c2.createRadialGradient(cx,cy,r0,cx,cy,r1);
+  gr.addColorStop(0,'rgba(124,92,255,0)');
+  gr.addColorStop(.72,'rgba(150,120,255,'+al+')');
+  gr.addColorStop(1,'rgba(232,226,255,'+Math.min(1,al*1.5)+')');
+  c2.beginPath(); c2.arc(cx,cy,r1,a0,a1); c2.arc(cx,cy,r0,a1,a0,true); c2.closePath();
+  c2.fillStyle=gr; c2.fill();
+  var i,aa;
+  for(i=0;i<3;i++){aa=a1-(a1-a0)*(.1+i*.16);
+   c2.beginPath(); c2.moveTo(cx+Math.cos(aa)*(r0+6),cy+Math.sin(aa)*(r0+6));
+   c2.lineTo(cx+Math.cos(aa)*(r1-4),cy+Math.sin(aa)*(r1-4));
+   c2.strokeStyle='rgba(205,190,255,'+Math.max(.1,al*1.4-i*.14)+')'; c2.lineWidth=2.6-i*.6; c2.lineCap='round'; c2.stroke();}
+ });
+}
+function fxFlame(c2,v,x,y,r,seed){ // 흑염: 다크 티어드롭 + 보라 림
+ withView(c2,v,function(){
+  var R=rng(seed||7),i;
+  for(i=0;i<6;i++){
+   var a2=(R()-.5)*1.7, rr=r*(.5+R()*.85),
+       fx0=x+(R()-.5)*r*2.6, fy0=y+(R()-.5)*r*2-i*r*.35;
+   c2.save(); c2.translate(fx0,fy0); c2.rotate(a2);
+   c2.beginPath(); c2.moveTo(0,-rr*2.2);
+   c2.bezierCurveTo(rr*.9,-rr*.8,rr*.75,rr*.5,0,rr);
+   c2.bezierCurveTo(-rr*.75,rr*.5,-rr*.9,-rr*.8,0,-rr*2.2); c2.closePath();
+   c2.fillStyle='rgba(16,8,30,.85)'; c2.fill();
+   c2.strokeStyle='rgba(140,102,255,.75)'; c2.lineWidth=1.6; c2.stroke();
+   c2.globalCompositeOperation='lighter';
+   c2.beginPath(); c2.moveTo(0,-rr*1.3); c2.quadraticCurveTo(rr*.4,-rr*.2,0,rr*.5);
+   c2.strokeStyle='rgba(179,154,255,.5)'; c2.lineWidth=2; c2.stroke();
+   c2.restore();
+  }
+ });
+}
+function fxImpact(c2,v,x,y,r){ // 임팩트 플래시 + 스파이크
+ withView(c2,v,function(){
+  c2.globalCompositeOperation='lighter';
+  var gr=c2.createRadialGradient(x,y,0,x,y,r);
+  gr.addColorStop(0,'rgba(255,252,255,.95)'); gr.addColorStop(.28,'rgba(205,175,255,.7)'); gr.addColorStop(1,'rgba(124,92,255,0)');
+  c2.beginPath(); c2.arc(x,y,r,0,TAU); c2.fillStyle=gr; c2.fill();
+  var i,n=9;
+  for(i=0;i<n;i++){var a2=i/n*TAU+.35, r1=r*(.7+(i%3)*.28);
+   c2.beginPath(); c2.moveTo(x+Math.cos(a2)*r*.1,y+Math.sin(a2)*r*.1);
+   c2.lineTo(x+Math.cos(a2+.06)*r1,y+Math.sin(a2+.06)*r1);
+   c2.lineTo(x+Math.cos(a2+.16)*r*.15,y+Math.sin(a2+.16)*r*.15); c2.closePath();
+   c2.fillStyle='rgba(232,218,255,'+(.55-(i%3)*.12)+')'; c2.fill();}
+ });
+}
+function fxSpeed(c2,x,y,w,h,cx,cy,n,al){ // 방사 스피드라인 (스크린 좌표)
+ var R=rng(42),i;
+ c2.save(); c2.beginPath(); c2.rect(x,y,w,h); c2.clip();
+ for(i=0;i<n;i++){var a2=R()*TAU, r0=Math.max(w,h)*(.3+R()*.28), r1=r0+40+R()*100;
+  c2.beginPath(); c2.moveTo(cx+Math.cos(a2)*r0,cy+Math.sin(a2)*r0);
+  c2.lineTo(cx+Math.cos(a2)*r1,cy+Math.sin(a2)*r1);
+  c2.strokeStyle='rgba(205,195,255,'+(al||.2)+')'; c2.lineWidth=1+R()*1.6; c2.stroke();}
+ c2.restore();
 }
 function drawMontage(){
  ['panel','hud','back'].forEach(function(id){document.getElementById(id).style.display='none'});
@@ -1045,54 +1157,119 @@ function drawMontage(){
  ctx.fillStyle='#0b0912'; ctx.fillRect(0,0,1680,1500);
  var mt=13.4; // 고정 시각 (위스프 결정론)
  function cell(x,y,w,h,label,P,fx,fy,charH,opts){
+  opts=opts||{};
   ctx.save();
   ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
   var gr=ctx.createRadialGradient(x+w/2,y+h*.36,h*.06,x+w/2,y+h*.5,h*.9);
   gr.addColorStop(0,'#2e2352'); gr.addColorStop(1,'#151022');
   ctx.fillStyle=gr; ctx.fillRect(x,y,w,h);
   var v=cellView(x,y,w,h,fx,fy,charH);
+  if(opts.shake){v={s:v.s,ox:v.ox+opts.shake[0],oy:v.oy+opts.shake[1]}}
   if(!/[?&]bare/.test(location.search)){
-   if(opts&&opts.wisps)drawWisps(ctx,mt,v,false);
+   if(opts.wisps)drawWisps(ctx,mt,v,false);
+   if(opts.ghost){ // 화면 흔들림 잔상 (임팩트 프레임)
+    var gv={s:v.s,ox:v.ox+opts.ghost[0],oy:v.oy+opts.ghost[1]};
+    ctx.globalAlpha=opts.ghost[2]; renderScene(ctx,P,gv,{noSword:opts.noSword}); ctx.globalAlpha=1;
+   }
    renderScene(ctx,P,v,opts);
-   if(opts&&opts.wisps)drawWisps(ctx,mt,v,true);
+   if(opts.fx)opts.fx(v,x,y,w,h);
+   if(opts.wisps)drawWisps(ctx,mt,v,true);
   }
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.fillStyle='rgba(10,8,16,.72)'; ctx.fillRect(x,y+h-24,w,24);
+  ctx.setTransform(1,0,0,1,0,0); ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='rgba(10,8,16,.78)'; ctx.fillRect(x,y+h-24,w,24);
   ctx.fillStyle='#f2eefc'; ctx.font='13px "Segoe UI","Malgun Gothic",sans-serif';
   ctx.textAlign='center'; ctx.fillText(label,x+w/2,y+h-7);
   ctx.restore();
   ctx.strokeStyle='#2a2342'; ctx.lineWidth=1; ctx.strokeRect(x+.5,y+.5,w-1,h-1);
  }
  var i,cw6=270,gap=8,x0=8;
- // Row A: 고개/시선 6포즈 (시차 증명)
- var yaws=[-30,-15,0,15,30];
+ // ---- Row A: 요 스윕 × 표정 통합 (헤어가 역방향으로 끌리는 모션 중간 프레임) ----
+ var rowA=[
+  {yaw:-30,e:2,lb:'요 -30° · 진지'},
+  {yaw:-15,e:1,lb:'요 -15° · 미소'},
+  {yaw:0,  e:0,lb:'요 0° · 기본'},
+  {yaw:15, e:4,lb:'요 +15° · 윙크'},
+  {yaw:30, e:3,lb:'요 +30° · 놀람'}
+ ];
  for(i=0;i<5;i++){
-  var yv=yaws[i];
-  cell(x0+i*(cw6+gap),8,cw6,450,'요 '+(yv>0?'+':'')+yv+'°',
-   defaultP({yaw:yv,roll:yv*.2,eyeX:yv/30*.8,sway:yv*-.25}),500,430,640);
+  var ra=rowA[i];
+  cell(x0+i*(cw6+gap),8,cw6,450,ra.lb,
+   exprP(ra.e,{yaw:ra.yaw,roll:ra.yaw*.18,eyeX:ra.yaw/30*.85,sway:-ra.yaw*.55,swayTip:-ra.yaw*.5}),500,430,640);
  }
- cell(x0+5*(cw6+gap),8,cw6,450,'피치 업 +18°',
-  defaultP({pitch:18,eyeY:-.55,sway:2}),500,430,640);
- // Row B: 표정 5 + 블링크 중간
- for(i=0;i<5;i++){
-  cell(x0+i*(cw6+gap),466,cw6,450,'표정 · '+EXPRS[i].name,
-   exprP(i,{yaw:i%2?-7:7,roll:i%2?-2:2}),500,430,640);
- }
- cell(x0+5*(cw6+gap),466,cw6,450,'블링크 0.55',
-  defaultP({blinkL:.55,blinkR:.55,yaw:4}),500,430,640);
- // Row C: 뷰티샷 / 클로즈업 / 와이어프레임 / 극단 변형
- var cw4=410;
- cell(8,924,cw4,568,'버스트 뷰티샷',defaultP({yaw:8,roll:2.5,eyeX:.25,sway:5}),500,560,1080,{wisps:true});
- cell(8+(cw4+gap),924,cw4,568,'얼굴 클로즈업 (머리 세로 527px)',
-  defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,390,380);
- cell(8+2*(cw4+gap),924,cw4,568,'리깅: 삼각 메시 와이어프레임',
-  defaultP({yaw:12,sway:6}),500,430,640,{mesh:true});
- cell(8+3*(cw4+gap),924,cw4,568,'극단 변형: 요+30 피치+16 롤+9 헤어스윙',
-  exprP(2,{yaw:30,pitch:16,roll:9,sway:26,swayTip:20,eyeX:.9}),500,420,620);
- // 캡션
- ctx.fillStyle='#8a76e8'; ctx.font='12px "Segoe UI","Malgun Gothic",sans-serif';
- ctx.textAlign='left';
- ctx.fillText('카이렌 — 메시 디포메이션(Live2D式) 몽타주 · 22레이어 · 격자 삼각 메시 변형',14,1497);
+ cell(x0+5*(cw6+gap),8,cw6,450,'피치 업 +18° (턱 상승·앞머리 후퇴)',
+  exprP(0,{pitch:18,eyeY:-.7,sway:3}),500,430,640);
+ // ---- Row B: 발도 액션 시퀀스 (시간축 키프레임 6컷) ----
+ var by=466,bh=450;
+ cell(x0+0*(cw6+gap),by,cw6,bh,'① 발도 준비 · 0.00s',
+  exprP(2,{yaw:-16,pitch:-5,roll:-7,sway:12,eyeX:-.7,eyeY:.2}),460,430,640,
+  {fx:function(v){
+   fxArm(ctx,v,[452,684, 372,702, 308,588],30,15);
+   withView(ctx,v,function(){ // 힐트를 쥐는 장갑 손
+    ctx.beginPath(); ctx.ellipse(296,576,13,16,-.7,0,TAU); ctx.fillStyle='#211a30'; ctx.fill();
+    ctx.strokeStyle=C.line; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(288,566); ctx.quadraticCurveTo(297,561,305,569);
+    ctx.strokeStyle='rgba(10,8,16,.8)'; ctx.lineWidth=1.4; ctx.stroke();
+   });
+   fxFlame(ctx,v,272,552,13,11);
+  }});
+ cell(x0+1*(cw6+gap),by,cw6,bh,'② 발도 (칼 끌기) · 0.12s',
+  exprP(2,{yaw:-8,pitch:-2,roll:-4,sway:6,eyeX:-.3}),480,430,640,
+  {noSword:true,fx:function(v){
+   fxSmear(ctx,v,430,660,150,260,-2.5,-1.85,.1);
+   fxArm(ctx,v,[452,678, 434,702, 416,662],28,15);
+   fxBlade(ctx,v,398,632,-.5,235,{glow:.55});
+   fxFlame(ctx,v,340,470,11,23);
+  }});
+ cell(x0+2*(cw6+gap),by,cw6,bh,'③ 스윙 스미어 · 0.18s',
+  exprP(2,{yaw:6,pitch:2,roll:3,sway:-26,swayTip:-22,eyeX:.5}),500,430,640,
+  {noSword:true,fx:function(v){
+   fxSmear(ctx,v,500,660,150,330,-2.75,-.45,.22);
+   fxBlade(ctx,v,545,548,-1.45,225,{a:.3,glow:.9});   // 잔상 1
+   fxBlade(ctx,v,610,585,-.85,230,{a:.55,glow:.9});   // 잔상 2
+   fxArm(ctx,v,[478,680, 560,690, 618,608],30,15);
+   fxBlade(ctx,v,635,595,-.42,235,{glow:1});
+  }});
+ cell(x0+3*(cw6+gap),by,cw6,bh,'④ 임팩트 (흑염 폭발) · 0.22s',
+  exprP(2,{yaw:4,pitch:6,roll:-2,sway:-20,blinkL:-.35,blinkR:-.35,irisS:.86,
+   browLift:{L:-.2,R:-.2},browTilt:{L:1.4,R:1.4},eyeX:.4,eyeY:.3}),500,430,640,
+  {noSword:true,shake:[5,-4],ghost:[-8,6,.26],fx:function(v,cx0,cy0,cw0,ch0){
+   fxSmear(ctx,v,500,620,170,330,-2.7,.35,.1);
+   fxArm(ctx,v,[472,688, 438,704, 424,608],28,15);
+   fxBlade(ctx,v,450,620,2.1,230,{glow:1});
+   fxImpact(ctx,v,610,700,125);
+   fxFlame(ctx,v,600,660,20,31);
+   fxSpeed(ctx,cx0,cy0,cw0,ch0,610*v.s+v.ox,700*v.s+v.oy,26,.22);
+  }});
+ cell(x0+4*(cw6+gap),by,cw6,bh,'⑤ 팔로스루 · 0.34s',
+  exprP(2,{yaw:12,pitch:3,roll:7,sway:-34,swayTip:-30,eyeX:.6}),500,430,640,
+  {noSword:true,fx:function(v){
+   fxSmear(ctx,v,520,540,170,320,.5,2.1,.09);
+   fxArm(ctx,v,[480,690, 462,708, 446,664],28,15);
+   fxBlade(ctx,v,430,690,-2.7,230,{glow:.5});
+   fxFlame(ctx,v,382,800,15,47);
+  }});
+ cell(x0+5*(cw6+gap),by,cw6,bh,'⑥ 잔심 · 0.60s',
+  exprP(2,{yaw:6,pitch:-2,roll:1,sway:5,blinkL:.3,blinkR:.3,eyeX:.2}),500,430,640,
+  {noSword:true,fx:function(v){
+   fxArm(ctx,v,[548,690, 572,708, 578,674],28,15);
+   fxBlade(ctx,v,585,700,2.9,230,{glow:.35});
+   fxFlame(ctx,v,620,790,10,53);
+  }});
+ // ---- Row C: 뷰티샷 / 클로즈업 / 리깅 오버레이 / 극단 변형 ----
+ var cw4=410,cy4=924,ch4=540;
+ cell(8,cy4,cw4,ch4,'버스트 뷰티샷',defaultP({yaw:8,roll:2.5,eyeX:.25,sway:5}),500,560,1080,{wisps:true});
+ cell(8+(cw4+gap),cy4,cw4,ch4,'얼굴 클로즈업 (머리 세로 528px)',
+  defaultP({yaw:-6,roll:-2,eyeX:-.2,sway:4}),500,398,356);
+ cell(8+2*(cw4+gap),cy4,cw4,ch4,'리깅: 요+30° 피치+16° 메시 변형 (회색=중립 격자)',
+  defaultP({yaw:30,pitch:16,sway:14,eyeX:.8}),500,430,640,{mesh:true,meshNeutral:true});
+ cell(8+3*(cw4+gap),cy4,cw4,ch4,'극단 변형: 요+30 피치+18 롤+14 헤어스윙 MAX',
+  exprP(2,{yaw:30,pitch:18,roll:14,sway:40,swayTip:36,eyeX:.9}),500,420,620);
+ // ---- 푸터 캡션 밴드 (셀 라벨과 분리 · 고대비 · 하단 패딩 확보) ----
+ ctx.fillStyle='#0b0912'; ctx.fillRect(0,1464,1680,36);
+ ctx.strokeStyle='#2a2342'; ctx.lineWidth=1;
+ ctx.beginPath(); ctx.moveTo(0,1464.5); ctx.lineTo(1680,1464.5); ctx.stroke();
+ ctx.fillStyle='#cfc8e8'; ctx.font='13px "Segoe UI","Malgun Gothic",sans-serif'; ctx.textAlign='left';
+ ctx.fillText('카이렌 — 메시 디포메이션(Live2D式) 몽타주 · 23레이어 격자 삼각 메시 · Row B: 발도 액션 시퀀스 키프레임',14,1487);
 }
 
 // ==== 9. 부트 ====
