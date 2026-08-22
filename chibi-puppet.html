@@ -416,7 +416,7 @@ makePart('hairBack',-150,-224,116,58,2.2,c=>{
 });
 // ---- 2g. 앞머리 (3/4 — 가르마가 +x로, 가닥 6개 뭉툭) ----
 function bakeBang(nm,P){
-  makePart(nm,-116,-216,124,-14,2.2,c=>{
+  makePart(nm,-118,-216,124,-8,2.2,c=>{
     path(c,[-106,-88,
       [-110,-172,-58,-208,4,-208],
       [72,-210,112,-166,109,-102],               // 정수리 돔
@@ -426,8 +426,8 @@ function bakeBang(nm,P){
       [37,-148,23,-118],[17,-108,11,-128],       // 가닥4 (가르마 오른쪽)
       [-5,-156,-21,-122],[-27,-110,-33,-128],    // 가닥3
       [-51,-152,-63,-118],[-67,-106,-73,-124],   // 가닥2
-      [-87,-144,-93,-98],[-97,-62,-101,-26],     // 왼쪽 긴 옆가닥
-      [-110,-42,-106,-88]]);
+      [-87,-144,-93,-98],[-99,-58,-102,-20],     // 왼쪽 긴 옆가닥
+      [-112,-40,-106,-88]]);
     c.closePath();
     c.fillStyle=P.hair;c.fill();
     c.lineWidth=OLW;c.strokeStyle=P.outline;c.stroke();
@@ -613,9 +613,9 @@ makePart('p_torso',-64,-142,68,58,2.6,c=>{
 });
 // ---- 다리 (near/far) ----
 function bakeLegU(nm,P,sc){
-  makePart(nm,-22*sc,-18,22*sc,66*sc,3,c=>{
+  makePart(nm,-24*sc,-18,24*sc,66*sc,3,c=>{
     c.scale(sc,sc);
-    const mk=()=>path(c,[-18.5,-6,[-21,20,-19,46,-16.5,56],[0,63,16.5,56],[19,46,21,20,18.5,-6],[9,-16,-9,-16,-18.5,-6]]);
+    const mk=()=>path(c,[-20,-6,[-22.5,20,-20.5,46,-18,56],[0,63,18,56],[20.5,46,22.5,20,20,-6],[10,-16,-10,-16,-20,-6]]);
     mk();c.closePath();c.fillStyle=P.skin;c.fill();
     c.save();mk();c.closePath();c.clip();
     c.fillStyle='rgba(232,150,116,.34)';                  // 뒤쪽(-x) 셀셰이드
@@ -974,13 +974,13 @@ const SKINS={
     tailN1:'tailN1',tailN2:'tailN2',tailF1:'tailF1',tailF2:'tailF2',
     back1:'p_scarf1',back2:'p_scarf2',cape:'none',
     armU:'armU',armL:'armL',hand:'handN',armU2:'armU_f',armL2:'armL_f',hand2:'handF',
-    legU:'p_legU',legL:'p_legL',legU2:'p_legU_f',legL2:'p_legL_f',weapon:'p_sword'},
+    legU:'p_legU',legL:'p_legL',legU2:'p_legU_f',legL2:'p_legL_f',weapon:'p_sword',wRot:0},
   mage:{torso:'m_torso',skull:'head',hairBack:'hairBack',hairFront:'hairFront',
     headgear:'m_hat',ahoge:'none',earN:'earN',earF:'earF',
     tailN1:'tailN1',tailN2:'tailN2',tailF1:'tailF1',tailF2:'tailF2',
     back1:'none',back2:'none',cape:'m_cape1',
     armU:'m_armU',armL:'m_armL',hand:'handN',armU2:'m_armU_f',armL2:'m_armL_f',hand2:'handF',
-    legU:'m_legU',legL:'m_legL',legU2:'m_legU_f',legL2:'m_legL_f',weapon:'m_staff'}
+    legU:'m_legU',legL:'m_legL',legU2:'m_legU_f',legL2:'m_legL_f',weapon:'m_staff',wRot:0.86}
 };
 NMAP.legL_N.mirror=false;
 function computeRig(rx,ry,rr,rsx,rsy){
@@ -1074,7 +1074,7 @@ function resetPose(){
 }
 // 쉬는 자세 (3/4 기본): NEAR 맨팔은 옆에, FAR 팔은 대검 그립
 function restArms(){
-  N.armU_N.rot=0.30;N.armL_N.rot=0.20;      // 화면 왼쪽 앞 팔 (몸 바깥으로 자연스럽게)
+  N.armU_N.rot=0.22;N.armL_N.rot=0.26;      // 화면 왼쪽 앞 팔 (몸 바깥으로 자연스럽게)
   N.armU_F.rot=-0.35;N.armL_F.rot=-2.45;    // 무기 팔 — 팔꿈치 깊게 접어 그립이 어깨 위
   N.weapon.rot=1.73;                        // 칼날 월드각 -0.85 = 왼쪽 위 대각 (머리 뒤로 통과)
 }
@@ -1241,7 +1241,7 @@ ANIMS.slashUp={dur:1.2,fn(t,r){        // ③ 올려 베기 — 아래에서 퍼
   if(t<.28){FACE.eye='_h';FACE.mouth='m_cat';}
   else if(t<.60){FACE.mouth='m_grit';FACE.browY=-1;}
   else{FACE.eye='_j';FACE.mouth='m_open';}
-  slashFx(r,kf(t,[[.28,0],[.35,1]]),kf(t,[[.28,0],[.29,.95],[.44,1],[.66,0]]),2.42,-.62,200,16,-40,imp);
+  slashFx(r,kf(t,[[.28,0],[.35,1]]),kf(t,[[.28,0],[.29,.95],[.44,1],[.66,0]]),2.42,-.62,178,26,-16,imp);
 }};
 ANIMS.slashSpin={dur:1.6,fn(t,r){      // ④ 회전 베기 — 제자리 스핀 슬래시
   setArmLayer(true);
@@ -1352,20 +1352,21 @@ ANIMS.defeat={dur:3.2,fn(t,r){         // 패배 — 한쪽 무릎 꿇고 고개
   const drop=kf(t,[[0,0],[.12,.35],[.36,1],[1,1]]);
   const settle=kf(t,[[.36,0],[.56,1],[1,1]]);
   const breathe=Math.sin(t*TAU*1.3)*settle;
-  r.y=drop*84+breathe*2.4;
+  r.y=drop*83+breathe*2.4;
   r.x=-drop*10;
   r.rot=drop*.03;
   r.sy=1-drop*.06;r.sx=1+drop*.05;
-  N.torso.rot=-drop*.22+breathe*.022;
-  N.head.rot=-drop*.46+breathe*.03;
-  N.head.py=drop*8;
+  N.torso.rot=-drop*.34+breathe*.024;
+  N.head.rot=-drop*.56+breathe*.03;
+  N.head.py=drop*12;
+  N.armU_N.py=drop*6;N.armU_F.py=drop*6;   // 어깨 처짐
   // NEAR(앞·화면 왼쪽) 다리 = 무릎 꿇음 / FAR 다리 = 세워 버팀
-  N.legU_N.rot=-drop*.12;N.legL_N.rot=drop*1.62;   // 앞무릎이 지면, 정강이는 뒤로 눕음
-  N.legU_F.rot=-drop*.95;N.legL_F.rot=drop*1.70;   // 뒷다리는 세워 버팀
+  N.legU_N.rot=-drop*.05;N.legL_N.rot=drop*1.60;   // 앞무릎이 지면, 정강이는 뒤로 눕음
+  N.legU_F.rot=-drop*.92;N.legL_F.rot=drop*1.82;   // 뒷다리는 무릎 세워 버팀
   // 검: 손에서 힘이 빠져 칼끝이 뒤 지면에 끌림
-  N.armU_F.rot=lerp(-.35,.30,drop);           // 어깨에서 힘없이 뒤로 처짐
-  N.armL_F.rot=lerp(-2.45,-2.02,drop);
-  aimBlade(lerp(-1.07,-1.92,drop));
+  N.armU_F.rot=lerp(-.35,.24,drop);           // 어깨에서 힘없이 처짐
+  N.armL_F.rot=lerp(-2.45,-2.34,drop);
+  aimBlade(lerp(-1.07,-1.62,drop));  // 검이 낮게 처짐 (다리 실루엣은 확보)
   N.armU_N.rot=lerp(.16,.92,drop);N.armL_N.rot=lerp(.30,.30,drop);
   N.tailN1.rot=-.05+drop*.55+breathe*.05;N.tailN2.rot=drop*.46;
   N.tailF1.rot=.05+drop*.44;N.tailF2.rot=drop*.38;
@@ -1467,15 +1468,15 @@ function drawFxBack(c,fx,t){   // 캐릭터 뒤에 깔리는 이펙트 (오라·
       c.lineWidth=6-k*1.4;c.strokeStyle=k?'rgba(255,210,110,.9)':'rgba(255,255,255,.95)';
       c.beginPath();c.ellipse(0,GY0-30,60+(1-u)*180,18+(1-u)*54,0,0,TAU);c.stroke();
     }
-    c.globalAlpha=fx.burst*.6;
+    c.globalAlpha=fx.burst*.42;
     const bg=c.createRadialGradient(4,-60,10,4,-60,200);
     bg.addColorStop(0,'rgba(255,240,170,.9)');bg.addColorStop(1,'rgba(255,180,60,0)');
     c.fillStyle=bg;c.beginPath();c.arc(4,-60,200,0,TAU);c.fill();
   }
   if(fx.aura>0){
-    c.globalAlpha=fx.aura*.55;
+    c.globalAlpha=fx.aura*.38;
     const ag=c.createRadialGradient(4,-10,20,4,-10,190);
-    ag.addColorStop(0,'rgba(255,196,80,.62)');ag.addColorStop(1,'rgba(255,150,40,0)');
+    ag.addColorStop(0,'rgba(255,196,80,.48)');ag.addColorStop(1,'rgba(255,150,40,0)');
     c.fillStyle=ag;c.beginPath();c.arc(4,-10,190,0,TAU);c.fill();
     c.globalAlpha=fx.aura*.85;
     for(let k=0;k<7;k++){
@@ -1671,6 +1672,7 @@ function drawScene(c,w,h,o){
   const z=o.zoom||Math.min(w/760,h/700);
   const gy=o.gy!==undefined?o.gy:h*.84;
   applySnap(o.snap);
+  N.weapon.rot+=(SKINS[o.skin].wRot||0);   // 스킨별 무기 어태치 보정
   const r=o.snap.r;
   c.save();
   c.translate(w*(o.cx||.5),gy);c.scale(z,z);c.translate(0,-GY0);
@@ -1949,7 +1951,7 @@ if(IS_MONTAGE){
     mcell(w,h/2,{anim:'death',t:.88,skin:'pirate',zoom:(h/2)/700,gy:h*.40,cx:.44,time:2.2});
     g.restore();
     g.save();g.beginPath();g.rect(0,h/2,w,h/2);g.clip();g.translate(0,h/2);
-    mcell(w,h/2,{anim:'defeat',t:.90,skin:'pirate',zoom:(h/2)/620,gy:(h/2)*.90,cx:.55,time:2.6});
+    mcell(w,h/2,{anim:'defeat',t:.92,skin:'pirate',zoom:(h/2)/700,gy:(h/2)*.86,cx:.52,time:2.6});
     g.restore();
     g.strokeStyle='rgba(255,220,170,.2)';g.lineWidth=1;
     g.beginPath();g.moveTo(0,h/2+.5);g.lineTo(w,h/2+.5);g.stroke();
