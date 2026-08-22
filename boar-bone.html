@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>뚱멧돼지 「투기」 — 절차적 스켈레톤</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#87c8ec;
+    font-family:"Segoe UI","Malgun Gothic",sans-serif;}
+  #cv{display:block;width:100vw;height:100vh;}
+  #backlink{position:fixed;left:10px;top:8px;z-index:30;color:#245a18;text-decoration:none;
+    font-size:13px;background:rgba(255,255,255,.75);padding:3px 10px;border-radius:12px;}
+  #backlink:hover{background:#fff;}
+  #err{position:fixed;left:8px;top:40px;z-index:99;color:#ff2222;font-size:13px;font-weight:bold;
+    white-space:pre-wrap;max-width:80vw;text-shadow:0 1px 0 #000;pointer-events:none;}
+  #ui{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:20;
+    display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;
+    background:rgba(20,28,16,.72);padding:8px 12px;border-radius:14px;}
+  #ui button{font-family:inherit;font-size:13px;padding:6px 12px;border:0;border-radius:9px;
+    background:#3d5a2c;color:#eef4e2;cursor:pointer;}
+  #ui button:hover{background:#4f7238;}
+  #ui button.on{background:#8fc250;color:#1c2a10;font-weight:bold;}
+  #ui .sep{width:1px;height:22px;background:rgba(255,255,255,.25);margin:0 3px;}
+  #ui label{color:#dfe8cf;font-size:12px;display:flex;align-items:center;gap:4px;}
+  #ttl{position:fixed;right:14px;top:10px;z-index:20;color:#1d3a10;font-size:14px;font-weight:bold;
+    background:rgba(255,255,255,.6);padding:3px 12px;border-radius:12px;}
+</style>
+</head>
+<body>
+<a id="backlink" href="heroes.html">&#8592; 용사 전시관</a>
+<div id="ttl">뚱멧돼지 「투기」 · 절차적 스켈레톤 리깅</div>
+<div id="ui">
+  <button data-anim="idle" class="on">대기</button>
+  <button data-anim="walk">걷기</button>
+  <button data-anim="charge">돌진</button>
+  <button data-anim="hit">피격</button>
+  <button data-anim="death">죽음</button>
+  <button data-anim="revive">부활</button>
+  <span class="sep"></span>
+  <button id="avBase" class="on">기본</button>
+  <button id="avFire">불속성</button>
+  <span class="sep"></span>
+  <button id="boneBtn">뼈대 보기</button>
+  <label>속도 <input id="spd" type="range" min="0.2" max="2" step="0.1" value="1" style="width:80px"></label>
+</div>
+<canvas id="cv"></canvas>
+<div id="err"></div>
+<script>
+// ============================================================================
+// 섹션 맵
+// ==== 0. 에러 표시 ==== 1. 팔레트/수학 ==== 2. 리그(본 FK) ====
+// ==== 3. 애니 pose 순수함수 ==== 4. 렌더(멧돼지/배경) ====
+// ==== 5. 음식 조각/이펙트 ==== 6. UI/루프 ==== 7. 몽타주 ====
+// ============================================================================
+
+// ==== 0. 에러 표시 ====
+(function(){
+  var e=document.getElementById('err');
+  window.onerror=function(m,s,l){e.textContent+='ERR: '+m+' @'+l+'\n';};
+  window.addEventListener('unhandledrejection',function(ev){e.textContent+='REJ: '+ev.reason+'\n';});
+})();
+
+// ==== 1. 팔레트 / 수학 ====
+const TAU=Math.PI*2, PI=Math.PI;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,k)=>a+(b-a)*k;
+const frac=v=>v-Math.floor(v);
+const sstep=k=>{k=clamp(k,0,1);return k*k*(3-2*k);};
+const easeOut=k=>1-Math.pow(1-clamp(k,0,1),3);
+const easeIn=k=>{k=clamp(k,0,1);return k*k*k;};
+const easeOutBack=k=>{k=clamp(k,0,1);const c=1.70158;k-=1;return 1+k*k*((c+1)*k+c);};
+const elastic=k=>{k=clamp(k,0,1);return k===0?0:k===1?1:Math.pow(2,-10*k)*Math.sin((k*10-0.75)*(TAU/3))+1;};
+const hash=n=>frac(Math.sin(n*127.1+311.7)*43758.5453);
+// 창(윈도우) 함수: t가 [a,b] 안이면 0→1→0 부드러운 펄스
+const pulse=(t,a,b)=>{if(t<=a||t>=b)return 0;const k=(t-a)/(b-a);return Math.sin(k*PI);};
+const inw=(t,a,b)=>t>a&&t<b;
+
+const PAL={
+  base:{
+    body:'#564840', belly:'#6f5d52', shade:'#3d332c', rim:'#837062',
+    mane:'#bb9d5c', maneSh:'#8d7541', maneHi:'#d8bc7e',
+    eye:'#eec344', pupil:'#191008',
+    snout:'#a07e75', snoutHi:'#b39289', snoutSh:'#816159', nostril:'#45302c',
+    tusk:'#f7f0e1', tuskSh:'#d2c7b0',
+    earIn:'#c48d85', hoof:'#2f2620',
+    line:'#261b12', browLine:'#241812'
+  },
+  fire:{
+    body:'#2f2725', belly:'#3e3431', shade:'#211b19', rim:'#6b5347',
+    mane:'#e84c2c', maneSh:'#b03318', maneHi:'#ffd54a',
+    eye:'#ff9d3a', pupil:'#2b1305',
+    snout:'#6d4c43', snoutHi:'#826055', snoutSh:'#523731', nostril:'#281813',
+    tusk:'#f7f0e1', tuskSh:'#d2c7b0',
+    earIn:'#a35c4b', hoof:'#191110',
+    line:'#170e0a', browLine:'#170e0a',
+    crack:'#ff7a3c', crackHi:'#ffd54a'
+  }
+};
+
+/*__RIG__*/
+/*__ANIM__*/
+/*__RENDER__*/
+/*__PIECES__*/
+/*__UI__*/
+/*__MONTAGE__*/
+</script>
+</body>
+</html>

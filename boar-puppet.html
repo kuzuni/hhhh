@@ -365,6 +365,373 @@ function tailPath(g){
  g.bezierCurveTo(20,-22,10,-26,6,-18);
  g.bezierCurveTo(3,-12,12,-8,20,-16);
 }
+// --- 죽음 조각(음식) 부품 — 단면이 보이는 만화 음식. 신체 요소 0 ---------------
+function drawHam(g,grill,sc){ // 둥근 분홍 단면 + 중앙 흰 뼈 원
+ g.scale(sc,sc); g.rotate(-0.1);
+ g.beginPath(); g.ellipse(0,0,37,31,0,0,TAU);
+ g.fillStyle=grill?'#a95f30':'#d9986a'; g.fill();
+ g.beginPath(); g.ellipse(0,0,30,24,0,0,TAU);
+ g.fillStyle=grill?'#cf8446':'#ff9fae'; g.fill();
+ g.save(); g.beginPath(); g.ellipse(0,0,30,24,0,0,TAU); g.clip();
+ g.fillStyle=grill?'rgba(255,214,140,.5)':'#ffc4cd';
+ g.beginPath(); g.ellipse(-8,-8,24,15,-0.25,0,TAU); g.fill();
+ if(grill){ g.strokeStyle='#7c4020'; g.lineWidth=3.4; g.globalAlpha=.85;
+   [-14,0,14].forEach(o=>{ g.beginPath(); g.moveTo(o-16,-24); g.lineTo(o+8,24); g.stroke(); });
+   [-10,8].forEach(o=>{ g.beginPath(); g.moveTo(-26,o-8); g.lineTo(26,o+4); g.stroke(); });
+   g.globalAlpha=1;
+ }
+ g.restore();
+ // 뼈 단면 (흰 원)
+ g.beginPath(); g.arc(3,-1,9,0,TAU); g.fillStyle='#fff6e6'; g.fill();
+ g.strokeStyle='#dcc9ae'; g.lineWidth=2.5; g.stroke();
+ g.fillStyle='#e9d9c2'; g.beginPath(); g.arc(5.5,1,2.6,0,TAU); g.fill();
+ // 광택
+ g.strokeStyle='rgba(255,255,255,.75)'; g.lineWidth=4;
+ g.beginPath(); g.arc(-6,-4,24,-2.7,-1.6); g.stroke();
+ g.beginPath(); g.ellipse(0,0,37,31,0,0,TAU);
+ g.strokeStyle=grill?'#4e2a16':'#6a3a28'; g.lineWidth=5; g.stroke();
+}
+function drawSteak(g,grill){ // 붉은 살 + 크림 지방 마블링 단면
+ g.rotate(-0.12);
+ const rr=(w,h,r)=>{ g.beginPath(); g.roundRect(-w/2,-h/2,w,h,r); };
+ rr(82,50,20); g.fillStyle='#f4e2c2'; g.fill();
+ rr(68,37,14); g.fillStyle=grill?'#8a4a2a':'#d8524e'; g.fill();
+ g.save(); rr(68,37,14); g.clip();
+ if(grill){
+   g.fillStyle='#a25a32'; g.fillRect(-34,-19,68,15);
+   g.strokeStyle='#55291a'; g.lineWidth=4.5;
+   [-22,-6,10,26].forEach(o=>{ g.beginPath(); g.moveTo(o-10,-20); g.lineTo(o+10,20); g.stroke(); });
+   g.fillStyle='rgba(255,190,120,.35)';
+   g.beginPath(); g.ellipse(-8,-10,26,8,0,0,TAU); g.fill();
+ }else{
+   g.fillStyle='#ea7568'; g.fillRect(-34,-19,68,14);
+   g.strokeStyle='#f6e6c8'; g.lineWidth=3;
+   g.beginPath(); g.moveTo(-30,2); g.bezierCurveTo(-12,10,4,-6,18,4);
+   g.quadraticCurveTo(26,8,32,2); g.stroke();
+   g.beginPath(); g.moveTo(-24,12); g.quadraticCurveTo(-6,6,10,13); g.stroke();
+   g.fillStyle='#f6e6c8';
+   [[-16,-6],[8,-10],[22,8]].forEach(d=>{ g.beginPath(); g.arc(d[0],d[1],2.2,0,TAU); g.fill(); });
+ }
+ g.restore();
+ g.strokeStyle='rgba(255,255,255,.7)'; g.lineWidth=3.5;
+ g.beginPath(); g.moveTo(-30,-21); g.quadraticCurveTo(-8,-26,14,-22); g.stroke();
+ rr(82,50,20); g.strokeStyle=grill?'#472312':'#6a2f28'; g.lineWidth=5; g.stroke();
+}
+function drawSausage(g,grill,cut){ // 통통 소시지 (cut=단면 보임)
+ g.rotate(0.1);
+ const body=()=>{ g.beginPath(); g.roundRect(-35,-15,70,30,15); };
+ body();
+ const gr=g.createLinearGradient(0,-15,0,15);
+ if(grill){ gr.addColorStop(0,'#b06034'); gr.addColorStop(1,'#8a4424'); }
+ else{ gr.addColorStop(0,'#d67c5c'); gr.addColorStop(1,'#b25844'); }
+ g.fillStyle=gr; g.fill();
+ g.save(); body(); g.clip();
+ if(grill){ g.strokeStyle='#54250f'; g.lineWidth=4;
+   [-18,0,18].forEach(o=>{ g.beginPath(); g.moveTo(o-8,-16); g.lineTo(o+8,16); g.stroke(); });
+ }else{
+   g.fillStyle='rgba(120,54,36,.55)';
+   [[-20,4],[-4,-3],[12,6],[24,-2],[-28,-5]].forEach(d=>{
+     g.beginPath(); g.arc(d[0],d[1],1.6,0,TAU); g.fill(); });
+ }
+ g.strokeStyle='rgba(255,255,255,.75)'; g.lineWidth=4.5;
+ g.beginPath(); g.moveTo(-26,-8); g.quadraticCurveTo(0,-13,24,-8); g.stroke();
+ g.restore();
+ // 묶인 끝
+ g.fillStyle=grill?'#7c3a1e':'#a04c38';
+ g.beginPath(); g.ellipse(-38,0,5,7,0,0,TAU); g.fill();
+ g.beginPath(); g.ellipse(38,0,5,7,0,0,TAU); g.fill();
+ body(); g.strokeStyle=grill?'#43200e':'#5e2c20'; g.lineWidth=5; g.stroke();
+ g.strokeStyle=grill?'#43200e':'#5e2c20'; g.lineWidth=3;
+ g.beginPath(); g.moveTo(-35,-6); g.quadraticCurveTo(-31,0,-35,6); g.stroke();
+ if(cut){ // 오른쪽 단면
+   g.beginPath(); g.ellipse(32,0,7,13,0,0,TAU);
+   g.fillStyle=grill?'#d89058':'#eba686'; g.fill();
+   g.strokeStyle=grill?'#43200e':'#5e2c20'; g.lineWidth=3.5; g.stroke();
+   g.fillStyle='rgba(120,54,36,.5)';
+   [[30,-5],[34,3],[30,7]].forEach(d=>{ g.beginPath(); g.arc(d[0],d[1],1.4,0,TAU); g.fill(); });
+ }else{
+   g.beginPath(); g.moveTo(35,-6); g.quadraticCurveTo(31,0,35,6); g.stroke();
+ }
+}
+
+// --- 아틀라스 조립 (아바타당 1세트, 초기화 때 1회) ---------------------------
+function bakeAtlas(av){
+ const A={};
+ A.body   = bakePart(280,215,140,155, g=>drawBody(g,av));
+ if(av===0){ A.mane=[ bakePart(180,140,80,66, g=>drawMane(g,0,0)) ]; }
+ else{ A.mane=[0,1,2].map(v=>bakePart(200,170,90,95, g=>drawMane(g,1,v))); }
+ A.eyes   =[0,1,2].map(v=>bakePart(140,60,70,30, g=>drawEyes(g,av,v)));
+ A.brows  = bakePart(140,50,70,26, g=>drawBrows(g,av));
+ A.snout  = bakePart(124,92,62,46, g=>drawSnout(g,av));
+ A.tusks  = bakePart(160,80,80,56, g=>drawTusks(g,av));
+ A.earNear= bakePart(70,70,36,52, g=>drawEar(g,av,true));
+ A.earFar = bakePart(62,62,32,46, g=>drawEar(g,av,false));
+ A.legNear= bakePart(58,70,29,14, g=>drawLeg(g,av,true));
+ A.legFar = bakePart(58,70,29,14, g=>drawLeg(g,av,false));
+ A.tail   = bakePart(76,72,28,38, g=>drawTail(g,av));
+ if(av===1){
+   A.crackGlow=bakePart(280,215,140,155, g=>drawCrackGlow(g));
+   A.eyeGlow  =bakePart(160,90,80,45, g=>drawEyeGlow(g));
+ }
+ const gr=av===1;
+ A.ham    = bakePart(96,84,48,42, g=>drawHam(g,gr,1));
+ A.ham2   = bakePart(84,74,42,37, g=>drawHam(g,gr,0.85));
+ A.steak  = bakePart(104,74,52,37, g=>drawSteak(g,gr));
+ A.saus   = bakePart(100,58,50,29, g=>drawSausage(g,gr,false));
+ A.sausCut= bakePart(100,58,50,29, g=>drawSausage(g,gr,true));
+ return A;
+}
+
+// ==== 3. 리그 (씬그래프 — 두 아바타 공유) ====================================
+// pivot(x,y)=부모 공간, z=드로우 순서. 모든 프레임은 pivot·rot·scale 리지드 변환만.
+const NODES=[
+ {n:'root',   p:null,  x:0,   y:0,    z:-1},
+ {n:'body',   p:'root',x:0,   y:-46,  z:5, part:'body'},
+ {n:'tail',   p:'body',x:104, y:-64,  z:0, part:'tail'},
+ {n:'earFar', p:'body',x:56,  y:-128, z:1, part:'earFar'},
+ {n:'mane',   p:'body',x:28,  y:-130, z:2, part:'mane'},
+ {n:'legFL',  p:'body',x:-88, y:2,    z:3, part:'legFar'},
+ {n:'legFR',  p:'body',x:70,  y:0,    z:3, part:'legFar'},
+ {n:'crack',  p:'body',x:0,   y:0,    z:6, part:'crackGlow', add:true},
+ {n:'earNear',p:'body',x:-80, y:-122, z:7, part:'earNear'},
+ {n:'eyeGlow',p:'body',x:-14, y:-82,  z:8, part:'eyeGlow', add:true},
+ {n:'eyes',   p:'body',x:-14, y:-82,  z:9, part:'eyes'},
+ {n:'brows',  p:'body',x:-14, y:-99,  z:10,part:'brows'},
+ {n:'snout',  p:'body',x:-20, y:-40,  z:11,part:'snout'},
+ {n:'tusks',  p:'body',x:-10, y:-14,  z:12,part:'tusks'},
+ {n:'legNL',  p:'body',x:-62, y:8,    z:13,part:'legNear'},
+ {n:'legNR',  p:'body',x:40,  y:10,   z:13,part:'legNear'},
+];
+const NIDX={}; NODES.forEach((nd,i)=>NIDX[nd.n]=i);
+function trs(x,y,r,sx,sy){ const c=Math.cos(r),s=Math.sin(r);
+ return [c*sx,s*sx,-s*sy,c*sy,x,y]; }
+function mmul(a,b){ return [
+ a[0]*b[0]+a[2]*b[1], a[1]*b[0]+a[3]*b[1],
+ a[0]*b[2]+a[2]*b[3], a[1]*b[2]+a[3]*b[3],
+ a[0]*b[4]+a[2]*b[5]+a[4], a[1]*b[4]+a[3]*b[5]+a[5]]; }
+function gv(tr,ch,d){ const v=tr[ch]; return v===undefined?d:v; }
+// 노드 월드행렬 계산 (부모 우선 순서 보장)
+function computeWorld(tr){
+ const W={};
+ NODES.forEach(nd=>{
+   const dx=gv(tr,nd.n+'.dx',0), dy=gv(tr,nd.n+'.dy',0), rot=gv(tr,nd.n+'.rot',0);
+   const sx=gv(tr,nd.n+'.sx',1), sy=gv(tr,nd.n+'.sy',1);
+   const local=trs(nd.x+dx, nd.y+dy, rot, sx, sy);
+   W[nd.n]=nd.p?mmul(W[nd.p],local):local;
+ });
+ return W;
+}
+// ==== 4. 애니 ================================================================
+// 트랙: 키프레임 배열 or 함수(tt,traw). 채널명 = "노드.속성"
+const S2=Math.PI*2;
+const ANIMS={
+ idle:{ dur:4.8, loop:true, tracks:{
+   'root.sy': t=>1+0.028*Math.sin(S2*t/1.2-Math.PI/2),
+   'root.sx': t=>1-0.016*Math.sin(S2*t/1.2-Math.PI/2),
+   'body.rot': t=>0.022*Math.sin(S2*t/2.4),
+   'mane.rot': t=>0.055*Math.sin(S2*(t-0.22)/2.4),
+   'tail.rot': t=>0.28*Math.sin(S2*t/1.6)+0.08,
+   'snout.sy': [[0,1],[0.36,1],[0.44,1.14,'out'],[0.54,0.97],[0.62,1.11,'out'],[0.8,1,'io'],[4.8,1]],
+   'snout.dy': [[0,0],[0.36,0],[0.44,-3,'out'],[0.62,-2],[0.8,0],[4.8,0]],
+   'earNear.rot': [[0,0],[2.02,0],[2.1,-0.6,'out'],[2.26,0.22],[2.42,0,'io'],[4.8,0]],
+   'earFar.rot': [[0,0],[2.98,0],[3.06,0.55,'out'],[3.22,-0.2],[3.38,0,'io'],[4.8,0]],
+   'eyes.frame': t=>((t>1.66&&t<1.8)||(t>3.86&&t<3.97)||(t>4.04&&t<4.14))?1:0,
+   'legNL.dy': [[0,0],[3.24,0],[3.36,-14,'out'],[3.5,-11],[3.62,-13],[3.76,-11],[3.92,0,'in'],[4.8,0]],
+   'legNL.rot': [[0,0],[3.3,0],[3.44,0.35],[3.56,-0.3],[3.68,0.32],[3.82,-0.25],[3.95,0],[4.8,0]],
+   'root.rot': [[0,0],[3.24,0],[3.4,0.03],[3.9,0.03],[4.05,0],[4.8,0]],
+ }, fx:(t)=>{
+   const f={puffs:[],dust:[]};
+   [0.44,0.62].forEach((t0,i)=>{ const a=t-t0;
+     if(a>0&&a<0.75){ f.puffs.push({x:-57,y:-88,a:a/0.75,k:'breath',i:i});
+                      f.puffs.push({x:-27,y:-86,a:a/0.75,k:'breath',i:i+2}); }});
+   if(t>3.34&&t<4.0){ const a=(t-3.34)/0.66;
+     f.dust.push({x:-66,y:-4,a:(t*7)%1,s:0.7}); }
+   return f; }},
+ walk:{ dur:0.64, loop:true, tracks:{
+   'root.rot': t=>0.085*Math.sin(S2*t/0.64),
+   'root.dy':  t=>-7*Math.abs(Math.sin(S2*t/0.64)),
+   'root.dx':  t=>3.5*Math.sin(S2*t/0.64),
+   'legNL.dy': t=>-15*Math.max(0,Math.sin(S2*t/0.64)),
+   'legFR.dy': t=>-13*Math.max(0,Math.sin(S2*t/0.64)),
+   'legNR.dy': t=>-15*Math.max(0,Math.sin(S2*t/0.64+Math.PI)),
+   'legFL.dy': t=>-13*Math.max(0,Math.sin(S2*t/0.64+Math.PI)),
+   'legNL.rot':t=>0.28*Math.sin(S2*t/0.64),
+   'legNR.rot':t=>-0.28*Math.sin(S2*t/0.64),
+   'mane.rot': t=>-0.07*Math.sin(S2*(t-0.07)/0.64),
+   'tail.rot': t=>0.4*Math.sin(S2*t/0.32)+0.1,
+   'earNear.rot': t=>0.13*Math.sin(S2*t/0.32+0.6),
+   'earFar.rot':  t=>-0.11*Math.sin(S2*t/0.32),
+   'snout.dy': t=>2.2*Math.sin(S2*t/0.32+1.2),
+   'eyes.frame': ()=>0,
+ }, fx:(t)=>{
+   const f={dust:[]};
+   const ph=(t%0.32)/0.32, foot=Math.floor(t/0.32)%2;
+   if(ph<0.5) f.dust.push({x:foot?-62:40,y:-2,a:ph/0.5,s:0.55});
+   return f; }},
+ charge:{ dur:2.5, loop:false, next:'idle', tracks:{
+   'root.dx': [[0,0],[0.25,26,'io'],[0.85,34],[1.0,46,'in'],[1.28,-238,'lin'],[1.5,-272,'out'],[1.72,-272],[1.9,-170,'io'],[2.12,-64],[2.34,0,'out'],[2.5,0]],
+   'root.dy': [[0,0],[1.7,0],[1.88,-36,'out'],[2.04,-8,'in'],[2.12,-22,'out'],[2.3,0,'in'],[2.38,-6,'out'],[2.46,0,'in'],[2.5,0]],
+   'root.rot':[[0,0],[0.3,0.1,'io'],[0.95,0.12],[1.1,0.17],[1.32,-0.16,'out'],[1.55,0.07],[1.72,0.02],[2.1,0],[2.5,0]],
+   'root.sx': [[0,1],[0.9,1],[1.04,0.86,'out'],[1.3,1.17],[1.55,0.93],[1.72,1.04],[1.95,1],[2.5,1]],
+   'root.sy': [[0,1],[0.9,1],[1.04,1.13],[1.3,0.87],[1.55,1.06],[1.72,0.97],[1.95,1],[2.5,1]],
+   'legNL.dx':[[0,0],[0.18,0],[0.32,16,'out'],[0.46,-12],[0.6,15],[0.74,-10],[0.88,0],[2.5,0]],
+   'legNL.dy':[[0,0],[0.18,0],[0.26,-12,'out'],[0.42,-8],[0.54,-12],[0.7,-8],[0.85,0],[2.5,0]],
+   'brows.dy':[[0,0],[0.25,4],[1.7,4],[2.1,0],[2.5,0]],
+   'mane.sy': [[0,1],[0.4,1.2,'out'],[1.6,1.2],[2.05,1],[2.5,1]],
+   'mane.rot':[[0,0],[1.05,0],[1.3,0.14,'out'],[1.6,-0.05],[1.9,0],[2.5,0]],
+   'eyes.frame':()=>0,
+   'earNear.rot':[[0,0],[1.05,0],[1.3,0.5,'out'],[1.6,-0.15],[1.9,0],[2.5,0]],
+ }, fx:(t)=>{
+   const f={puffs:[],dust:[],lines:[],smear:0};
+   [0.16,0.55].forEach((t0,i)=>{ const a=t-t0;
+     if(a>0&&a<0.6){ f.puffs.push({x:-57,y:-88,a:a/0.6,k:'snort',i:i});
+                     f.puffs.push({x:-27,y:-86,a:a/0.6,k:'snort',i:i+5}); }});
+   if(t>0.24&&t<0.9) f.dust.push({x:-58,y:-2,a:(t*4)%1,s:0.8});
+   if(t>1.04&&t<1.5){ f.smear=1;
+     for(let i=0;i<6;i++) f.lines.push({y:-40-i*24,a:((t*6+i*0.37)%1),len:90+50*hash(i)});
+     f.dust.push({x:120,y:-8,a:clamp((t-1.04)/0.5,0,1),s:1.6});
+     f.dust.push({x:170,y:-14,a:clamp((t-1.12)/0.5,0,1),s:1.2}); }
+   if(t>1.32&&t<1.85){ f.dust.push({x:36,y:-2,a:(t-1.32)/0.53,s:1.3});
+     f.dust.push({x:66,y:-4,a:(t-1.36)/0.49,s:1}); }
+   return f; }},
+ hit:{ dur:0.7, loop:false, next:'idle', tracks:{
+   'root.dx': [[0,0],[0.06,30,'out'],[0.3,18],[0.58,0,'io'],[0.7,0]],
+   'root.rot':[[0,0],[0.07,0.15,'out'],[0.42,0,'io'],[0.7,0]],
+   'root.sx': [[0,1],[0.07,1.22,'out'],[0.22,0.9],[0.38,1.07],[0.55,1],[0.7,1]],
+   'root.sy': [[0,1],[0.07,0.8,'out'],[0.22,1.1],[0.38,0.95],[0.55,1],[0.7,1]],
+   'eyes.frame': t=>t<0.45?2:0,
+   'brows.dy':[[0,0],[0.08,-5,'out'],[0.5,0],[0.7,0]],
+   'earNear.rot':[[0,0],[0.08,-0.7,'out'],[0.35,0.2],[0.55,0],[0.7,0]],
+   'earFar.rot':[[0,0],[0.08,0.7,'out'],[0.35,-0.2],[0.55,0],[0.7,0]],
+ }, fx:(t)=>{
+   const f={stars:[],flash:0,ring:null};
+   if(t<0.14) f.flash=1-t/0.14;
+   if(t<0.6) f.stars={a:t/0.6,n:4,r0:30};
+   if(t<0.35) f.ring={a:t/0.35};
+   return f; }},
+ death:{ dur:2.7, loop:false, tracks:{
+   'root.dx': [[0,0],[0.05,26,'out'],[0.22,14]],
+   'root.rot':[[0,0],[0.06,0.16,'out'],[0.22,0.1]],
+   'root.sx': [[0,1],[0.06,1.3,'out'],[0.2,0.72,'in']],
+   'root.sy': [[0,1],[0.06,0.74,'out'],[0.2,1.24,'in']],
+   'eyes.frame': ()=>2,
+   'brows.dy':[[0,0],[0.07,-6,'out']],
+ }},
+ revive:{ dur:2.0, loop:false, next:'idle', tracks:{} },
+};
+const POOF_T=0.22;
+// 트랙 평가 → tr 맵
+function evalTracks(A,tt,traw){
+ const tr={};
+ for(const ch in A.tracks){
+   const k=A.tracks[ch];
+   tr[ch]=(typeof k==='function')?k(tt,traw):tk(k,tt);
+ }
+ return tr;
+}
+function poseOf(name,traw){
+ const A=ANIMS[name];
+ const tt=A.loop?((traw%A.dur)+A.dur)%A.dur:Math.min(traw,A.dur);
+ return {tr:evalTracks(A,tt,traw), fx:A.fx?A.fx(tt,traw):{}, tt:tt};
+}
+
+// --- 죽음 조각 절차 물리 (초기화 때 결정론 궤적 계산 → 순수 평가) --------------
+const PIECE_DEF=[
+ {part:'ham',    s:1.0, vx:-215, vy:-740, w: 4.4},
+ {part:'steak',  s:1.0, vx:-142, vy:-660, w:-5.2},
+ {part:'saus',   s:1.0, vx:-70,  vy:-780, w: 6.0},
+ {part:'ham2',   s:0.95,vx:-6,   vy:-700, w:-4.0},
+ {part:'steak',  s:0.82,vx:64,   vy:-745, w: 5.0},
+ {part:'sausCut',s:1.0, vx:138,  vy:-655, w:-6.2},
+ {part:'ham',    s:0.72,vx:210,  vy:-715, w: 4.8},
+];
+const GRAV=1900, REST=0.52;
+function makeTraj(d,hh){
+ const gy=-hh; let x=0,y=-92,vx=d.vx,vy=d.vy,w=d.w,rot=0,t=0;
+ const segs=[]; let restT=0,restX=0,restRot=0;
+ for(let k=0;k<7;k++){
+   const A2=0.5*GRAV;
+   const T=(-vy+Math.sqrt(vy*vy-4*A2*(y-gy)))/(2*A2);
+   segs.push({t0:t,x:x,y:y,vx:vx,vy:vy,w:w,rot0:rot,k:k});
+   x+=vx*T; rot+=w*T; t+=T; y=gy;
+   const impact=vy+GRAV*T;
+   const nvy=-impact*REST;
+   vx*=0.62; w*=0.5;
+   restT=t; restX=x; restRot=rot;
+   if(-nvy<175||k===6){ break; }
+   vy=nvy;
+ }
+ return {segs:segs,restT:restT,restX:restX,restRot:restRot,gy:gy};
+}
+let TRAJS=null;
+function buildTrajs(){
+ TRAJS=PIECE_DEF.map((d,i)=>{
+   const hh=(d.part.indexOf('ham')===0?31:(d.part.indexOf('steak')===0?25:15))*d.s;
+   return makeTraj(d,hh);
+ });
+}
+const LAUNCH=PIECE_DEF.map((d,i)=>0.30+i*0.05);
+// evalPieces: 순수 — t(죽음 타임라인)에 대한 조각 상태
+function evalPieces(t){
+ return PIECE_DEF.map((d,i)=>{
+   const lt=t-LAUNCH[i];
+   if(lt<=0) return null;
+   const tr=TRAJS[i];
+   const pop=clamp(lt/0.13,0,1);
+   const popS=pop<1?EASE.back(pop):1;
+   let x,y,rot,sq=1,restAge=-1;
+   if(lt>=tr.restT){
+     restAge=lt-tr.restT;
+     x=tr.restX; y=tr.gy;
+     const r0=((tr.restRot+Math.PI)%TAU+TAU)%TAU-Math.PI;
+     rot=r0*(1-EASE.out(clamp(restAge/0.4,0,1)));
+     sq=1-0.3*Math.exp(-restAge*10);
+   }else{
+     let seg=tr.segs[0];
+     for(let k=tr.segs.length-1;k>=0;k--){ if(lt>=tr.segs[k].t0){ seg=tr.segs[k]; break; } }
+     const u=lt-seg.t0;
+     x=seg.x+seg.vx*u; y=seg.y+seg.vy*u+0.5*GRAV*u*u;
+     rot=seg.rot0+seg.w*u;
+     if(seg.k>0) sq=1-0.42*Math.exp(-u*15);
+   }
+   return {x:x,y:y,rot:rot,s:d.s*popS,sq:sq,part:d.part,restAge:restAge,i:i};
+ });
+}
+// samplePose: 실시간·몽타주 공용 순수 진입점
+function samplePose(name,traw){
+ if(name==='death'){
+   const bp=poseOf('death',Math.min(traw,POOF_T));
+   const st={tr:bp.tr, fx:{puffs:[],stars:null,flash:0,ring:null,poof:null},
+             hideBody:traw>=POOF_T, pieces:null, sparkT:traw};
+   if(traw<0.14) st.fx.flash=1-traw/0.14;
+   const pa=traw-POOF_T;
+   if(pa>0&&pa<0.8) st.fx.poof={a:pa/0.8};
+   if(pa>0&&pa<0.7) st.fx.stars={a:pa/0.7,n:6,r0:26};
+   if(pa>0&&pa<0.45) st.fx.ring={a:pa/0.45};
+   if(traw>=0.26) st.pieces=evalPieces(traw);
+   return st;
+ }
+ if(name==='revive'){
+   const u=clamp(traw/1.5,0,1);
+   const td=2.42-EASE.io(u)*(2.42-0.19);
+   const st={tr:null, fx:{puffs:[],stars:null,flash:0,ring:null,poof:null},
+             hideBody:td>=POOF_T, pieces:null, sparkT:0, absorb:u<1?u:1};
+   if(td>=0.26) st.pieces=evalPieces(td);
+   const pa=traw-1.42;
+   if(pa>0&&pa<0.55){ st.fx.poof={a:pa/0.55}; }
+   if(pa>0&&pa<0.5) st.fx.stars={a:pa/0.5,n:6,r0:26};
+   // 복원 팝 (아이들 호흡 + 오버슛 스케일)
+   const ip=poseOf('idle',traw); st.tr=ip.tr;
+   if(!st.hideBody){
+     const ps=tk([[1.44,0.01],[1.6,1.22,'out'],[1.78,0.94],[2.0,1,'io']],traw);
+     st.tr['root.sx']=(st.tr['root.sx']||1)*ps;
+     st.tr['root.sy']=(st.tr['root.sy']||1)*ps;
+   }
+   return st;
+ }
+ const p=poseOf(name,traw);
+ return {tr:p.tr, fx:p.fx, hideBody:false, pieces:null};
+}
 //__MORE__
 </script>
 </body>
