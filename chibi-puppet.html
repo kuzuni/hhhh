@@ -826,6 +826,168 @@ function drawBones(c){
   }
   c.restore();
 }
+// ==== 4. 애니메이션 (키프레임 트랙 + 큐빅 이징, 순수함수) ====================
+function kf(t,keys){ // [[t,v],...] 구간별 큐빅 이징
+  if(t<=keys[0][0])return keys[0][1];
+  for(let i=1;i<keys.length;i++)if(t<=keys[i][0]){
+    const a=keys[i-1],b=keys[i];
+    return lerp(a[1],b[1],sstep((t-a[0])/(b[0]-a[0])));
+  }
+  return keys[keys.length-1][1];
+}
+function resetPose(){
+  for(const n of NODES){n.rot=0;n.px=0;n.py=0;n.sx=1;n.sy=1;}
+  FACE.eye='';FACE.mouth='m_smile';FACE.blushX=0;
+}
+const N=NMAP;
+function armDown(side,uRot,lRot){ // side: 'L'|'R'
+  N['armU_'+side].rot=uRot;N['armL_'+side].rot=lRot;
+}
+// 공통 2차 모션: 테일/귀/스카프/케이프가 몸을 지연 추종
+function secondary(t,sp,amp,phase){
+  const w=Math.sin(t*TAU*sp+(phase||0));
+  const w2=Math.sin(t*TAU*sp+(phase||0)-.9); // 지연(오버랩)
+  N.tailL1.rot=-.06+w*.09*amp;N.tailL2.rot=w2*.16*amp;
+  N.tailR1.rot=.06+w*.09*amp;N.tailR2.rot=w2*.16*amp;
+  N.earL.rot=w*.07*amp;N.earR.rot=-w*.07*amp;
+  N.scarf1.rot=.1+w2*.12*amp;N.scarf2.rot=w2*.2*amp;
+  N.capeB.rot=w2*.06*amp;N.capeB.sy=1+w2*.03*amp;
+  N.hairFront.py=w2*1.4*amp;
+}
+const ANIMS={
+  idle:{dur:2.6,fn(t,r){
+    const w=Math.sin(t*TAU);
+    r.y=-Math.abs(Math.sin(t*TAU))*5;      // 통통 리듬
+    r.sy=1+w*.022;r.sx=1-w*.016;
+    N.torso.rot=w*.03;
+    N.head.rot=Math.sin(t*TAU-.6)*.05;
+    N.head.py=Math.sin(t*TAU*2)*1.6;
+    // 오른팔: 무기 어깨에 얹음 + 으쓱
+    armDown('R',-2.45+w*.06,-.75);
+    N.weapon.rot=2.55+w*.05;               // 칼날이 어깨 뒤로 비스듬히
+    // 왼팔: 허리춤
+    armDown('L',.55+w*.04,-1.5);
+    const shrug=kf(t,[[0,0],[.42,0],[.5,1],[.62,1],[.72,0],[1,0]]);
+    N.armU_R.py=-shrug*5;N.armU_L.py=-shrug*5;N.head.py+=shrug*3;
+    secondary(t,1,1,0);
+    FACE.mouth='m_cat';
+  }},
+  greet:{dur:3.0,fn(t,r){
+    // 예비(위로) → 꾸벅 → 반동으로 발라당 넘어질 뻔 → 회복
+    const up=kf(t,[[0,0],[.1,1],[.2,0],[1,0]]);
+    const bow=kf(t,[[.1,0],[.22,1],[.40,1],[.5,0],[1,0]]);
+    const tip=kf(t,[[.44,0],[.54,1],[.68,1],[.8,.25],[.9,0],[1,0]]); // 뒤로 기우뚱
+    const wob=Math.sin(t*TAU*6)*kf(t,[[.6,0],[.7,1],[.95,0],[1,0]]);
+    r.y=-up*10+bow*26;
+    r.sy=1+up*.06-bow*.16;r.sx=1-up*.04+bow*.10;
+    r.rot=-tip*.38+wob*.06;
+    N.torso.rot=bow*.22-tip*.18;
+    N.head.rot=bow*.34-tip*.22+wob*.05;
+    N.head.py=bow*30-tip*6;
+    // 팔: 인사 때 뒤로 스윙 → 기우뚱 때 풍차질
+    const flail=Math.sin(t*TAU*7)*tip;
+    armDown('R',-2.45+bow*1.5+tip*1.2+flail*.9,-.75+bow*.5);
+    N.weapon.rot=2.55-bow*.6-tip*.9;
+    armDown('L',.55-bow*2.4-tip*2.6-flail*.9,-1.5+bow*1.3+tip*1.4);
+    // 기우뚱 때 한 발 번쩍
+    N.legU_L.rot=-tip*1.15;N.legL_L.rot=tip*.9;
+    N.legU_R.rot=tip*.15;
+    secondary(t,2,.8+tip,0);
+    N.tailL1.rot+=bow*.5;N.tailR1.rot+=bow*.5;   // 인사 때 테일 앞으로 쏠림
+    N.tailL2.rot+=bow*.35;N.tailR2.rot+=bow*.35;
+    if(bow>.5){FACE.eye='_j';FACE.mouth='m_smile';}
+    else if(tip>.35){FACE.eye='';FACE.mouth='m_oh';}
+    else FACE.mouth='m_cat';
+    r.fx.sweat=tip;
+  }},
+  swing:{dur:3.4,fn(t,r){
+    // 재기 → 스윙 → 검 무게로 반 바퀴 과회전 → 어지러움 → 복귀 → 으쓱
+    const wind=kf(t,[[0,0],[.13,1],[.2,1],[.26,0],[1,0]]);
+    const swg=kf(t,[[.2,0],[.27,1],[1,1]]);
+    const spin=kf(t,[[.26,0],[.36,.55],[.5,1],[1,1]]);          // 0→1 = 한 바퀴
+    const diz=kf(t,[[.5,0],[.56,1],[.8,1],[.9,0],[1,0]]);
+    const shr=kf(t,[[.9,0],[.96,1],[1,.6]]);
+    r.rot=spin*TAU+Math.sin(t*TAU*5)*diz*.05;
+    r.y=wind*10-Math.sin(spin*Math.PI)*14+Math.abs(Math.sin(t*TAU*3))*diz*-3;
+    r.sy=1-wind*.12+swg*.05-diz*.04;r.sx=1+wind*.08;
+    N.torso.rot=-wind*.28+swg*.3-diz*.06;
+    N.head.rot=-wind*.18+Math.sin(t*TAU*4.5)*diz*.16;
+    // 무기팔: 크게 치켜들었다 휘두름
+    const aswg=kf(t,[[0,-2.45],[.13,-3.5],[.2,-3.6],[.24,-.6],[.3,.5],[.5,.7],[.7,-1.2],[.9,-2.45],[1,-2.45]]);
+    N.armU_R.rot=aswg;
+    N.armL_R.rot=kf(t,[[0,-.75],[.13,-.3],[.24,-.4],[.3,-.2],[.5,-.1],[.9,-.75],[1,-.75]]);
+    N.weapon.rot=kf(t,[[0,2.55],[.13,3.35],[.2,3.4],[.24,.4],[.3,-.15],[.5,0],[.7,1.6],[.9,2.55],[1,2.55]]);
+    armDown('L',.55-wind*1.1+swg*1.5-diz*.9,-1.5+wind*.6);
+    N.armU_L.rot+=Math.sin(t*TAU*6)*diz*.25;
+    N.legU_L.rot=-wind*.2+diz*.12;N.legU_R.rot=wind*.25-diz*.12;
+    N.legL_L.rot=wind*.3;N.legL_R.rot=wind*.3;
+    secondary(t,3,1.3,1);
+    if(wind>.4){FACE.eye='';FACE.mouth='m_oh';}
+    if(swg>.3&&diz<.3)FACE.mouth='m_open';
+    if(diz>.3){FACE.eye='_d';FACE.mouth='m_wavy';}
+    if(shr>.3){FACE.eye='_j';FACE.mouth='m_smile';}
+    r.fx.smear=kf(t,[[.2,0],[.24,1],[.34,1],[.42,0],[1,0]]);
+    r.fx.dizzy=diz;
+  }},
+  victory:{dur:1.5,fn(t,r){
+    // 제자리 방방 + 무기 번쩍
+    const hop=Math.abs(Math.sin(t*TAU));
+    const air=Math.sin(t*TAU)>0?hop:0;
+    const land=Math.max(0,-Math.sin(t*TAU))*hop;
+    r.y=-air*46;
+    r.sy=1+air*.09-land*.14;r.sx=1-air*.06+land*.10;
+    N.torso.rot=Math.sin(t*TAU)*.04;
+    N.head.rot=Math.sin(t*TAU+.8)*.07;
+    // 무기 번쩍 (팔 위로 쭉)
+    armDown('R',-3.05+air*.12,-.25);
+    N.weapon.rot=3.1;
+    armDown('L',2.4-air*.3,.3);   // 왼팔도 만세
+    N.legU_L.rot=-air*.5;N.legL_L.rot=air*.9;
+    N.legU_R.rot=air*.45;N.legL_R.rot=air*.8;
+    secondary(t,2,1.6,.5);
+    FACE.eye=air>.6?'_j':'';FACE.mouth='m_open';
+    r.fx.spark=air;
+  }},
+  shy:{dur:2.4,fn(t,r){
+    // 블러시 확 + 손 내젓기 + 도리도리
+    const sh=Math.sin(t*TAU*3);
+    r.y=Math.abs(Math.sin(t*TAU*1.5))*-2;
+    r.sy=1+Math.sin(t*TAU*1.5)*.012;
+    N.head.rot=sh*.14;                      // 도리도리
+    N.head.px=sh*3;
+    N.torso.rot=-sh*.03;
+    // 두 손 가슴 앞에서 파닥파닥
+    armDown('R',-1.7+sh*.22,-1.85);
+    N.weapon.rot=1.7;N.weapon.px=0;
+    armDown('L',1.7-sh*.22,1.85);
+    // 안짱다리
+    N.legU_L.rot=.16;N.legU_R.rot=-.16;
+    N.legL_L.rot=-.1;N.legL_R.rot=-.1;
+    secondary(t,3,.7,2);
+    FACE.eye='_h';FACE.mouth='m_wavy';FACE.blushX=.85;
+    r.fx.heart=(Math.sin(t*TAU*1.5)+1)/2;
+  }}
+};
+// 포즈 스냅샷/블렌드 (크로스페이드용)
+function evalPose(anim,t){
+  resetPose();
+  const r={x:0,y:0,rot:0,sx:1,sy:1,fx:{}};
+  ANIMS[anim].fn(t,r);
+  const loc=new Float32Array(NODES.length*5);
+  NODES.forEach((n,i)=>{loc[i*5]=n.rot;loc[i*5+1]=n.px;loc[i*5+2]=n.py;loc[i*5+3]=n.sx;loc[i*5+4]=n.sy;});
+  return{r,loc,face:{eye:FACE.eye,mouth:FACE.mouth,blushX:FACE.blushX}};
+}
+function applySnap(s){
+  NODES.forEach((n,i)=>{n.rot=s.loc[i*5];n.px=s.loc[i*5+1];n.py=s.loc[i*5+2];n.sx=s.loc[i*5+3];n.sy=s.loc[i*5+4];});
+  FACE.eye=s.face.eye;FACE.mouth=s.face.mouth;FACE.blushX=s.face.blushX;
+}
+function blendSnap(a,b,w){ // w: 0=a 1=b
+  const loc=new Float32Array(a.loc.length);
+  for(let i=0;i<loc.length;i++)loc[i]=lerp(a.loc[i],b.loc[i],w);
+  const r={x:lerp(a.r.x,b.r.x,w),y:lerp(a.r.y,b.r.y,w),rot:lerp(a.r.rot,b.r.rot,w),
+    sx:lerp(a.r.sx,b.r.sx,w),sy:lerp(a.r.sy,b.r.sy,w),fx:w<.5?a.r.fx:b.r.fx};
+  return{r,loc,face:w<.5?a.face:b.face};
+}
 /*__NEXT__*/
 </script>
 </body>

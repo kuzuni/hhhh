@@ -1242,6 +1242,10 @@ if(IS_MONTAGE){
   resize();
   window.addEventListener('resize',resize);
   setupUI();
+  // 디버그: ?bones / ?explode / ?demon 으로 뷰 강제
+  if(/[?&]bones/.test(location.search))state.bones=true;
+  if(/[?&]explode/.test(location.search))state.explode=true;
+  if(/[?&]demon/.test(location.search))state.av='demon';
   let last=performance.now();
   (function loop(ts){
     const dt=ts-last;last=ts;

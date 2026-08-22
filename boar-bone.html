@@ -1152,22 +1152,23 @@ if(isMontage){
    cell(pad+(cwA+pad)*i,pad,cwA,hA,c.l,function(w,h){
      c.st.scale=h/560;mScene(w,h,c.st);});
  });
- // Row B: 죽음 시퀀스 6키 (1~3 기본, 4~6 불속성 — 구운 고기 조각)
+ // Row B: 죽음 시퀀스 6키 — 한 아바타(불속성·구이)로 통일해 연속성 확보
+ // (기본 아바타 생고기 조각 비교는 Row C-3 클로즈업이 담당)
  var yB=pad+hA+pad, hB=396;
  var rowB=[
-  {l:'① 피격 경직 · 기본',st:{anim:'death',t:0.12,avatar:'base'}},
-  {l:'② 뿅! 연기 팝 · 기본',st:{anim:'death',t:0.42,avatar:'base',time:0.42}},
-  {l:'③ 조각 튀어오름 · 기본',st:{anim:'death',t:0.72,avatar:'base',time:0.72}},
-  {l:'④ 바운스 · 불속성',st:{anim:'death',t:1.05,avatar:'fire',time:1.05}},
-  {l:'⑤ 안착 · 불속성(구이)',st:{anim:'death',t:2.1,avatar:'fire',time:2.1}},
+  {l:'① 피격 경직 · 불속성',st:{anim:'death',t:0.12,avatar:'fire',time:0.12}},
+  {l:'② 뿅! 연기+별 팝 · 불속성',st:{anim:'death',t:0.36,avatar:'fire',time:0.36}},
+  {l:'③ 조각(구이) 튀어오름 · 불속성',st:{anim:'death',t:0.72,avatar:'fire',time:0.72}},
+  {l:'④ 바운스 · 불속성(구이)',st:{anim:'death',t:1.05,avatar:'fire',time:1.05}},
+  {l:'⑤ 안착·김 모락 · 불속성(구이)',st:{anim:'death',t:2.1,avatar:'fire',time:2.1}},
   {l:'⑥ 반짝✨/부활 역재생 · 불속성',st:{anim:'revive',t:0.58,avatar:'fire',time:3.0}}
  ];
  rowB.forEach(function(c,i){
    cell(pad+(cwA+pad)*i,yB,cwA,hB,c.l,function(w,h){
      c.st.scale=h/560;mScene(w,h,c.st);});
  });
- // Row C
- var yC=yB+hB+pad, hC=MH-yC-pad, cwC=(MW-pad*5)/4;
+ // Row C (하단 26px는 푸터 캡션용으로 비워둠)
+ var yC=yB+hB+pad, hC=MH-yC-30, cwC=(MW-pad*5)/4;
  cell(pad,yC,cwC,hC,'뷰티샷 · 기본 아바타',function(w,h){
    mScene(w,h,{anim:'idle',t:0.58,avatar:'base',scale:h/430,gyFrac:0.82});});
  cell(pad*2+cwC,yC,cwC,hC,'뷰티샷 · 불속성 아바타',function(w,h){
@@ -1192,11 +1193,24 @@ if(isMontage){
    g.fillText('▲ 기본: 생고기 단면',w/2,h*0.06+6);
    g.fillText('▼ 불속성: 그릴 자국 + 김',w/2,h*0.52);
  });
- cell(pad*4+cwC*3,yC,cwC,hC,'리깅 오버레이 — 본·관절·접지 락(빨강)',function(w,h){
-   mScene(w,h,{anim:'walk',t:0.18,avatar:'base',scale:h/520,gyFrac:0.8,
-     showBones:true,alpha:0.55,groundOff:0.18*STRIDE/DUTY});});
- // 헤더 워터마크
- g.fillStyle='rgba(255,255,255,0.5)';g.font='12px '+FONT;g.textAlign='left';
- g.fillText('boar-bone.html — 뚱멧돼지 「투기」 절차적 스켈레톤 몽타주',14,MH-6);
+ cell(pad*4+cwC*3,yC,cwC,hC,'리깅 오버레이 — 1 rig = 2 avatars (본·관절·접지 공유)',function(w,h){
+   // 좌우 분할: 동일 포즈·동일 스켈레톤을 기본/불속성 두 아바타에 겹쳐 그림
+   [['base',0],['fire',1]].forEach(function(hf){
+     g.save();
+     g.beginPath();g.rect(hf[1]*w/2,0,w/2,h);g.clip();
+     g.translate(hf[1]*w/2,0);
+     mScene(w/2,h,{anim:'walk',t:0.30,avatar:hf[0],scale:h/850,gyFrac:0.8,
+       showBones:true,alpha:0.55,groundOff:0.30*STRIDE/DUTY,time:1.3});
+     g.restore();
+   });
+   g.strokeStyle='rgba(255,255,255,0.28)';g.lineWidth=1;
+   g.beginPath();g.moveTo(w/2+0.5,8);g.lineTo(w/2+0.5,h-30);g.stroke();
+   g.fillStyle='#ffd54a';g.font='bold 15px '+FONT;g.textAlign='center';
+   g.fillText('1 rig = 2 avatars — 같은 walk t=0.30, 같은 본·관절',w/2,22);
+   g.fillStyle='#cfe4bc';g.font='12px '+FONT;
+   g.fillText('기본',w*0.25,42);g.fillText('불속성',w*0.75,42);});
+ // 푸터 캡션 (하단 여백 확보 — 잘리지 않게)
+ g.fillStyle='rgba(255,255,255,0.55)';g.font='12px '+FONT;g.textAlign='left';
+ g.fillText('boar-bone.html — 뚱멧돼지 「투기」 절차적 스켈레톤 몽타주',14,MH-11);
 }
 </script>
