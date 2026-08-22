@@ -95,22 +95,22 @@ function softEllipse(g,x,y,rx,ry,col,a){
 // 두상: 계란형 + V라인 턱
 function headPath(g){
  g.beginPath();
- g.moveTo(500,562);
- g.bezierCurveTo(478,559,446,540,428,508);   // 좌 턱→볼
- g.bezierCurveTo(410,478,399,452,395,424);   // 좌 볼→관자
- g.bezierCurveTo(390,390,391,356,402,326);   // 좌 관자→이마
- g.bezierCurveTo(418,286,452,264,500,263);   // 좌상 두정
- g.bezierCurveTo(548,264,582,286,598,326);   // 우상
- g.bezierCurveTo(609,356,610,390,605,424);
- g.bezierCurveTo(601,452,590,478,572,508);
- g.bezierCurveTo(554,540,522,559,500,562);
+ g.moveTo(500,557);
+ g.bezierCurveTo(481,554,450,537,433,506);   // 좌 턱→볼 (V라인)
+ g.bezierCurveTo(415,477,404,452,400,424);   // 좌 볼→관자
+ g.bezierCurveTo(395,390,396,356,406,326);   // 좌 관자→이마
+ g.bezierCurveTo(421,286,454,264,500,263);   // 좌상 두정
+ g.bezierCurveTo(546,264,579,286,594,326);   // 우상
+ g.bezierCurveTo(604,356,605,390,600,424);
+ g.bezierCurveTo(596,452,585,477,567,506);
+ g.bezierCurveTo(550,537,519,554,500,557);
  g.closePath();
 }
-// 눈 기하: side s=-1(뷰어 좌), +1(뷰어 우). 눈중심 ex=500+s*60, ey=418
+// 눈 기하: side s=-1(뷰어 좌), +1(뷰어 우). 아몬드 2.2:1, 눈꼬리 살짝 올림
 function eyeGeo(s){
- var ex=500+s*60, ey=418;
- return {ex:ex,ey:ey, inx:ex-s*31,iny:ey+7, outx:ex+s*33,outy:ey-6,
-  tcx:ex+s*1,tcy:ey-17, bcx:ex-s*2,bcy:ey+15};
+ var ex=500+s*59, ey=415;
+ return {ex:ex,ey:ey, inx:ex-s*34,iny:ey+8, outx:ex+s*36,outy:ey-7,
+  tcx:ex+s*1,tcy:ey-19, bcx:ex-s*2,bcy:ey+16.5};
 }
 // 눈꺼풀 개구부 샘플 폴리곤 (위 커브 + 아래 커브)
 function apPoly(s){

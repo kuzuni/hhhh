@@ -591,15 +591,20 @@ RIGM.eyeL.kind={open:'eyeL',half:'eyeL_h',closed:'eyeL_c'};
 RIGM.eyeR.kind={open:'eyeR',half:'eyeR_h',closed:'eyeR_c'};
 RIGM.mouth.kind={smile:'m_smile',smirk:'m_smirk',open:'m_open',o:'m_o'};
 
-// 분해도 슬롯 (디자인 좌표, root 기준)
-const EXPL={
-  hairFront:[-430,-330],hairSideL:[-270,-330],hairSideR:[-140,-330],head:[0,-330],hairBack:[160,-330],eyeL:[300,-350],
-  eyeR:[400,-350],browL:[300,-280],browR:[400,-280],mouth:[350,-210],torso:[-380,-90],pelvis:[-200,-110],
-  upArmR:[-60,-160],foreArmR:[40,-160],handR:[130,-140],rapier:[240,-120],upArmL:[-60,40],foreArmL:[40,40],
-  handL:[130,20],scab:[240,80],thighR:[-420,150],shinR:[-320,150],bootR:[-210,180],thighL:[-100,150],
-  shinL:[0,150],bootL:[110,180],capeA:[230,190],capeB:[330,190],capeC:[430,190]
-};
-function explScale(p){const w=(p.x1-p.x0),h=(p.y1-p.y0);return Math.min(1,150/Math.max(w,h));}
+// 분해도 슬롯 (디자인 좌표, root 기준) — 6열 그리드, 피벗이 슬롯 상단에 오도록
+const EXPL={};
+{
+  const order=['head','hairFront','hairBack','hairSideL','hairSideR','eyeL',
+    'eyeR','browL','browR','mouth','torso','pelvis',
+    'upArmR','foreArmR','handR','upArmL','foreArmL','handL',
+    'rapier','scab','thighR','shinR','bootR','thighL',
+    'shinL','bootL','capeA','capeB','capeC'];
+  order.forEach((k,i)=>{
+    const col=i%6,row=(i/6)|0;
+    EXPL[k]=[-430+col*172,-360+row*158];
+  });
+}
+function explScale(p){const w=(p.x1-p.x0),h=(p.y1-p.y0);return Math.min(1,118/Math.max(w,h));}
 
 // 월드 변환 계산 (base + 애니 델타 + IK 오프셋)
 function computeWorld(over,px,py,ps){
@@ -631,10 +636,11 @@ function renderCharacter(ctx,opts){
       pname=n.kind[g>0.5?(n.name==='mouth'?'smile':'open'):st]||n.part;}
     const p=PARTS[pname];if(!p)continue;
     let wx=n.wx,wy=n.wy,wr=n.wr,ws=n.ws;
-    if(eg>0){
-      const s=EXPL[n.name]||[0,0];
-      wx=lerp(wx,px+s[0]*ps,eg); wy=lerp(wy,py+s[1]*ps,eg);
-      wr=lerp(wr,0,eg); ws=lerp(ws,ps*explScale(p)*1.1,eg);
+    if(eg>0){ // 파트 중심이 슬롯 중앙에 오도록 피벗 목표를 보정
+      const s=EXPL[n.name]||[0,0],sc=explScale(p);
+      const cxd=(p.x0+p.x1)/2*sc,cyd=(p.y0+p.y1)/2*sc;
+      wx=lerp(wx,px+(s[0]-cxd)*ps,eg); wy=lerp(wy,py+(s[1]-cyd)*ps,eg);
+      wr=lerp(wr,0,eg); ws=lerp(ws,ps*sc,eg);
     }
     ctx.save();
     ctx.translate(wx,wy);ctx.rotate(wr);ctx.scale(ws/p.bs,ws/p.bs);
@@ -642,13 +648,12 @@ function renderCharacter(ctx,opts){
     ctx.restore();
     if(eg>0.45){ // 분해도 이름표
       ctx.save();ctx.globalAlpha=clamp((eg-0.45)/0.55,0,1);
-      const s=EXPL[n.name]||[0,0];
-      const lx=px+s[0]*ps, ly=py+(s[1]+((p.y1-p.y0)*explScale(p)*0.62))*ps+14;
-      ctx.fillStyle='rgba(212,175,90,.92)';
-      ctx.font='11px "Segoe UI","Malgun Gothic",sans-serif';ctx.textAlign='center';
-      ctx.fillText(n.label,lx,ly+8);
-      ctx.strokeStyle='rgba(212,175,90,.3)';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(lx,ly-4);ctx.lineTo(lx,ly+((p.y0-p.y1)*explScale(p)*0.3)*ps);ctx.stroke();
+      const s=EXPL[n.name]||[0,0],sc=explScale(p);
+      const lx=px+s[0]*ps, ly=py+(s[1]+(p.y1-p.y0)/2*sc)*ps;
+      ctx.fillStyle='rgba(240,210,140,.95)';
+      ctx.font=Math.max(9,Math.round(26*ps))+'px "Segoe UI","Malgun Gothic",sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText(n.label,lx,ly+4);
       ctx.restore();
     }
   }
@@ -870,7 +875,7 @@ function drawSparkles(ctx,k,time){ // 승리: 검끝 금빛 반짝이
 }
 function drawFloorShadow(ctx,px,py,ps,lift){
   ctx.save();ctx.globalAlpha=clamp(1-Math.abs(lift||0)/220,.25,1)*.5;
-  const fy=py+346*ps;
+  const fy=py+FLOOR*ps;
   const g=ctx.createRadialGradient(px,fy,0,px,fy,150*ps);
   g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=g;
@@ -1038,8 +1043,8 @@ function startLive(){
       if(bt>(st.dbl?.3:.14))st.blinkT=-1;
     }
     // 배치
-    const ps=Math.min(H*.66/700,W*.5/700);
-    const px=W*.5,py=H*.82-346*ps;
+    const ps=Math.min(H*.66/730,W*.5/730);
+    const px=W*.5,py=H*.82-FLOOR*ps;
     // IK
     if(dragging){
       const stk=ikState[dragging]||(ikState[dragging]={w:0,vw:0});
@@ -1111,9 +1116,9 @@ function montage(){
     opt=opt||{};
     cell(x,y,w,h,label,(cx,cy,cw,ch)=>{
       const po=pose(anim,t);
-      const ps=opt.ps||Math.min(ch*.82/700,cw*.62/700);
+      const ps=opt.ps||Math.min(ch*.85/730,cw/430);
       const px=cx+cw/2-((po.over.root&&po.over.root.x)||0)*ps*.5+(opt.dx||0);
-      const py=cy+ch-40-346*ps+(opt.dy||0);
+      const py=cy+ch-34-FLOOR*ps+(opt.dy||0);
       drawFloorShadow(ctx,px+((po.over.root&&po.over.root.x)||0)*ps,py,ps,(po.over.root&&po.over.root.y)||0);
       renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:opt.fx===false?{}:po.fx,
         bones:opt.bones,explode:opt.explode||0,time:t});
@@ -1131,16 +1136,16 @@ function montage(){
   // Row C: 뷰티샷 / 얼굴 클로즈업 / 리깅 오버레이 / 부품 분해도
   const cy0=m*3+ah*2,chh=MH-cy0-m,cwidth=(MW-m*5)/4;
   charCell(m,cy0,cwidth,chh,'① 뷰티샷 (승리)','victory',1.05,{ps:.5});
-  cell(m*2+cwidth,cy0,cwidth,chh,'② 얼굴 클로즈업 (두상 460px)',(cx,cy,cw,ch)=>{
-    const po=pose('idle',.6),ps=4.6;
-    const px=cx+cw/2-10*ps,py=cy+ch/2+278*ps-10;
+  cell(m*2+cwidth,cy0,cwidth,chh,'② 얼굴 클로즈업 (두상 470px)',(cx,cy,cw,ch)=>{
+    const po=pose('idle',.6),ps=4.9;
+    const px=cx+cw/2-8*ps*.96,py=cy+ch/2+282*ps*.96;
     renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:{},time:.6});
   });
-  charCell(m*3+cwidth*2,cy0,cwidth,chh,'③ 리깅 오버레이 (뼈/피벗)','idle',0,{bones:true});
+  charCell(m*3+cwidth*2,cy0,cwidth,chh,'③ 리깅 오버레이 (뼈/피벗)','idle',0,{bones:true,ps:.62});
   cell(m*4+cwidth*3,cy0,cwidth,chh,'④ 부품 분해도 (컷아웃 파트)',(cx,cy,cw,ch)=>{
     const po=pose('idle',0);
-    const ps=Math.min(ch/1000,cw/1050);
-    renderCharacter(ctx,{px:cx+cw/2,py:cy+ch/2+40,ps,over:po.over,face:po.face,explode:1,fx:{},time:0});
+    const ps=Math.min(ch/1080,cw/1020);
+    renderCharacter(ctx,{px:cx+cw/2,py:cy+ch/2-20,ps,over:po.over,face:po.face,explode:1,fx:{},time:0});
   });
 }
 </script>
