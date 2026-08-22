@@ -1148,9 +1148,8 @@ function montage(){
     opt=opt||{};
     cell(x,y,w,h,label,(cx,cy,cw,ch)=>{
       const po=pose(anim,t);
-      if(anim==='lunge'&&t===.63)errBox.textContent+='DBG fx='+JSON.stringify(po.fx)+' optfx='+JSON.stringify(opt.fx)+'\n';
       const ps=opt.ps||Math.min(ch*.85/730,cw/430);
-      const px=cx+cw/2-((po.over.root&&po.over.root.x)||0)*ps*.5+(opt.dx||0);
+      const px=cx+cw/2-((po.over.root&&po.over.root.x)||0)*ps+(opt.dx||0);
       const py=cy+ch-34-FLOOR*ps+(opt.dy||0);
       drawFloorShadow(ctx,px+((po.over.root&&po.over.root.x)||0)*ps,py,ps,(po.over.root&&po.over.root.y)||0);
       renderCharacter(ctx,{px,py,ps,over:po.over,face:po.face,fx:opt.fx===false?{}:po.fx,
@@ -1165,7 +1164,7 @@ function montage(){
   // Row B: 런지 6키
   const rowB=[['런지 ① 준비','lunge',.14],['런지 ② 재기','lunge',.5],['런지 ③ 발사','lunge',.63],
     ['런지 ④ 극점','lunge',.72],['런지 ⑤ 홀드','lunge',1.0],['런지 ⑥ 복귀','lunge',1.9]];
-  rowB.forEach((r,i)=>charCell(m+i*(aw+m),m*2+ah,aw,ah,r[0],r[1],r[2]));
+  rowB.forEach((r,i)=>charCell(m+i*(aw+m),m*2+ah,aw,ah,r[0],r[1],r[2],{ps:.46,dx:-12}));
   // Row C: 뷰티샷 / 얼굴 클로즈업 / 리깅 오버레이 / 부품 분해도
   const cy0=m*3+ah*2,chh=MH-cy0-m,cwidth=(MW-m*5)/4;
   charCell(m,cy0,cwidth,chh,'① 뷰티샷 (승리)','victory',1.05,{ps:.5});

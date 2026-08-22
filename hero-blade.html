@@ -483,11 +483,13 @@ function drawHead(g,P){
   g.save();
   g.translate(j.head.x,j.head.y);
   g.rotate(j.headA);
-  // -- 두상: 갸름한 계란형 + V라인 턱 --
+  // -- 두상: 갸름한 계란형 + 3/4 코 돌출 + V라인 턱 --
   g.beginPath();
   bez(g,[[-14.5,-16],[-4,-24],[8,-22.5],[15,-19],[18.6,-11],[19.4,-4],
-    [19.6,-0.5],[19.0,2.5],[18.6,5],[18.2,8],
-    [15.5,17.5],[7.2,22.4],       // 뺨 → 턱끝 V
+    [19.5,-0.5],[19.7,2.0],[19.2,4.6],   // 눈가 살짝 오목
+    [19.1,6.4],[20.3,7.6],[21.2,8.5],[20.4,9.7],  // 콧대→코끝
+    [19.3,10.3],[18.9,11.6],[18.4,13.8],[17.2,15.8], // 코밑→입가
+    [15.0,19.5],[7.2,22.4],       // 뺨 → 턱끝 V
     [2.5,23.2],[-2.2,20.2],
     [-7.5,15.5],[-10.8,10.2],
     [-12.2,7],[-12.4,4.5],[-14.2,-4],[-14.5,-16]]);
@@ -500,9 +502,9 @@ function drawHead(g,P){
   bez(g,[[-2,20.1],[2.5,22.6],[7,21.6],[3,20.6],[0,19.8],[-2,20.1]]);
   g.fillStyle=PAL.skinSh; g.globalAlpha=0.30; g.fill(); g.globalAlpha=1;
   // 뺨 혈색 (라디얼 그라데이션, 아주 옅게)
-  for(const bp of[[8.2,9.6,3.2],[17.2,8.8,2.0]]){
+  for(const bp of[[8.2,10.0,2.6],[17.4,9.2,1.7]]){
     const bg2=g.createRadialGradient(bp[0],bp[1],0,bp[0],bp[1],bp[2]);
-    bg2.addColorStop(0,"rgba(240,168,162,0.16)");
+    bg2.addColorStop(0,"rgba(240,168,162,0.11)");
     bg2.addColorStop(1,"rgba(240,168,162,0)");
     g.beginPath(); g.ellipse(bp[0],bp[1],bp[2],bp[2]*0.55,0.08,0,TAU);
     g.fillStyle=bg2; g.fill();
@@ -510,18 +512,18 @@ function drawHead(g,P){
   // -- 눈 --
   eye(g, 2.6,3.8, 5.3,2.55, false, F);
   eye(g,15.2,3.4, 4.0,2.40, true,  F);
-  // 눈썹: 얇고 길게, 눈보다 살짝 길게 (서늘한 각)
+  // 눈썹: 얇고 길게, 낮고 직선적인 서늘한 각
   g.strokeStyle=PAL.brow; g.lineWidth=0.55; g.lineCap="round";
   const bl=F.brow*1.1;
-  g.beginPath(); g.moveTo(-3.0,-2.0+bl);
-  g.quadraticCurveTo(2.8,-4.4+bl*0.4, 9.0,-2.8+bl*1.2); g.stroke();
-  g.beginPath(); g.moveTo(11.6,-2.6+bl);
-  g.quadraticCurveTo(15.6,-4.4+bl*0.4, 19.6,-3.0+bl*1.2); g.stroke();
-  // 코: 콧대 생략, 코끝 짧은 획 + 미세 그림자점
-  g.strokeStyle="#d8b4a8"; g.lineWidth=0.75; g.lineCap="round";
-  g.beginPath(); g.moveTo(19.2,7.8); g.quadraticCurveTo(20.2,8.8,19.5,9.9); g.stroke();
-  g.fillStyle="rgba(216,180,168,0.5)";
-  g.beginPath(); g.ellipse(18.9,10.1,0.8,0.4,0.3,0,TAU); g.fill();
+  g.beginPath(); g.moveTo(-3.2,-1.2+bl);
+  g.quadraticCurveTo(2.6,-3.2+bl*0.4, 9.2,-2.2+bl*1.2); g.stroke();
+  g.beginPath(); g.moveTo(11.6,-2.0+bl);
+  g.quadraticCurveTo(15.6,-3.4+bl*0.4, 19.8,-2.4+bl*1.2); g.stroke();
+  // 코: 콧대 생략, 코끝 안쪽 짧은 획 + 미세 그림자점
+  g.strokeStyle="#d8b4a8"; g.lineWidth=0.7; g.lineCap="round";
+  g.beginPath(); g.moveTo(19.4,8.2); g.quadraticCurveTo(20.1,8.9,19.5,9.8); g.stroke();
+  g.fillStyle="rgba(216,180,168,0.45)";
+  g.beginPath(); g.ellipse(18.8,10.3,0.75,0.38,0.3,0,TAU); g.fill();
   // 입: 작고 절제된 입매
   g.strokeStyle="#b06a63"; g.lineWidth=0.55; g.lineCap="round";
   g.beginPath(); g.moveTo(11.2,15.1+F.mouth*0.5);

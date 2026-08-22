@@ -269,50 +269,57 @@ function paintMouth(g,idx){
 // 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스
 // 뒷머리 실루엣: 어깨 뒤로 흐르는 큰 매스 (source-atop 셰이딩)
 function paintBackHair(g){
+ // 짧은 샤기컷 실루엣: 턱~목 높이의 스파이키 팁 + 얇은 롱 위스프 2가닥
  g.beginPath();
  g.moveTo(500,232);
- g.bezierCurveTo(426,236,372,286,362,352);   // 좌상 (하이탑 돔 뒤에 숨음)
- g.bezierCurveTo(354,412,358,470,352,520);   // 좌측면 (얼굴 가까이)
- g.bezierCurveTo(348,572,338,624,320,672);   // 어깨 뒤로
- g.quadraticCurveTo(342,658,352,628);
- g.quadraticCurveTo(354,706,338,758);        // 스파이크 타래 1
- g.quadraticCurveTo(366,730,376,688);
- g.quadraticCurveTo(384,766,374,824);        // 최장 타래
- g.quadraticCurveTo(400,782,404,716);
- g.bezierCurveTo(412,656,408,600,412,556);   // 안쪽 복귀
- g.lineTo(588,556);
- g.bezierCurveTo(592,600,588,656,596,716);   // 우측 대칭
- g.quadraticCurveTo(600,782,626,824);
- g.quadraticCurveTo(616,766,624,688);
- g.quadraticCurveTo(634,730,662,758);
- g.quadraticCurveTo(646,706,648,628);
- g.quadraticCurveTo(658,658,680,672);
- g.bezierCurveTo(662,624,652,572,648,520);
- g.bezierCurveTo(642,470,646,412,638,352);
- g.bezierCurveTo(628,286,574,236,500,232);
+ g.bezierCurveTo(430,238,380,288,372,352);
+ g.bezierCurveTo(366,394,368,414,366,430);
+ g.quadraticCurveTo(358,468,356,498);   // 팁1
+ g.quadraticCurveTo(368,496,384,480);
+ g.quadraticCurveTo(378,530,378,584);   // 팁2
+ g.quadraticCurveTo(390,566,404,556);
+ g.quadraticCurveTo(400,616,400,660);   // 팁3
+ g.quadraticCurveTo(412,634,428,620);
+ g.quadraticCurveTo(432,664,436,700);   // 네이프 팁
+ g.quadraticCurveTo(446,668,456,650);
+ g.bezierCurveTo(460,610,462,580,462,560);
+ g.lineTo(538,560);
+ g.bezierCurveTo(538,580,540,610,544,650);
+ g.quadraticCurveTo(554,668,564,700);
+ g.quadraticCurveTo(568,664,572,620);
+ g.quadraticCurveTo(588,634,600,660);
+ g.quadraticCurveTo(600,616,596,556);
+ g.quadraticCurveTo(610,566,622,584);
+ g.quadraticCurveTo(622,530,616,480);
+ g.quadraticCurveTo(632,496,644,498);
+ g.quadraticCurveTo(642,468,634,430);
+ g.bezierCurveTo(632,414,634,394,628,352);
+ g.bezierCurveTo(620,288,570,238,500,232);
  g.closePath();
  g.fillStyle=C.hair; g.fill();
  g.strokeStyle=C.line; g.lineWidth=3; g.lineJoin='round'; g.stroke();
+ // 얇은 롱 위스프 (남는 우아함)
+ strandPath(g,[368,440, 352,570, 356,706],5.5,1,.6);
+ g.fillStyle=C.hair; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
+ strandPath(g,[632,440, 648,570, 644,706],5.5,1,.6);
+ g.fillStyle=C.hair; g.fill(); g.stroke();
  g.save(); g.globalCompositeOperation='source-atop';
  // 흐름 스트로크
- g.strokeStyle='rgba(16,12,20,.75)'; g.lineWidth=2.2; g.lineCap='round';
- [[382,300,362,470,336,660],[404,280,392,470,368,720],[424,310,420,500,408,660],
-  [618,300,638,470,664,660],[596,280,608,470,632,720],[576,310,580,500,592,660]].forEach(function(p){
+ g.strokeStyle='rgba(16,12,20,.7)'; g.lineWidth=2.2; g.lineCap='round';
+ [[388,300,372,430,362,540],[408,282,398,430,384,600],[428,310,424,470,412,630],
+  [612,300,628,430,638,540],[592,282,602,430,616,600],[572,310,576,470,588,630]].forEach(function(p){
   g.beginPath(); g.moveTo(p[0],p[1]); g.quadraticCurveTo(p[2],p[3],p[4],p[5]); g.stroke();});
- // 하단·안쪽 어둡게
- var gr=g.createLinearGradient(0,340,0,830);
+ // 하단 어둡게
+ var gr=g.createLinearGradient(0,330,0,700);
  gr.addColorStop(0,'rgba(20,16,25,0)'); gr.addColorStop(1,'rgba(12,9,16,.85)');
- g.fillStyle=gr; g.fillRect(300,220,400,620);
- var gc=g.createRadialGradient(500,430,110,500,470,290);
- gc.addColorStop(0,'rgba(12,9,16,.8)'); gc.addColorStop(1,'rgba(12,9,16,0)');
- g.fillStyle=gc; g.fillRect(340,320,320,420);
- // 보라 림 시어 (양측)
- g.strokeStyle='rgba(138,118,232,.5)'; g.lineWidth=5;
- g.beginPath(); g.moveTo(366,330); g.quadraticCurveTo(354,440,348,540); g.stroke();
- g.beginPath(); g.moveTo(634,330); g.quadraticCurveTo(646,440,652,540); g.stroke();
- g.strokeStyle='rgba(179,166,240,.3)'; g.lineWidth=2.4;
- g.beginPath(); g.moveTo(374,340); g.quadraticCurveTo(363,440,357,530); g.stroke();
- g.beginPath(); g.moveTo(626,340); g.quadraticCurveTo(637,440,643,530); g.stroke();
+ g.fillStyle=gr; g.fillRect(330,220,340,500);
+ // 보라 림 시어
+ g.strokeStyle='rgba(138,118,232,.5)'; g.lineWidth=4.5;
+ g.beginPath(); g.moveTo(376,330); g.quadraticCurveTo(364,420,360,500); g.stroke();
+ g.beginPath(); g.moveTo(624,330); g.quadraticCurveTo(636,420,640,500); g.stroke();
+ g.strokeStyle='rgba(179,166,240,.3)'; g.lineWidth=2.2;
+ g.beginPath(); g.moveTo(384,340); g.quadraticCurveTo(373,430,369,500); g.stroke();
+ g.beginPath(); g.moveTo(616,340); g.quadraticCurveTo(627,430,631,500); g.stroke();
  g.restore();
 }
 function paintHairTop(g){
@@ -392,13 +399,13 @@ var BANGS_R=[
  {p:[572,252, 624,330, 622,428],w:13},
  {p:[550,248, 584,320, 590,388],w:10}
 ];
-function paintSideHair(g,s){ // 얼굴 옆 긴 타래 (물리 스윙)
- var x=500+s*118;
- strandPath(g,[x-s*8,316, x+s*22,470, x+s*2,664],11,1.4,.58);
+function paintSideHair(g,s){ // 얼굴 옆 짧은 프레이밍 가닥 (물리 스윙)
+ var x=500+s*114;
+ strandPath(g,[x-s*6,318, x+s*18,420, x+s*4,528],10.5,1.2,.6);
  g.fillStyle=C.hairF; g.fill(); g.strokeStyle=C.line; g.lineWidth=2.4; g.lineJoin='round'; g.stroke();
- strandPath(g,[x+s*2,330, x+s*30,480, x+s*22,616],6,1,.58);
+ strandPath(g,[x+s*2,330, x+s*24,440, x+s*16,552],6,1,.6);
  g.fillStyle=C.hair; g.fill(); g.strokeStyle=C.line; g.lineWidth=2; g.stroke();
- g.beginPath(); g.moveTo(x-s*2,360); g.quadraticCurveTo(x+s*18,470,x+s*6,596);
+ g.beginPath(); g.moveTo(x-s*2,354); g.quadraticCurveTo(x+s*14,430,x+s*4,502);
  g.strokeStyle='rgba(179,166,240,.4)'; g.lineWidth=2; g.lineCap='round'; g.stroke();
 }
 // 목: 가늘게 + 턱밑 캐스트 섀도
