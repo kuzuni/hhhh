@@ -46,6 +46,8 @@
   .down{width:1px;height:22px;background:var(--line)}
   .fan{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;margin-top:0;max-width:640px;margin-left:auto;margin-right:auto}
   .grpline{margin:20px auto 10px;font-size:11px;letter-spacing:.22em;color:var(--faint);text-align:center}
+  .fan3{grid-template-columns:repeat(3,1fr);max-width:960px}
+  @media(max-width:720px){.fan3{grid-template-columns:1fr}}
   .plain .node::before{display:none}
   .t-chibi{color:#ff8aa0;border-color:rgba(255,138,160,.45)}
   .t-mon{color:#ff9a3c;border-color:rgba(255,154,60,.45)}
@@ -129,9 +131,10 @@
     <div class="down"></div>
     <div class="node"><b>heroes.html</b><small>용사 전시관 (허브)</small></div>
     <div class="fanwrap">
-      <div class="fan">
+      <div class="fan fan3">
         <div class="node"><b>hero-blade.html</b><small>아스렐 · 銀月의 검성</small><br><span class="tag t-blade">절차적 스켈레톤 · IK</span></div>
         <div class="node"><b>hero-puppet.html</b><small>루시엘 · 황금 사자의 왕자</small><br><span class="tag t-puppet">컷아웃 리깅 · 퍼펫</span></div>
+        <div class="node"><b>hero-live.html</b><small>카이렌 · 흑염의 마검사</small><br><span class="tag t-live">메시 디포메이션 · Live2D식</span></div>
       </div>
     </div>
     <div class="grpline">CHIBI — 리코 · 아바타 ×2 (해적 ↔ 마법사)</div>
@@ -149,7 +152,6 @@
     <div class="etc">
       <div class="node">index.html — 바퀴성 대전</div>
       <div class="node">spiderbot.html — ORB WEAVER</div>
-      <div class="node">hero-live.html — 카이렌 (미채용 · 숨은 페이지)</div>
       <div class="node">architecture.html — 이 문서</div>
     </div>
   </div>
@@ -246,9 +248,9 @@
         <li>「부품 분해」 뷰 — 조각들이 이름표 달고 날아가는 컷아웃 증명샷</li>
       </ul>
     </div>
-    <div class="tcard l" style="opacity:.55">
+    <div class="tcard l">
       <h3>메시 디포메이션 (Live2D식)</h3>
-      <div class="who">미채용 — 기법 설계 기록만 남김</div>
+      <div class="who">hero-live.html · 카이렌</div>
       <svg viewBox="0 0 300 150" aria-hidden="true">
         <defs><clipPath id="mf"><ellipse cx="150" cy="75" rx="52" ry="60"/></clipPath></defs>
         <ellipse cx="150" cy="75" rx="52" ry="60" fill="#241d2e"/>
