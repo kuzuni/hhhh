@@ -272,73 +272,87 @@ makePart('earF',-8,-18,38,18,3,c=>{    // far: 짧고 살짝 작게 (원근)
 
 // ---- 2c. 눈 (near = 정면형, far = 가로 압축) × 상태 5종 ----
 function eyeBody(c,st,dir,sqz){
-  // dir: 속눈썹 플릭 방향(+1 = 화면 오른쪽), sqz: 가로 압축 (far=0.74)
+  // dir: 속눈썹 플릭 방향(+1 = 화면 오른쪽), sqz: 가로 압축 (far)
   c.save();c.scale(sqz,1);
   if(st==='closed'){
-    c.strokeStyle=PAL.outline;c.lineWidth=6.4/sqz*sqz;
-    c.beginPath();c.moveTo(-24,0);c.quadraticCurveTo(0,13,24,0);c.stroke();
-    c.beginPath();c.moveTo(dir*24,0);c.quadraticCurveTo(dir*31,-2,dir*33,-8);c.lineWidth=5;c.stroke();
+    c.strokeStyle=PAL.outline;c.lineWidth=6.6;
+    c.beginPath();c.moveTo(-24,2);c.quadraticCurveTo(0,15,24,2);c.stroke();
+    c.beginPath();c.moveTo(dir*24,2);c.quadraticCurveTo(dir*31,0,dir*33,-6);c.lineWidth=5;c.stroke();
     c.restore();return;
   }
   if(st==='happy'){
-    c.strokeStyle=PAL.outline;c.lineWidth=6.8;
-    c.beginPath();c.moveTo(-23,11);c.quadraticCurveTo(0,-17,23,11);c.stroke();
+    c.strokeStyle=PAL.outline;c.lineWidth=7;
+    c.beginPath();c.moveTo(-23,11);c.quadraticCurveTo(0,-18,23,11);c.stroke();
     c.beginPath();c.moveTo(dir*23,11);c.quadraticCurveTo(dir*30,8,dir*32,2);c.lineWidth=5;c.stroke();
     c.restore();return;
   }
-  if(st==='x'){ // 죽음 ✕
-    c.strokeStyle=PAL.outline;c.lineWidth=7.2;c.lineCap='round';
+  if(st==='x'){
+    c.strokeStyle=PAL.outline;c.lineWidth=7.4;c.lineCap='round';
     c.beginPath();c.moveTo(-19,-19);c.lineTo(19,19);c.moveTo(19,-19);c.lineTo(-19,19);c.stroke();
     c.restore();return;
   }
-  if(st==='sad'){ // 패배 — 아래로 처진 눈
-    ell(c,0,4,25,26,0);c.fillStyle='#fff';c.fill();
+  if(st==='sad'){
+    ell(c,0,4,25,27,0);c.fillStyle='#fff';c.fill();
     c.save();c.clip();
     const g0=c.createLinearGradient(0,-22,0,30);
     g0.addColorStop(0,PAL.eyeD);g0.addColorStop(.5,PAL.eyeM);g0.addColorStop(1,PAL.eyeLt);
-    ell(c,0,8,22,24,0);c.fillStyle=g0;c.fill();
-    ell(c,0,10,9,11,0);c.fillStyle='#08243f';c.fill();
-    ell(c,-8,-2,7,7,0);c.fillStyle='rgba(255,255,255,.95)';c.fill();
-    c.fillStyle='rgba(6,32,58,.34)';c.fillRect(-28,-24,56,10);
+    ell(c,0,8,23,25,0);c.fillStyle=g0;c.fill();
+    ell(c,0,10,10,12,0);c.fillStyle='#08243f';c.fill();
+    ell(c,-8,-2,7.5,7.5,0);c.fillStyle='rgba(255,255,255,.96)';c.fill();
     c.restore();
-    c.strokeStyle=PAL.outline;c.lineWidth=6.4;
-    c.beginPath();c.moveTo(-25,-8);c.quadraticCurveTo(-20,-20,0,-20);
-    c.quadraticCurveTo(20,-20,25,-4);c.stroke();
+    c.strokeStyle=PAL.outline;c.lineWidth=6.6;
+    c.beginPath();c.moveTo(-25,-8);c.quadraticCurveTo(-20,-21,0,-21);
+    c.quadraticCurveTo(20,-21,25,-4);c.stroke();
     c.restore();return;
   }
   const half=st==='half';
-  const lidY=half?-8:-31;
-  // 흰자
-  path(c,[-27,-5,[-27,lidY-5,27,lidY-5,27,-5],[27,33,-27,33,-27,-5]]);
+  const topY=half?-14:-36;                 // 위 라인 (둥근 돔)
+  // 흰자: 세로로 큰 둥근 형태
+  path(c,[-27,-2,
+    [-27,topY,-13,topY-6,0,topY-6],
+    [13,topY-6,27,topY,27,-2],
+    [27,26,14,37,0,37],[-14,37,-27,26,-27,-2]]);
   c.closePath();c.fillStyle='#fff';c.fill();
   c.save();c.clip();
-  const g=c.createLinearGradient(0,-30,0,32);
-  g.addColorStop(0,PAL.eyeD);g.addColorStop(.52,PAL.eyeM);g.addColorStop(1,PAL.eyeLt);
-  ell(c,0,2,24,30,0);c.fillStyle=g;c.fill();
-  c.lineWidth=2.6;c.strokeStyle='#07304f';c.stroke();
-  ell(c,0,5,10.5,13.5,0);c.fillStyle='#07223a';c.fill();          // 동공
-  ell(c,0,23,15,8,0);c.fillStyle='rgba(200,246,255,.62)';c.fill(); // 아래 반사
-  c.fillStyle='rgba(6,38,70,.34)';c.fillRect(-30,lidY-5,60,8);     // 눈꺼풀 그림자
-  ell(c,-9,-10,9.6,9.6,0);c.fillStyle='#fff';c.fill();             // 큰 하이라이트
-  ell(c,10,8,4.6,4.6,0);c.fillStyle='rgba(255,255,255,.95)';c.fill();
-  spark4(c,13,-18,2.8);c.fillStyle='rgba(255,255,255,.9)';c.fill();
+  // 홍채: 눈을 거의 채우는 큰 원 (3톤, 위 어둡고 아래 밝음)
+  const g=c.createLinearGradient(0,topY-2,0,36);
+  g.addColorStop(0,PAL.eyeD);g.addColorStop(.48,PAL.eyeM);g.addColorStop(1,PAL.eyeLt);
+  ell(c,0,3,25,32,0);c.fillStyle=g;c.fill();
+  c.lineWidth=2.2;c.strokeStyle='#07304f';c.stroke();
+  // 동공 (크고 부드럽게)
+  const gp=c.createRadialGradient(0,4,2,0,4,15);
+  gp.addColorStop(0,'#041825');gp.addColorStop(1,'#0a3352');
+  ell(c,0,5,12.5,16,0);c.fillStyle=gp;c.fill();
+  // 아래 밝은 반사 크레센트
+  ell(c,0,26,16,8.5,0);c.fillStyle='rgba(210,250,255,.75)';c.fill();
+  // 위 눈꺼풀 그림자 (얇게만)
+  c.fillStyle='rgba(6,38,70,.22)';
+  c.beginPath();c.moveTo(-28,topY-8);c.quadraticCurveTo(0,topY+8,28,topY-8);
+  c.lineTo(28,topY-12);c.lineTo(-28,topY-12);c.closePath();c.fill();
+  // 하이라이트: 큰 원(좌상) + 중간(우중) + 미니 스파클
+  ell(c,-9,-13,11,11,0);c.fillStyle='#fff';c.fill();
+  ell(c,11,10,5.5,5.5,0);c.fillStyle='rgba(255,255,255,.98)';c.fill();
+  ell(c,-14,14,3.2,3.2,0);c.fillStyle='rgba(255,255,255,.75)';c.fill();
+  spark4(c,14,-22,3.2);c.fillStyle='rgba(255,255,255,.95)';c.fill();
   c.restore();
-  // 위 눈꺼풀 굵은 라인 + 속눈썹
-  c.strokeStyle=PAL.outline;c.lineWidth=7.4;
-  c.beginPath();c.moveTo(-27,-3);c.quadraticCurveTo(-24,lidY-4,0,lidY-4);
-  c.quadraticCurveTo(24,lidY-4,27,-3);c.stroke();
+  // 위 눈꺼풀: 굵은 돔 라인 + 속눈썹 3개
+  c.strokeStyle=PAL.outline;c.lineWidth=7.6;
+  c.beginPath();c.moveTo(-27,0);
+  c.quadraticCurveTo(-26,topY-5,0,topY-5);
+  c.quadraticCurveTo(26,topY-5,27,0);c.stroke();
   c.fillStyle=PAL.outline;
-  const ly=lidY-4;
-  path(c,[dir*24,ly+3,[dir*35,ly-9,dir*36,ly-2,dir*25,ly+7],[dir*24,ly+7,dir*24,ly+3]]);c.closePath();c.fill();
-  path(c,[dir*15,ly,[dir*23,ly-13,dir*25,ly-6,dir*16,ly+4],[dir*15,ly+4,dir*15,ly]]);c.closePath();c.fill();
-  path(c,[dir*5,ly-1,[dir*10,ly-12,dir*13,ly-7,dir*6,ly+3],[dir*5,ly+3,dir*5,ly-1]]);c.closePath();c.fill();
-  c.strokeStyle='rgba(74,35,56,.42)';c.lineWidth=2.8;
-  c.beginPath();c.moveTo(dir*26,9);c.quadraticCurveTo(dir*22,33,dir*-6,32);c.stroke();
+  const ly=topY-5;
+  path(c,[dir*24,ly+4,[dir*35,ly-8,dir*36,ly-1,dir*25,ly+8],[dir*24,ly+8,dir*24,ly+4]]);c.closePath();c.fill();
+  path(c,[dir*15,ly+1,[dir*23,ly-12,dir*25,ly-5,dir*16,ly+5],[dir*15,ly+5,dir*15,ly+1]]);c.closePath();c.fill();
+  path(c,[dir*5,ly,[dir*10,ly-11,dir*13,ly-6,dir*6,ly+4],[dir*5,ly+4,dir*5,ly]]);c.closePath();c.fill();
+  // 아래 라인: 얇고 연하게 바깥 2/3만
+  c.strokeStyle='rgba(74,35,56,.38)';c.lineWidth=2.6;
+  c.beginPath();c.moveTo(dir*26,14);c.quadraticCurveTo(dir*20,38,dir*-8,36);c.stroke();
   c.restore();
 }
 for(const[st,sf]of[['open',''],['half','_h'],['closed','_c'],['happy','_j'],['x','_x'],['sad','_s']]){
-  makePart('eyeN'+sf,-40,-46,40,46,3.4,c=>eyeBody(c,st,-1,1));    // near (화면 왼쪽)
-  makePart('eyeF'+sf,-28,-46,28,46,3.4,c=>eyeBody(c,st, 1,.56));  // far  (화면 오른쪽·강하게 압축)
+  makePart('eyeN'+sf,-40,-50,40,50,3.4,c=>eyeBody(c,st,-1,1));    // near (화면 왼쪽)
+  makePart('eyeF'+sf,-30,-50,30,50,3.4,c=>eyeBody(c,st, 1,.68));  // far  (화면 오른쪽·강하게 압축)
 }
 // ---- 2d. 눈썹 ----
 makePart('browN',-20,-9,20,9,4,c=>{
@@ -1061,11 +1075,11 @@ function drawRig(c,skin){
   c.save();
   c.transform(hm[0],hm[1],hm[2],hm[3],hm[4],hm[5]);
   const e=FACE.eye||'';
-  const dp=(nm,x,y)=>{const p=PARTS[nm];if(!p)return;
-    c.save();c.translate(x,y);c.scale(1/p.bs,1/p.bs);c.drawImage(p.cv,p.ox,p.oy);c.restore();};
-  dp('eyeN'+e,-26,-82); dp('eyeF'+e,48,-85);
+  const dp=(nm,x,y,sc2)=>{const p=PARTS[nm];if(!p)return;
+    c.save();c.translate(x,y);if(sc2)c.scale(sc2,sc2);c.scale(1/p.bs,1/p.bs);c.drawImage(p.cv,p.ox,p.oy);c.restore();};
+  dp('eyeN'+e,-26,-80,1.12); dp('eyeF'+e,48,-83,1.12);
   dp('browN',-22,-130+FACE.browY*7); dp('browF',50,-133+FACE.browY*6);
-  dp(FACE.mouth,52,-26);
+  dp(FACE.mouth,44,-33);
   if(FACE.blushX>0){
     c.globalAlpha=FACE.blushX;
     c.fillStyle='rgba(255,90,90,.55)';
