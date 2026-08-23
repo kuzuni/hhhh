@@ -93,11 +93,11 @@ window.addEventListener('unhandledrejection',e=>{errBox.textContent+='REJ: '+e.r
 
 // ==== 1. 팔레트 / 유틸 ======================================================
 const PAL={
-  outline:'#4a2338', outSoft:'#7a4055',
+  outline:'#231a20', outSoft:'#5a4550',
   skin:'#ffe6d2', skinSh:'#f3c3a2', skinLine:'#e8a988', blush:'rgba(245,130,120,.30)',
   hair:'#d6392b', hairSh:'#a5231d', hairDp:'#7c1512', hairHi:'#ef6448', hairRim:'#f79c7e', hairOr:'#e8823c', hairOrD:'#c65f24',
-  eyeD:'#274b70', eyeM:'#527fa8', eyeLt:'#9cbfd8',
-  band:'#3866cf', bandD:'#26489e', bandL:'#6a92e6',
+  eyeD:'#24457e', eyeM:'#3a6fc4', eyeLt:'#8fb8e8',
+  band:'#4478e0', bandD:'#2e55b0', bandL:'#78a2f0',
   scarf:'#e0343f', scarfD:'#a81d2c', scarfL:'#ff6a63',
   top:'#3f6ed4', topD:'#2c4da6', topSh:'#274490', topHi:'#6a92e8',
   short:'#3f66c6', shortD:'#2b4794', shortL:'#6e94e2',
@@ -372,12 +372,12 @@ function bakeBang(nm,P){
       [-8,-224,44,-214],
       [102,-198,114,-146,112,-102],
       [111,-88,106,-78],                       // 오른쪽 끝
-      [96,-80,90,-88],                         // 갈래4 오른변
-      [82,-102,72,-88],[64,-80,54,-82],        // 갈래4/3 사이 V
-      [40,-84,32,-92],[22,-104,12,-90],        // 갈래3/2 사이 V
-      [0,-80,-12,-82],[-24,-86,-32,-94],       // 갈래2
-      [-44,-104,-54,-90],[-64,-80,-74,-84],    // 갈래2/1 사이 V
-      [-86,-88,-92,-80],
+      [96,-72,90,-80],                         // 갈래4 오른변
+      [82,-94,72,-80],[64,-72,54,-74],        // 갈래4/3 사이 V
+      [40,-76,32,-84],[22,-96,12,-82],        // 갈래3/2 사이 V
+      [0,-72,-12,-74],[-24,-78,-32,-86],       // 갈래2
+      [-44,-96,-54,-82],[-64,-72,-74,-76],    // 갈래2/1 사이 V
+      [-86,-80,-92,-72],
       [-100,-70,-104,-60],[-108,-52,-108,-58]]);
     c.closePath();
     c.fillStyle=P.hair;c.fill();
@@ -405,27 +405,27 @@ makePart('ahoge',-30,-56,38,8,3,c=>{
 makePart('none',0,0,2,2,1,c=>{});
 // ---- 2i. 사이드 트윈테일 (near = 화면 왼쪽 크게 / far = 오른쪽 작게) ----
 function bakeTail1(nm,dir,P,sc){
-  makePart(nm,-40*sc-8,-20,40*sc+8,118*sc,2.6,c=>{
+  makePart(nm,-40*sc-8,-20,40*sc+8,190*sc,2.6,c=>{
     c.scale(sc,sc);
-    // 곧게 흘러내리는 사이드록 (레퍼런스: 어깨 앞으로, 끝이 주황)
-    const g=c.createLinearGradient(0,0,0,110);
-    g.addColorStop(0,P.hair);g.addColorStop(.55,P.hair);g.addColorStop(1,P.hairOr||P.hairHi);
-    path(c,[dir*-22,4,
-      [dir*-30,36,dir*-27,72,dir*-21,100],[dir*-16,112,dir*-6,106],
-      [dir*-2,100,dir*3,106],[dir*10,112,dir*13,100],
-      [dir*20,68,dir*17,32,dir*10,2],[dir*-6,-8,dir*-22,4]]);
+    // 매끈한 한 갈래 사이드록 (위 빨강 → 아래 주황, 끝 뾰족)
+    const g=c.createLinearGradient(0,0,0,182);
+    g.addColorStop(0,P.hair);g.addColorStop(.45,P.hair);g.addColorStop(.75,P.hairOr||P.hairHi);g.addColorStop(1,P.hairOrD||P.hairHi);
+    path(c,[dir*-20,2,
+      [dir*-30,44,dir*-26,92,dir*-20,128],[dir*-16,158,dir*-8,176],
+      [dir*-4,184,dir*1,176],[dir*10,152,dir*13,120],
+      [dir*18,76,dir*12,30,dir*8,0],[dir*-6,-10,dir*-20,2]]);
     c.closePath();
     c.fillStyle=g;c.fill();
     c.lineWidth=OLW/sc;c.strokeStyle=P.outline;c.stroke();
     c.save();
-    path(c,[dir*-22,4,[dir*-30,36,dir*-27,72,dir*-21,100],[dir*-16,112,dir*-6,106],
-      [dir*-2,100,dir*3,106],[dir*10,112,dir*13,100],
-      [dir*20,68,dir*17,32,dir*10,2],[dir*-6,-8,dir*-22,4]]);
+    path(c,[dir*-20,2,[dir*-30,44,dir*-26,92,dir*-20,128],[dir*-16,158,dir*-8,176],
+      [dir*-4,184,dir*1,176],[dir*10,152,dir*13,120],
+      [dir*18,76,dir*12,30,dir*8,0],[dir*-6,-10,dir*-20,2]]);
     c.closePath();c.clip();
-    c.strokeStyle='rgba(124,21,18,.4)';c.lineWidth=2.6/sc;
-    c.beginPath();c.moveTo(dir*-14,16);c.quadraticCurveTo(dir*-18,58,dir*-13,96);c.stroke();
-    c.strokeStyle=(P.hairOrD?'rgba(198,95,36,.55)':'rgba(198,95,36,.55)');c.lineWidth=2.4/sc;
-    c.beginPath();c.moveTo(dir*6,52);c.quadraticCurveTo(dir*9,80,dir*4,102);c.stroke();
+    c.strokeStyle='rgba(124,21,18,.35)';c.lineWidth=2.6/sc;
+    c.beginPath();c.moveTo(dir*-12,20);c.quadraticCurveTo(dir*-18,90,dir*-10,160);c.stroke();
+    c.strokeStyle='rgba(255,190,140,.4)';c.lineWidth=2.4/sc;
+    c.beginPath();c.moveTo(dir*6,40);c.quadraticCurveTo(dir*10,100,dir*3,150);c.stroke();
     c.restore();
   });
 }
@@ -496,11 +496,11 @@ function bakeArmL(nm,P,sc){
     c.save();mk();c.closePath();c.clip();
     c.fillStyle='rgba(232,150,116,.32)';ell(c,-13,22,10,32,0);c.fill();
     c.fillStyle='rgba(255,255,255,.24)';ell(c,7,18,5.5,24,0);c.fill();
-    // 흰 붕대 랩 (전완 하단 — 레퍼런스)
+    // 흰 붕대 랩 (팔꿈치 아래부터 손목까지 — 레퍼런스)
     c.fillStyle='#f4efe4';
-    c.fillRect(-16,26,32,20);
+    c.fillRect(-17,12,34,34);
     c.strokeStyle='rgba(120,105,90,.5)';c.lineWidth=1.8/sc;
-    for(let y=29;y<46;y+=5){c.beginPath();c.moveTo(-13,y);c.lineTo(13,y+2);c.stroke();}
+    for(let y=15;y<45;y+=6){c.beginPath();c.moveTo(-14,y);c.lineTo(14,y+2);c.stroke();}
     c.restore();
     strokeBelow(c,-3,()=>{mk();c.closePath();},OLW*.88/sc,P.outline);
 
@@ -638,11 +638,13 @@ bakeLegL('p_legL',PAL,1);bakeLegL('p_legL_f',FPAL,.92);
 // ---- 반다나 (3/4: 해골 문양이 +x 앞면, 매듭은 뒤통수 -x) ----
 makePart('p_band',-150,-236,128,-84,2.2,c=>{
   // 뒤 매듭 + 나부끼는 리본 꼬리 2가닥 (길게)
-  path(c,[-108,-140,[-146,-128,-152,-96],[-148,-78,-136,-88],[-122,-100,-110,-118],[-104,-132,-108,-140]]);
+  // 나비 리본 매듭 (크게 — 레퍼런스)
+  path(c,[-104,-136,[-152,-116,-158,-84],[-152,-64,-138,-78],[-120,-96,-106,-116],[-100,-130,-104,-136]]);
   c.closePath();c.fillStyle=PAL.bandD;c.fill();c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
-  path(c,[-110,-150,[-150,-168,-146,-196],[-136,-210,-124,-194],[-114,-178,-104,-162],[-100,-152,-110,-150]]);
+  path(c,[-106,-150,[-158,-172,-152,-206],[-140,-224,-126,-202],[-114,-182,-102,-162],[-96,-150,-106,-150]]);
   c.closePath();c.fillStyle=PAL.band;c.fill();c.stroke();
-  ell(c,-102,-146,20,18,.3);c.fillStyle=PAL.bandL;c.fill();c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
+  ell(c,-100,-144,24,21,.3);c.fillStyle=PAL.bandL;c.fill();c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
+  c.fillStyle='rgba(0,0,0,.15)';ell(c,-100,-140,13,11,.3);c.fill();
   // 본체 돔 — 깊게: 이마 라인이 눈썹 근처(-118)까지, 옆자락이 볼(-92)까지
   path(c,[-108,-128,
     [-114,-192,-58,-232,8,-232],
@@ -698,64 +700,48 @@ makePart('p_band',-150,-236,128,-84,2.2,c=>{
   c.restore();
 });
 // ---- 빨간 스카프 (목 뒤 → 화면 왼쪽 뒤로 나부낌, 2세그) ----
-makePart('p_scarf1',-110,-26,42,90,2.6,c=>{
-  // 목을 감는 칼라 (3/4: 앞쪽 +x이 살짝 넓게)
+makePart('p_scarf1',-118,-26,40,96,2.6,c=>{
+  // 목 칼라
   path(c,[-28,-14,[0,-4,30,-12],[34,0,30,12],[0,24,-28,14],[-32,0,-28,-14]]);
   c.closePath();c.fillStyle=PAL.scarf;c.fill();
   c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
   c.fillStyle='rgba(0,0,0,.14)';
   path(c,[-28,-14,[-6,-6,-2,-4],[-4,16,-28,14],[-32,0,-28,-14]]);c.closePath();c.fill();
-  c.strokeStyle=PAL.scarfL;c.lineWidth=3;
-  c.beginPath();c.moveTo(6,-8);c.quadraticCurveTo(22,-2,26,6);c.stroke();
-  // 뒤로 흐르는 자락 1 (좁고 부드럽게)
-  path(c,[-14,-6,
-    [-46,2,-76,18],[-100,32,-98,50],
-    [-94,64,-78,58],[-66,52,-60,64],
-    [-46,80,-34,60],[-20,36,-2,14],[6,2,-14,-6]]);
-  c.closePath();c.fillStyle=PAL.scarf;c.fill();
+  // 좌하단으로 뻗는 단일 테이퍼 꼬리 (끝폭 = 시작폭의 25%)
+  const g=c.createLinearGradient(0,0,-104,84);
+  g.addColorStop(0,PAL.scarf);g.addColorStop(1,'#b02020');
+  path(c,[-16,-4,
+    [-48,18,-76,44],[-100,66,-110,84],
+    [-104,88,-98,84],[-72,62,-44,40],[-14,18,-2,8],[2,0,-16,-4]]);
+  c.closePath();c.fillStyle=g;c.fill();
   c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
-  c.fillStyle='rgba(0,0,0,.18)';
-  path(c,[-14,-6,[-46,2,-76,18],[-100,32,-98,50],[-92,58,-80,54],[-44,26,-10,4],[0,-4,-14,-6]]);
-  c.closePath();c.fill();
-  c.strokeStyle=PAL.scarfL;c.lineWidth=3.2;
-  c.beginPath();c.moveTo(-20,6);c.quadraticCurveTo(-56,20,-86,44);c.stroke();
-  c.strokeStyle=PAL.scarfL;c.lineWidth=3;
-  c.beginPath();c.moveTo(-24,12);c.quadraticCurveTo(-48,26,-72,48);c.stroke();
+  c.strokeStyle='rgba(255,120,110,.5)';c.lineWidth=2.8;
+  c.beginPath();c.moveTo(-20,6);c.quadraticCurveTo(-56,28,-92,68);c.stroke();
 });
-makePart('p_scarf2',-90,-20,16,54,2.6,c=>{
-  path(c,[0,-10,[-30,-2,-56,10],[-76,22,-78,36],[-70,46,-54,38],[-50,32,-46,42],[-34,50,-24,34],[-8,12,4,2],[8,-8,0,-10]]);
-  c.closePath();c.fillStyle=PAL.scarfD;c.fill();
-  c.lineWidth=3.6;c.strokeStyle=PAL.outline;c.stroke();
-  c.strokeStyle=PAL.scarf;c.lineWidth=2.6;
-  c.beginPath();c.moveTo(-7,7);c.quadraticCurveTo(-27,18,-48,32);c.stroke();
-});
+makePart('p_scarf2',-6,-6,6,6,1,c=>{});   // 꼬리를 1세그로 통합 (2세그는 빈 파트)
 // ---- 거대 커틀러스 (식칼형 대검 · 피벗=그립, 칼날 -y) ----
-makePart('p_sword',-84,-346,74,72,1.7,c=>{
-  // 넓고 평평한 식칼 + 긴 자루 (손이 츠바에서 떨어진 위치를 쥠)
+makePart('p_sword',-84,-352,74,72,1.7,c=>{
+  // 무광 오프화이트 평면 블레이드, 끝이 지느러미처럼 우상향 곡선 (레퍼런스)
   path(c,[-34,-48,
-    [-40,-136,-42,-218,-40,-282],       // 등 (직선)
-    [-38,-302,-26,-314],                // 각진 어깨
-    [40,-268,46,-248],                  // 사선 컷
-    [52,-180,54,-126],[55,-80,46,-46],[4,-39,-34,-48]]);
+    [-40,-136,-42,-218,-40,-278],
+    [-36,-308,-22,-322],                 // 등 상단
+    [2,-306,20,-276],                    // 지느러미 곡선 컷 (우상향 뾰족)
+    [40,-232,46,-200],
+    [52,-160,54,-120],[55,-80,46,-46],[4,-39,-34,-48]]);
   c.closePath();
-  const g=c.createLinearGradient(-42,0,56,0);
-  g.addColorStop(0,PAL.steelD);g.addColorStop(.33,PAL.steel);g.addColorStop(.72,PAL.steelL);g.addColorStop(1,PAL.steelD);
-  c.fillStyle=g;c.fill();
-  c.lineWidth=OLW*1.2;c.strokeStyle=PAL.outline;c.stroke();
-  c.strokeStyle=PAL.steelE;c.lineWidth=4;
-  c.beginPath();c.moveTo(-35,-88);c.lineTo(-37,-288);c.stroke();
-  c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=8;
-  c.beginPath();c.moveTo(12,-134);c.lineTo(18,-252);c.stroke();
-  c.strokeStyle='rgba(255,255,255,.45)';c.lineWidth=4;
-  c.beginPath();c.moveTo(-8,-278);c.lineTo(-16,-298);c.stroke();
-  ell(c,-8,-280,11,13,0);c.fillStyle='rgba(58,70,84,.92)';c.fill();
-  c.lineWidth=3.2;c.strokeStyle=PAL.steelE;c.stroke();
-  c.fillStyle=PAL.steelD;ell(c,-4,-96,5,5,0);c.fill();ell(c,2,-180,5,5,0);c.fill();
+  c.fillStyle='#eae6dd';c.fill();                                 // 무광 단색
+  c.lineWidth=OLW*1.15;c.strokeStyle=PAL.outline;c.stroke();
+  c.fillStyle='rgba(150,142,128,.30)';                            // 등쪽 셰이드 한 톤
+  path(c,[-34,-48,[-40,-136,-42,-218,-40,-278],[-36,-308,-22,-322],
+    [-16,-300,-20,-270],[-24,-180,-22,-90],[-20,-56,-16,-48],[-26,-46,-34,-48]]);
+  c.closePath();c.fill();
+  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=4;            // 은은한 날 하이라이트
+  c.beginPath();c.moveTo(30,-100);c.lineTo(36,-200);c.stroke();
   // 가드 (금장)
   path(c,[-42,-48,[0,-60,42,-48],[49,-38,42,-29],[0,-40,-42,-29],[-49,-38,-42,-48]]);
   c.closePath();c.fillStyle=PAL.buckle;c.fill();
   c.lineWidth=4;c.strokeStyle=PAL.outline;c.stroke();
-  // 긴 자루 — 피벗(0,0)=손 위치(츠바에서 1/3 아래), 하단은 짧게
+  // 자루
   path(c,[-10,-32,[-12,4,-10,32],[0,40,10,32],[12,4,10,-32],[0,-37,-10,-32]]);
   c.closePath();c.fillStyle=PAL.belt;c.fill();c.stroke();
   c.strokeStyle='rgba(58,32,12,.85)';c.lineWidth=2.8;
@@ -931,7 +917,7 @@ makePart('m_staff',-56,-252,56,58,2,c=>{
 // ==== 3. 리그 (3/4 씬그래프) ================================================
 // FAR(화면 오른쪽) 파츠는 0.9배로 구워 원근 축소 → 자식 오프셋도 같은 비율.
 const NODES=[],NMAP={};
-const GY0=162;                       // 지면 y (root 기준)
+const GY0=152;                       // 지면 y (root 기준)
 function node(name,parent,x,y,z,slot){
   const n={name,parent:parent?NMAP[parent]:null,x,y,z,z0:z,slot:slot||null,
     k:1,rot:0,px:0,py:0,sx:1,sy:1,m:null};
@@ -949,7 +935,9 @@ NMAP.hairBack.k=1.14;
 node('tailF1','head',84,-38,8,'tailF1');
 node('tailF2','tailF1',3,80,11,'tailF2');
 node('earF','head',103,-64,199,'earF');
+NMAP.earF.k=1.4;
 node('earN','head',-99,-68,205,'earN');
+NMAP.earN.k=1.45;
 node('faceParts','head',0,0,210);
 node('hairFront','head',0,0,220,'hairFront');
 node('headgear','head',0,0,230,'headgear');
@@ -957,10 +945,10 @@ node('ahoge','head',10,-204,236,'ahoge');
 node('tailN1','head',-76,-34,252,'tailN1');  // 뺨 옆 앞쪽
 node('tailN2','tailN1',-4,102,249,'tailN2');
 node('legU_F','root',29,-2,55,'legU2');
-NMAP.legU_F.k=1.30;
+NMAP.legU_F.k=1.20;
 node('legL_F','legU_F',0,46,53,'legL2');
 node('legU_N','root',-26,8,44,'legU');   // 반바지(torso) 뒤
-NMAP.legU_N.k=1.36;
+NMAP.legU_N.k=1.26;
 node('legL_N','legU_N',0,50,42,'legL');
 node('armU_N','torso',-47,-104,244,'armU');  // 사이드록(250) 뒤·몸통 앞
 NMAP.armU_N.k=1.0;       // NEAR = 맨손 (앞·밝게·낮게)
@@ -975,13 +963,13 @@ node('handF','armL_F',0,38,210,'hand2');   // 자루 위 주먹    // 그립을 
 const SKINS={
   pirate:{torso:'p_torso',skull:'head',hairBack:'hairBack',hairFront:'hairFront',
     headgear:'p_band',ahoge:'none',earN:'earN',earF:'earF',
-    tailN1:'tailN1',tailN2:'tailN2',tailF1:'tailF1',tailF2:'tailF2',
+    tailN1:'tailN1',tailN2:'none',tailF1:'tailF1',tailF2:'none',
     back1:'p_scarf1',back2:'p_scarf2',cape:'none',
     armU:'armU',armL:'armL',hand:'handN',armU2:'armU_f',armL2:'armL_f',hand2:'fistF',
     legU:'p_legU',legL:'p_legL',legU2:'p_legU',legL2:'p_legL',weapon:'p_sword',wRot:0},
   mage:{torso:'m_torso',skull:'head',hairBack:'hairBack',hairFront:'hairFront',
     headgear:'m_hat',ahoge:'none',earN:'earN',earF:'earF',
-    tailN1:'tailN1',tailN2:'tailN2',tailF1:'tailF1',tailF2:'tailF2',
+    tailN1:'tailN1',tailN2:'none',tailF1:'tailF1',tailF2:'none',
     back1:'none',back2:'none',cape:'m_cape1',
     armU:'m_armU',armL:'m_armL',hand:'handN',armU2:'m_armU_f',armL2:'m_armL_f',hand2:'fistF',
     legU:'m_legU',legL:'m_legL',legU2:'m_legU',legL2:'m_legL',weapon:'m_staff',wRot:0.52}
@@ -1032,7 +1020,7 @@ function drawRig(c,skin){
   const e=FACE.eye||'';
   const dp=(nm,x,y,sc2)=>{const p=PARTS[nm];if(!p)return;
     c.save();c.translate(x,y);if(sc2)c.scale(sc2,sc2);c.scale(1/p.bs,1/p.bs);c.drawImage(p.cv,p.ox,p.oy);c.restore();};
-  dp('eyeN'+e,-10,-60); dp('eyeF'+e,60,-62);
+  dp('eyeN'+e,-18,-58,1.15); dp('eyeF'+e,64,-60,1.15);
   if(FACE.browY<0){dp('browN',-14,-96+FACE.browY*5); dp('browF',56,-99+FACE.browY*5);}
   dp(FACE.mouth,26,-20);
   if(FACE.blushX>0){
@@ -1079,8 +1067,8 @@ function resetPose(){
 // 쉬는 자세 (3/4 기본): NEAR 맨팔은 옆에, FAR 팔은 대검 그립
 function restArms(){
   N.armU_N.rot=0.22;N.armL_N.rot=0.26;      // 화면 왼쪽 앞 팔 (몸 바깥으로 자연스럽게)
-  N.armU_F.rot=0.10;N.armL_F.rot=-2.45;    // 무기 팔 — 팔꿈치 깊게 접어 그립이 어깨 위
-  N.weapon.rot=2.59;                        // 칼날 월드각 -0.85 = 왼쪽 위 대각 (머리 뒤로 통과)
+  N.armU_F.rot=-0.16;N.armL_F.rot=-2.14;    // 무기 팔 — 팔꿈치 깊게 접어 그립이 어깨 위
+  N.weapon.rot=2.64;                        // 칼날 월드각 -0.85 = 왼쪽 위 대각 (머리 뒤로 통과)
 }
 // 2차 모션: 테일/귀/스카프/케이프가 몸을 지연 추종
 function secondary(t,sp,amp,ph){
@@ -1137,8 +1125,8 @@ ANIMS.walk={dur:.92,fn(t,r){
   restArms();
   N.armU_N.rot=.16+Math.sin(c2)*.45;          // 맨팔 자연 스윙
   N.armL_N.rot=.30+Math.max(0,Math.sin(c2+.6))*.35;
-  N.armU_F.rot=.10-Math.sin(c2)*.12;          // 무기팔은 어깨에 얹은 채 살짝
-  N.weapon.rot=2.59+Math.sin(c2)*.06;
+  N.armU_F.rot=-.16-Math.sin(c2)*.12;          // 무기팔은 어깨에 얹은 채 살짝
+  N.weapon.rot=2.64+Math.sin(c2)*.06;
   secondary(t,1,1.9,.4);
   N.scarf1.rot+=.20+Math.sin(c2-1.0)*.16;      // 스카프가 뒤로 나부낌
   N.scarf2.rot+=.26+Math.sin(c2-1.5)*.20;
@@ -1161,9 +1149,9 @@ ANIMS.run={dur:.58,fn(t,r){
   restArms();
   N.armU_N.rot=.10+Math.sin(c2)*1.0;
   N.armL_N.rot=.9+Math.max(0,Math.sin(c2+.5))*.5;
-  N.armU_F.rot=.14-Math.sin(c2)*.22;
-  N.armL_F.rot=-2.53;
-  N.weapon.rot=2.65+Math.sin(c2)*.09;
+  N.armU_F.rot=-.12-Math.sin(c2)*.22;
+  N.armL_F.rot=-2.22;
+  N.weapon.rot=2.70+Math.sin(c2)*.09;
   secondary(t,1,2.4,.3);
   N.tailN1.rot+=.42+Math.sin(c2-1.2)*.18;      // 속도감: 테일이 뒤로 흩날림
   N.tailN2.rot+=.48+Math.sin(c2-1.7)*.22;
@@ -1191,8 +1179,8 @@ ANIMS.slashH={dur:1.15,fn(t,r){        // ① 가로 베기 — 허리 회전 �
   r.sy=1-wind*.05-imp*.09;r.sx=1+wind*.04+imp*.07;
   N.torso.rot=kf(t,[[0,0],[.20,.30],[.29,.32],[.38,-.34],[.55,-.28],[.9,0],[1,0]]);
   N.head.rot=kf(t,[[0,0],[.20,-.14],[.38,.17],[.55,.12],[.9,0]]);
-  N.armU_F.rot=kf(t,[[0,.10],[.20,1.15],[.29,1.2],[.37,-.62],[.52,-.72],[.72,-.1],[.9,.10],[1,.10]]);
-  N.armL_F.rot=kf(t,[[0,-2.45],[.20,-1.5],[.29,-1.48],[.37,-.55],[.55,-.62],[.9,-2.45]]);
+  N.armU_F.rot=kf(t,[[0,-.16],[.20,1.15],[.29,1.2],[.37,-.62],[.52,-.72],[.72,-.1],[.9,-.16],[1,-.16]]);
+  N.armL_F.rot=kf(t,[[0,-2.14],[.20,-1.5],[.29,-1.48],[.37,-.55],[.55,-.62],[.9,-2.14]]);
   aimBlade(kf(t,[[0,.24],[.20,-1.35],[.29,-1.4],[.37,2.15],[.55,2.3],[.72,1.2],[.9,.24],[1,.24]]));
   N.armU_N.rot=.16-wind*.75+imp*.5;N.armL_N.rot=.30+wind*.5;
   brace(wind*.9+imp*.7);
@@ -1212,8 +1200,8 @@ ANIMS.slashDown={dur:1.3,fn(t,r){      // ② 내려 베기 — 머리 위로 �
   r.sy=1+wind*.08-imp*.14;r.sx=1-wind*.05+imp*.11;
   N.torso.rot=kf(t,[[0,0],[.24,.20],[.32,.22],[.40,-.40],[.60,-.34],[.9,0]]);
   N.head.rot=kf(t,[[0,0],[.24,-.14],[.40,.20],[.60,.14],[.9,0]]);
-  N.armU_F.rot=kf(t,[[0,.10],[.24,1.62],[.32,1.66],[.39,-.30],[.58,-.34],[.9,.10],[1,.10]]);
-  N.armL_F.rot=kf(t,[[0,-2.45],[.24,-1.05],[.32,-1.0],[.39,-.45],[.58,-.5],[.9,-2.45]]);
+  N.armU_F.rot=kf(t,[[0,-.16],[.24,1.62],[.32,1.66],[.39,-.30],[.58,-.34],[.9,-.16],[1,-.16]]);
+  N.armL_F.rot=kf(t,[[0,-2.14],[.24,-1.05],[.32,-1.0],[.39,-.45],[.58,-.5],[.9,-2.14]]);
   aimBlade(kf(t,[[0,.24],[.24,-.18],[.32,-.12],[.39,2.42],[.58,2.46],[.9,.24],[1,.24]]));
   N.armU_N.rot=.16-wind*1.05+imp*.4;N.armL_N.rot=.30+wind*.85;
   brace(wind*.6+imp*1.1);
@@ -1235,8 +1223,8 @@ ANIMS.slashUp={dur:1.2,fn(t,r){        // ③ 올려 베기 — 아래에서 퍼
   r.sx=1+wind*.08-lift*.06+land*.12;
   N.torso.rot=kf(t,[[0,0],[.20,-.28],[.28,-.30],[.36,.32],[.5,.28],[.85,0]]);
   N.head.rot=kf(t,[[0,0],[.20,.12],[.36,-.16],[.5,-.12],[.85,0]]);
-  N.armU_F.rot=kf(t,[[0,.10],[.20,-.55],[.28,-.6],[.35,1.72],[.5,1.78],[.88,.10],[1,.10]]);
-  N.armL_F.rot=kf(t,[[0,-2.45],[.20,-.9],[.28,-.85],[.35,-1.3],[.5,-1.35],[.88,-2.45]]);
+  N.armU_F.rot=kf(t,[[0,-.16],[.20,-.55],[.28,-.6],[.35,1.72],[.5,1.78],[.88,-.16],[1,-.16]]);
+  N.armL_F.rot=kf(t,[[0,-2.14],[.20,-.9],[.28,-.85],[.35,-1.3],[.5,-1.35],[.88,-2.14]]);
   aimBlade(kf(t,[[0,.24],[.20,2.35],[.28,2.42],[.35,-.62],[.5,-.7],[.88,.24],[1,.24]]));
   N.armU_N.rot=.16+wind*.4-lift*1.5;N.armL_N.rot=.30+wind*.35;
   if(lift>.15){
@@ -1263,8 +1251,8 @@ ANIMS.slashSpin={dur:1.6,fn(t,r){      // ④ 회전 베기 — 제자리 스핀
   N.torso.rot=-wind*.2+Math.sin(spin*Math.PI)*.13;
   N.head.rot=-wind*.1+Math.sin(t*TAU*4.5)*diz*.16;
   const ext=kf(t,[[.14,0],[.24,1],[.56,1],[.68,0]]);
-  N.armU_F.rot=lerp(.10,-1.0,ext);
-  N.armL_F.rot=lerp(-2.45,-.35,ext);
+  N.armU_F.rot=lerp(-.16,-1.0,ext);
+  N.armL_F.rot=lerp(-2.14,-.35,ext);
   aimBlade(lerp(.24,1.62,ext));
   N.armU_N.rot=.16+ext*.9;N.armL_N.rot=.30+ext*.5;
   brace(.45+diz*.5);
@@ -1290,8 +1278,8 @@ ANIMS.victory={dur:1.7,fn(t,r){        // 승리 — 검 번쩍 들고 방방
   r.rot=Math.sin(t*TAU*1.5)*.03;
   N.torso.rot=-.06+Math.sin(t*TAU*1.5)*.05;
   N.head.rot=.06+Math.sin(t*TAU*1.5+.8)*.07;
-  N.armU_F.rot=lerp(.10,-2.15,raise)+air*.1;    // 검을 하늘로 (프레임 안)
-  N.armL_F.rot=lerp(-2.45,-.92,raise);
+  N.armU_F.rot=lerp(-.16,-2.15,raise)+air*.1;    // 검을 하늘로 (프레임 안)
+  N.armL_F.rot=lerp(-2.14,-.92,raise);
   aimBlade(lerp(.24,.16,raise));
   N.armU_N.rot=lerp(.16,2.35,raise)-air*.28;    // 반대 팔도 만세
   N.armL_N.rot=lerp(.30,.42,raise);
@@ -1315,8 +1303,8 @@ ANIMS.buff={dur:2.2,fn(t,r){           // 버프 — 웅크림 → 기 모으기
   N.head.rot=-crouch*.10+hold*.14;
   N.head.py=-hold*3;
   // 검을 앞으로 세워 들고 기를 모음
-  N.armU_F.rot=lerp(.10,-1.28,charge*.7+hold*.3);
-  N.armL_F.rot=lerp(-2.45,-1.28,charge*.6+hold*.4);
+  N.armU_F.rot=lerp(-.16,-1.28,charge*.7+hold*.3);
+  N.armL_F.rot=lerp(-2.14,-1.28,charge*.6+hold*.4);
   aimBlade(lerp(.24,.62,charge*.45+hold*.55)+shake*.03);
   N.armU_N.rot=lerp(.16,-.72,charge*.6+hold*.4);
   N.armL_N.rot=lerp(.30,-1.15,charge*.6+hold*.4);
@@ -1339,8 +1327,8 @@ ANIMS.death={dur:2.6,fn(t,r){          // 죽기 — 피격 경직 → 뒤로 �
   N.torso.rot=stag*.24-fall*.22;
   N.head.rot=-stag*.20-fall*.30;
   N.head.py=fall*4;
-  N.armU_F.rot=lerp(.10,1.62,fall)+hit*.4;      // 검을 놓친 듯 늘어뜨림
-  N.armL_F.rot=lerp(-2.45,-.28,fall);
+  N.armU_F.rot=lerp(-.16,1.62,fall)+hit*.4;      // 검을 놓친 듯 늘어뜨림
+  N.armL_F.rot=lerp(-2.14,-.28,fall);
   aimBlade(lerp(.24,-.15,fall));
   N.armU_N.rot=lerp(.16,-1.42,fall)-hit*.5;
   N.armL_N.rot=lerp(.30,-.35,fall);
@@ -1370,8 +1358,8 @@ ANIMS.defeat={dur:3.2,fn(t,r){         // 패배 — 한쪽 무릎 꿇고 고개
   N.legU_N.rot=-drop*.05;N.legL_N.rot=drop*1.60;   // 앞무릎이 지면, 정강이는 뒤로 눕음
   N.legU_F.rot=-drop*.92;N.legL_F.rot=drop*1.82;   // 뒷다리는 무릎 세워 버팀
   // 검: 손에서 힘이 빠져 칼끝이 뒤 지면에 끌림
-  N.armU_F.rot=lerp(.10,.24,drop);           // 어깨에서 힘없이 처짐
-  N.armL_F.rot=lerp(-2.45,-2.34,drop);
+  N.armU_F.rot=lerp(-.16,.24,drop);           // 어깨에서 힘없이 처짐
+  N.armL_F.rot=lerp(-2.14,-2.34,drop);
   aimBlade(lerp(.24,-1.62,drop));  // 검이 낮게 처짐 (다리 실루엣은 확보)
   N.armU_N.rot=lerp(.16,.92,drop);N.armL_N.rot=lerp(.30,.30,drop);
   N.tailN1.rot=-.05+drop*.55+breathe*.05;N.tailN2.rot=drop*.46;
