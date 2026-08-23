@@ -937,10 +937,10 @@ node('legL_F','legU_F',0,46,18,'legL2');
 node('legU_N','root',-26,8,50,'legU');   // 반바지(torso) 뒤
 NMAP.legU_N.k=1.14;
 node('legL_N','legU_N',0,50,48,'legL');
-node('armU_N','torso',-43,-104,308,'armU');
+node('armU_N','torso',-43,-104,244,'armU');  // 사이드록(250) 뒤·몸통 앞
 NMAP.armU_N.k=1.0;       // NEAR = 맨손 (앞·밝게·낮게)
-node('armL_N','armU_N',0,48,304,'armL');
-node('handN','armL_N',0,42,300,'hand');
+node('armL_N','armU_N',0,48,240,'armL');
+node('handN','armL_N',0,42,236,'hand');
 node('armU_F','torso',36,-104,30,'armU2');   // 몸통 뒤
 NMAP.armU_F.k=1.0;      // FAR = 무기 팔 (몸통 앞·머리 뒤·어둡게)
 node('armL_F','armU_F',0,43,46,'armL2');     // 몸통 뒤 (오른쪽으로 삐져나온 부분만 보임)
