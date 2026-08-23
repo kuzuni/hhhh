@@ -94,7 +94,7 @@ window.addEventListener('unhandledrejection',e=>{errBox.textContent+='REJ: '+e.r
 // ==== 1. 팔레트 / 유틸 ======================================================
 const PAL={
   outline:'#231a20', outSoft:'#5a4550',
-  skin:'#ffe6d2', skinSh:'#f3c3a2', skinLine:'#e8a988', blush:'rgba(245,130,120,.30)',
+  skin:'#ffe6d2', skinSh:'#f3c3a2', skinLine:'#e8a988', blush:'rgba(242,160,150,.55)',
   hair:'#d6392b', hairSh:'#a5231d', hairDp:'#7c1512', hairHi:'#ef6448', hairRim:'#f79c7e', hairOr:'#e8823c', hairOrD:'#c65f24',
   eyeD:'#24457e', eyeM:'#3a6fc4', eyeLt:'#8fb8e8',
   band:'#4478e0', bandD:'#2e55b0', bandL:'#78a2f0',
@@ -200,11 +200,10 @@ function bakeHead(nm,P){
     c.fillStyle='rgba(255,255,255,.16)';
     ell(c,44,-118,34,16,-.22);c.fill();
     c.restore();
-    // 블러시: near 볼에 아주 작게 (레퍼런스는 매우 절제)
+    // 블러시: 연분홍 타원 (양 볼)
     c.fillStyle=P.blush;
-    ell(c,-30,-34,12,6.5,.05);c.fill();
-    c.strokeStyle='rgba(230,110,96,.35)';c.lineWidth=1.5;
-    for(let i=-1;i<=1;i++){c.beginPath();c.moveTo(-30+i*5-3,-38);c.lineTo(-30+i*5+3,-30);c.stroke();}
+    ell(c,-30,-32,14,8,.05);c.fill();
+    ell(c,80,-36,11,6.5,-.12);c.fill();
   });
 }
 bakeHead('head',PAL);bakeHead('head_f',FPAL);
@@ -365,31 +364,30 @@ makePart('hairBack',-150,-224,116,58,2.2,c=>{
 });
 // ---- 2g. 앞머리 (3/4 — 가르마가 +x로, 가닥 6개 뭉툭) ----
 function bakeBang(nm,P){
-  makePart(nm,-124,-220,128,10,2.2,c=>{
-    // 굵은 4갈래 블런트 컷 (레퍼런스)
+  makePart(nm,-124,-220,128,16,2.2,c=>{
+    // 끝이 아래로 뾰족한 지그재그 스파이크 4갈래 (레퍼런스)
     path(c,[-108,-58,
       [-118,-128,-116,-176,-58,-206],
       [-8,-224,44,-214],
       [102,-198,114,-146,112,-102],
-      [111,-88,106,-78],                       // 오른쪽 끝
-      [96,-72,90,-80],                         // 갈래4 오른변
-      [82,-94,72,-80],[64,-72,54,-74],        // 갈래4/3 사이 V
-      [40,-76,32,-84],[22,-96,12,-82],        // 갈래3/2 사이 V
-      [0,-72,-12,-74],[-24,-78,-32,-86],       // 갈래2
-      [-44,-96,-54,-82],[-64,-72,-74,-76],    // 갈래2/1 사이 V
-      [-86,-80,-92,-72],
-      [-100,-70,-104,-60],[-108,-52,-108,-58]]);
+      [111,-88,106,-76],
+      [98,-88,92,-64],                         // 스파이크4 (뾰족 ↓)
+      [88,-88,78,-92],
+      [66,-88,58,-58],                         // 스파이크3
+      [52,-88,40,-94],
+      [26,-88,16,-62],                         // 스파이크2
+      [8,-90,-4,-94],
+      [-16,-88,-26,-60],                       // 스파이크1
+      [-34,-90,-46,-92],
+      [-58,-86,-68,-58],                       // 스파이크0
+      [-76,-88,-86,-84],
+      [-98,-72,-104,-58],[-108,-50,-108,-58]]);
     c.closePath();
     c.fillStyle=P.hair;c.fill();
     c.lineWidth=OLW;c.strokeStyle=P.outline;c.stroke();
-    // 끝단 그림자 한 겹 (민무늬 면 유지)
     c.save();c.globalAlpha=.30;c.fillStyle=P.hairSh;
-    path(c,[-100,-96,[0,-112,108,-94],[108,-80,106,-76],[0,-96,-98,-78],[-102,-84,-100,-96]]);
+    path(c,[-100,-100,[0,-116,108,-98],[108,-84,106,-80],[0,-100,-98,-82],[-102,-88,-100,-100]]);
     c.closePath();c.fill();c.restore();
-    c.fillStyle='rgba(247,156,126,.30)';
-    c.beginPath();c.moveTo(-70,-166);
-    c.quadraticCurveTo(0,-190,72,-160);
-    c.lineTo(68,-148);c.quadraticCurveTo(0,-176,-66,-152);c.closePath();c.fill();
   });
 }
 bakeBang('hairFront',PAL);
@@ -409,7 +407,7 @@ function bakeTail1(nm,dir,P,sc){
     c.scale(sc,sc);
     // S커브 사이드록: 안쪽으로 휘었다가 끝이 바깥으로 튕김
     const g=c.createLinearGradient(0,0,0,184);
-    g.addColorStop(0,P.hairOr||P.hairHi);g.addColorStop(.7,P.hairOr||P.hairHi);g.addColorStop(1,P.hairOrD||P.hairHi);
+    g.addColorStop(0,P.hair);g.addColorStop(.38,P.hairOr||P.hairHi);g.addColorStop(1,P.hairOrD||P.hairHi);
     const mk=()=>path(c,[dir*-20,2,
       [dir*-28,40,dir*-20,84,dir*-12,116],       // 안쪽으로 휨
       [dir*-6,148,dir*-14,166],                  // 다시 바깥으로
@@ -445,7 +443,7 @@ function bakeTail2(nm,dir,P,sc){
   });
 }
 bakeTail1('tailN1',-1,PAL,.82); bakeTail2('tailN2',-1,PAL,.82);
-bakeTail1('tailF1', 1,FPAL,.60); bakeTail2('tailF2', 1,FPAL,.52);
+bakeTail1('tailF1', 1,PAL,.56); bakeTail2('tailF2', 1,PAL,.52);
 
 // ---- 2j. 손 (뭉툭 미튼) — near/far ----
 function bakeHand(nm,P,sc){
@@ -495,11 +493,11 @@ function bakeArmL(nm,P,sc){
     c.save();mk();c.closePath();c.clip();
     c.fillStyle='rgba(232,150,116,.32)';ell(c,-13,22,10,32,0);c.fill();
     c.fillStyle='rgba(255,255,255,.24)';ell(c,7,18,5.5,24,0);c.fill();
-    // 흰 붕대 랩 (팔꿈치 아래부터 손목까지 — 레퍼런스)
+    // 흰 붕대 랩 (팔꿈치 아래~손목 — 레퍼런스)
     c.fillStyle='#f4efe4';
-    c.fillRect(-17,12,34,34);
-    c.strokeStyle='rgba(120,105,90,.5)';c.lineWidth=1.8/sc;
-    for(let y=15;y<45;y+=6){c.beginPath();c.moveTo(-14,y);c.lineTo(14,y+2);c.stroke();}
+    c.fillRect(-17,6,34,40);
+    c.strokeStyle='rgba(120,105,90,.55)';c.lineWidth=2/sc;
+    for(let y=10;y<45;y+=7){c.beginPath();c.moveTo(-15,y);c.lineTo(15,y+2);c.stroke();}
     c.restore();
     strokeBelow(c,-3,()=>{mk();c.closePath();},OLW*.88/sc,P.outline);
 
@@ -551,8 +549,7 @@ makePart('p_torso',-64,-142,68,58,2.6,c=>{
   c.closePath();c.clip();
   c.fillStyle='rgba(20,32,80,.30)';                               // 뒤쪽(-x) 셀셰이드 (3/4 원근)
   path(c,[-56,-134,[-22,-118,-16,-92],[-14,-66,-22,-40],[-56,-40,-56,-134]]);c.closePath();c.fill();
-  c.fillStyle='rgba(255,255,255,.10)';                            // 앞(+x) 하이라이트
-  ell(c,34,-92,9,13,-.18);c.fill();
+
   c.fillStyle=PAL.topSh;                                          // 밑단 그늘
   path(c,[-42,-56,[-27,-44,-15,-50],[0,-54,14,-50],[30,-44,46,-56],[46,-48,44,-42],[0,-32,-42,-42]]);
   c.closePath();c.fill();
@@ -664,8 +661,8 @@ makePart('p_band',-150,-236,128,-84,2.2,c=>{
     [-32,-144,-64,-136],[-92,-128,-102,-122],[-110,-130,-108,-140]]);
   c.closePath();c.clip();
   c.fillStyle='rgba(0,0,0,.18)';c.fillRect(-124,-242,52,146);      // 뒤통수 그늘
-  c.fillStyle='rgba(20,32,90,.14)';                                 // 우하단 셀 셰이드 (은은)
-  ell(c,74,-166,40,30,-.35);c.fill();
+  c.fillStyle='rgba(20,32,90,.20)';                                 // 우하단 셀 셰이드
+  ell(c,70,-168,46,34,-.35);c.fill();
   c.fillStyle='rgba(255,255,255,.16)';ell(c,-20,-214,48,20,-.1);c.fill();
   c.restore();
   // 접어올린 챙 (모자와 같은 파란 접힌 면 — 레퍼런스)
@@ -676,7 +673,7 @@ makePart('p_band',-150,-236,128,-84,2.2,c=>{
   path(c,[-104,-122,[-4,-148,108,-128],[108,-136,106,-142],[-2,-158,-102,-134],[-105,-128,-104,-122]]);
   c.closePath();c.fill();
   // 챙 위에 얹힌 크고 둥근 검은 삼각 패치 2개 (레퍼런스)
-  for(const[px2,py2,r2]of[[-44,-162,.16],[14,-170,-.06]]){
+  for(const[px2,py2,r2]of[[-50,-158,.18],[34,-172,-.06]]){
     c.save();c.translate(px2,py2);c.rotate(r2);
     path(c,[-30,18,[-10,-30,2,-31],[14,-30,30,16],[12,28,0,28],[-14,28,-30,18]]);
     c.closePath();c.fillStyle='#1e1a26';c.fill();
@@ -691,7 +688,7 @@ makePart('p_band',-150,-236,128,-84,2.2,c=>{
   c.beginPath();c.moveTo(-44,-216);c.quadraticCurveTo(-74,-198,-92,-158);c.stroke();
 
   // 흰 토끼 엠블럼 (앞면 +x)
-  c.save();c.translate(62,-186);c.scale(1.55,1.62);c.rotate(.17);
+  c.save();c.translate(56,-170);c.rotate(.15);c.scale(1.45,1.52);
   c.fillStyle='#fff';
   ell(c,0,4,16,13,0);c.fill();                       // 얼굴
   path(c,[-10,-6,[-16,-30,-9,-31],[-3,-31,-2,-8],[-5,-5,-10,-6]]);c.closePath();c.fill();  // 귀1
@@ -705,23 +702,26 @@ makePart('p_band',-150,-236,128,-84,2.2,c=>{
   c.restore();
 });
 // ---- 빨간 스카프 (목 뒤 → 화면 왼쪽 뒤로 나부낌, 2세그) ----
-makePart('p_scarf1',-118,-26,40,96,2.6,c=>{
+makePart('p_scarf1',-150,-30,44,120,2.6,c=>{
   // 목 칼라
   path(c,[-28,-14,[0,-4,30,-12],[34,0,30,12],[0,24,-28,14],[-32,0,-28,-14]]);
   c.closePath();c.fillStyle=PAL.scarf;c.fill();
   c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
   c.fillStyle='rgba(0,0,0,.14)';
   path(c,[-28,-14,[-6,-6,-2,-4],[-4,16,-28,14],[-32,0,-28,-14]]);c.closePath();c.fill();
-  // 좌하단으로 뻗는 단일 테이퍼 꼬리 (끝폭 = 시작폭의 25%)
-  const g=c.createLinearGradient(0,0,-104,84);
-  g.addColorStop(0,PAL.scarf);g.addColorStop(1,'#b02020');
-  path(c,[-16,-4,
-    [-48,18,-76,44],[-100,66,-110,84],
-    [-104,88,-98,84],[-72,62,-44,40],[-14,18,-2,8],[2,0,-16,-4]]);
+  // 도톰한 단일 테이퍼 꼬리 (시작폭 크게, 좌하 45°, 끝폭 25%)
+  const g=c.createLinearGradient(0,0,-130,104);
+  g.addColorStop(0,PAL.scarf);g.addColorStop(1,'#a81d20');
+  path(c,[-8,-16,
+    [-58,6,-96,40],[-128,68,-142,96],
+    [-136,104,-124,98],[-92,80,-62,58],
+    [-28,34,4,18],[14,8,10,-2],[4,-14,-8,-16]]);
   c.closePath();c.fillStyle=g;c.fill();
   c.lineWidth=3.8;c.strokeStyle=PAL.outline;c.stroke();
-  c.strokeStyle='rgba(255,120,110,.5)';c.lineWidth=2.8;
-  c.beginPath();c.moveTo(-20,6);c.quadraticCurveTo(-56,28,-92,68);c.stroke();
+  // 상단 밝은 하이라이트 면
+  c.fillStyle='rgba(255,110,100,.45)';
+  path(c,[-14,-10,[-56,10,-92,42],[-110,58,-118,72],[-104,64,-84,50],[-52,26,-10,4],[0,-4,-14,-10]]);
+  c.closePath();c.fill();
 });
 makePart('p_scarf2',-6,-6,6,6,1,c=>{});   // 꼬리를 1세그로 통합 (2세그는 빈 파트)
 // ---- 거대 커틀러스 (식칼형 대검 · 피벗=그립, 칼날 -y) ----
@@ -729,16 +729,17 @@ makePart('p_sword',-96,-372,92,130,1.7,c=>{
   // 무광 오프화이트 블레이드: 등이 왼쪽 곡선, 날끝이 우상향으로 솟는 지느러미형
   path(c,[-46,-46,
     [-54,-140,-56,-224,-50,-286],       // 등 (왼쪽, 완만한 곡선)
-    [-44,-318,-28,-338],                // 등 상단
-    [10,-352,42,-360],                  // ★ 날끝: 우상향 첨점
-    [30,-320,44,-268],
-    [58,-206,64,-150],[68,-92,58,-46],[6,-37,-46,-46]]);
+    [-46,-324,-24,-346],                // 등 상단
+    [0,-360,18,-356],                   // ★ 곡선 정점
+    [34,-342,42,-310],                  // 우상향 완만 하강
+    [52,-252,58,-196],
+    [64,-140,66,-96],[68,-66,58,-46],[6,-37,-46,-46]]);
   c.closePath();
   c.fillStyle='#eae6dd';c.fill();
   c.lineWidth=OLW*1.15;c.strokeStyle=PAL.outline;c.stroke();
   c.fillStyle='rgba(150,142,128,.30)';                            // 등쪽 셰이드
-  path(c,[-46,-46,[-54,-140,-56,-224,-50,-286],[-44,-318,-28,-338],
-    [-20,-320,-26,-286],[-32,-190,-30,-96],[-28,-56,-24,-46],[-34,-44,-46,-46]]);
+  path(c,[-46,-46,[-54,-140,-56,-224,-50,-286],[-46,-324,-24,-346],
+    [-16,-330,-22,-292],[-30,-190,-28,-96],[-26,-56,-22,-46],[-34,-44,-46,-46]]);
   c.closePath();c.fill();
   c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=4.4;
   c.beginPath();c.moveTo(38,-110);c.lineTo(46,-220);c.stroke();
@@ -940,7 +941,7 @@ node('head','torso',14,-122,200,'skull');
 NMAP.head.k=0.65;
 node('hairBack','head',-8,26,10,'hairBack');
 NMAP.hairBack.k=1.26;
-node('tailF1','head',84,-38,8,'tailF1');
+node('tailF1','head',94,-30,160,'tailF1');  // 오른뺨 옆 (블레이드 앞)
 node('tailF2','tailF1',3,80,11,'tailF2');
 node('earF','head',103,-64,199,'earF');
 NMAP.earF.k=1.4;
@@ -962,7 +963,7 @@ node('armU_N','torso',-47,-104,244,'armU');  // 사이드록(250) 뒤·몸통 �
 NMAP.armU_N.k=1.0;       // NEAR = 맨손 (앞·밝게·낮게)
 node('armL_N','armU_N',0,48,240,'armL');
 node('handN','armL_N',0,42,236,'hand');
-node('armU_F','torso',50,-96,30,'armU2');   // 몸통 뒤
+node('armU_F','torso',38,-96,30,'armU2');   // 몸통 뒤
 NMAP.armU_F.k=1.0;      // FAR = 무기 팔 (몸통 앞·머리 뒤·어둡게)
 node('armL_F','armU_F',0,43,46,'armL2');     // 몸통 뒤 (오른쪽으로 삐져나온 부분만 보임)
 node('weapon','armL_F',0,36,150,'weapon');  // 머리 뒤·몸 앞 (레퍼런스)       // 칼날이 머리 뒤로 걸침
@@ -1076,7 +1077,7 @@ function resetPose(){
 function restArms(){
   N.armU_N.rot=0.22;N.armL_N.rot=0.26;      // 화면 왼쪽 앞 팔 (몸 바깥으로 자연스럽게)
   N.armU_F.rot=-0.16;N.armL_F.rot=-2.14;    // 무기 팔 — 팔꿈치 깊게 접어 그립이 어깨 위
-  N.weapon.rot=2.82;                        // 칼날 월드각 -0.85 = 왼쪽 위 대각 (머리 뒤로 통과)
+  N.weapon.rot=2.66;                        // 칼날 월드각 -0.85 = 왼쪽 위 대각 (머리 뒤로 통과)
 }
 // 2차 모션: 테일/귀/스카프/케이프가 몸을 지연 추종
 function secondary(t,sp,amp,ph){
@@ -1134,7 +1135,7 @@ ANIMS.walk={dur:.92,fn(t,r){
   N.armU_N.rot=.16+Math.sin(c2)*.45;          // 맨팔 자연 스윙
   N.armL_N.rot=.30+Math.max(0,Math.sin(c2+.6))*.35;
   N.armU_F.rot=-.16-Math.sin(c2)*.12;          // 무기팔은 어깨에 얹은 채 살짝
-  N.weapon.rot=2.82+Math.sin(c2)*.06;
+  N.weapon.rot=2.66+Math.sin(c2)*.06;
   secondary(t,1,1.9,.4);
   N.scarf1.rot+=.20+Math.sin(c2-1.0)*.16;      // 스카프가 뒤로 나부낌
   N.scarf2.rot+=.26+Math.sin(c2-1.5)*.20;
@@ -1159,7 +1160,7 @@ ANIMS.run={dur:.58,fn(t,r){
   N.armL_N.rot=.9+Math.max(0,Math.sin(c2+.5))*.5;
   N.armU_F.rot=-.12-Math.sin(c2)*.22;
   N.armL_F.rot=-2.22;
-  N.weapon.rot=2.88+Math.sin(c2)*.09;
+  N.weapon.rot=2.72+Math.sin(c2)*.09;
   secondary(t,1,2.4,.3);
   N.tailN1.rot+=.42+Math.sin(c2-1.2)*.18;      // 속도감: 테일이 뒤로 흩날림
   N.tailN2.rot+=.48+Math.sin(c2-1.7)*.22;
